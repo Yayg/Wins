@@ -1,8 +1,6 @@
-<div style="text-align: center;">
-  <img src="http://wins-project.net/WinsLogo.png"></img><br/>
-  <span style="padding-right: 140px;">Wins is a "Point and Click" Game Motor written with OCaml.</span>
-</div>
-
+Wins - *Wins is not Scumm*
+---
+*Wins is a "Point and Click" Game Motor written with OCaml.*
 	
 Files :
 =====
