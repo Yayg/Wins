@@ -24,21 +24,34 @@
 open Lua_api
 open Tool
 
-(* Types **********************************************************************)
-(** Type of recordable function in Lua environment. *)
-type luaFuncRegister = string * (Lua.oCamlFunction ref) ;;
 
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
 let luaEnv = LuaL.newstate ();;
-
+(** Global Counters dictionary *)
+let globalCounts = new dictionary;;
 (* Functions ******************************************************************)
-
-let registerFunction ((name,func):luaFuncRegister) = 
-	Lua.register luaEnv name !func
-;;
 
 let initWally () =
 	LuaL.openlibs luaEnv
 ;;
 
+let registerFunction name func = 
+	Lua.register luaEnv name !func
+;;
+
+let registerGlobalCounts name (value:int) =
+	globalCounts#put name value
+;;
+
+let updateGlobalCounts name value =
+	globalCounts#update name value
+;;
+
+let getGlobalCounts name =
+	globalCounts#get name
+;;
+
+let removeGlobalCounts name =
+	globalCounts#remove name
+;;

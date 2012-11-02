@@ -62,6 +62,13 @@ class ['a] dictionary =
 				| (k,_)::_ when k = key -> raise Existing_entry
 				| c::q                  -> c::brower q
 			in data := brower !data
+		method update key element = 
+			let rec brower = function
+				| []                    -> raise Not_found
+				| (k,_)::_ when k > key -> raise Not_found
+				| (k,_)::q when k = key -> (key,element)::q
+				| c::q                  -> c::brower q
+			in data := brower !data
 		method remove key =
 			let rec brower = function
 				| []                    -> raise Not_found
