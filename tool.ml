@@ -30,6 +30,7 @@ class ['a] dictionary =
 		method get key =
 			let rec brower = function
 				| []                    -> raise Not_found
+				| (k,_)::_ when k > key -> raise Not_found
 				| (k,e)::q when k = key -> e
 				| _::q                  -> brower q
 			in brower !data
@@ -56,17 +57,18 @@ class ['a] dictionary =
 			in brower 0 !data
 		method put key element =
 			let rec brower = function
-				| []                    -> data := (key,element)::!data
+				| []                    -> (key,element)::[]
+				| (k,e)::q when k > key -> (key,element)::(k,e)::q
 				| (k,_)::_ when k = key -> raise Existing_entry
-				| _::q                  -> brower q
-			in brower !data
+				| c::q                  -> c::brower q
+			in data := brower !data
 		method remove key =
 			let rec brower = function
 				| []                    -> raise Not_found
-				| (k,_)::q when k = key -> q
+				| (k,_)::_ when k > key -> raise Not_found
+				| (k,e)::q when k = key -> q
 				| c::q                  -> c::brower q
-			in 
-			data := brower !data
+			in data := brower !data
 	end
 ;;
 
