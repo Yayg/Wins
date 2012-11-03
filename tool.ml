@@ -45,9 +45,7 @@ class ['a] dictionary =
 				| (_,e)::q -> e::brower q
 			in brower !data
 		method is_empty () = 
-			let content = self#elements () in 
-			if content = [] then true
-			else false
+			(function [] -> true | _::_ -> false) !data 
 		method clear () = 
 			data := []
 		method length () =
