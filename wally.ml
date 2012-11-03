@@ -40,18 +40,20 @@ let registerFunction name func =
 	Lua.register luaEnv name !func
 ;;
 
-let registerGlobalCounts name (value:int) =
+let registerGlobalCount name (value:int) =
 	globalCounts#put name value
 ;;
 
-let updateGlobalCounts name value =
+let updateGlobalCount name value =
 	globalCounts#update name value
 ;;
 
-let getGlobalCounts name =
+let getGlobalCount name =
 	globalCounts#get name
 ;;
 
-let removeGlobalCounts name =
+let removeGlobalCount name =
 	globalCounts#remove name
 ;;
+
+
