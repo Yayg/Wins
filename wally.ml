@@ -24,17 +24,14 @@
 open Lua_api
 open Tool
 
-
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
 let luaEnv = LuaL.newstate ();;
 (** Global Counters dictionary *)
 let globalCounts = new dictionary;;
-(* Functions ******************************************************************)
 
-let initWally () =
-	LuaL.openlibs luaEnv
-;;
+(* Functions ******************************************************************)
+LuaL.openlibs luaEnv;;
 
 let registerFunction name func = 
 	Lua.register luaEnv name !func

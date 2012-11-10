@@ -36,10 +36,10 @@
 
 ### Info #######################################################################
 RESULT     = wins
-SOURCES    = tool.ml wally.ml main.ml
+SOURCES    = tool.ml wally.ml jed.ml main.ml
 
 INCDIRS    = -I +sdl -I /usr/local/lib/ocaml/3.12.1/lua/
-LIBS       = sdl.cmxa bigarray.cmxa sdlloader.cmxa sdlttf.cmxa sdlmixer.cmxa\
+LIBS       = bigarray.cmxa sdl.cmxa sdlloader.cmxa sdlttf.cmxa sdlmixer.cmxa\
              lua.cmxa
 
 DOCDIR     = ./doc

@@ -20,9 +20,12 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.     #
 ################################################################################
 *)
+
+(* Exception ******************************************************************)
 exception Not_found
 exception Existing_entry
 
+(* Objects ********************************************************************)
 class ['a] dictionary = 
 	object (self)
 		val data = ref ([]:((string * 'a) list))
