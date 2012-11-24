@@ -23,6 +23,7 @@
 
 open Lua_api
 open Tool
+open Expat
 
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
@@ -53,4 +54,21 @@ let removeGlobalCount name =
 	globalCounts#remove name
 ;;
 
+let load_file file =
+	let data = open_in file in
+	let n = in_channel_length data in
+	let s = String.create n in
+	really_input data s 0 n;
+	close_in data;
+  (s)
+;;
 
+let load_xml file =
+	let data = load_file file
+	and parserXml = parser_create ~encoding:(Some "UTF-8")
+	in
+	parse parserXml data;
+	final parserXml;
+	parserXml
+;;
+	
