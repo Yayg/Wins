@@ -25,6 +25,12 @@ open Lua_api
 open Tool
 open Expat
 
+(* Types **********************************************************************)
+type xmlTree = 
+	| Element of string * (string * string) list * xmlTree
+	| Text of string
+;;
+
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
 let luaEnv = LuaL.newstate ();;
