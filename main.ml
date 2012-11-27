@@ -10,14 +10,14 @@
 #  Scumm !  `8'      `8'       o888o o888o o888o 8""888P'                      # 
 #                                                              Programmed by   #
 #    Philémon "Phil Gekni" Gardet [philemon.gardet@epita.fr]                   #
-#    Rafaël Gozlan [rafael.gozlan@epita.fr]                                    #
+#    Rafael Gozlan [rafael.gozlan@epita.fr]                                    #
 #    Lorry "Bardaf" Guedj [lorry.guedj@epita.fr]                               #
 #    Alexandre Starck [alexandre.starck@epita.fr]                              #
 #                                                                              #
 ################################################################################
 #    Wins is a "Point and Click" Game Motor written with OCaml                 #
 #    Copyright (C) 2013    Philémon Gardet [philemon.gardet@epita.fr]          #
-#                          Rafaël Gozlan [rafael.gozlan@epita.fr]              #
+#                          Rafael Gozlan [rafael.gozlan@epita.fr]              #
 #                          Lorry Guedj [lorry.guedj@epita.fr]                  #
 #                          Alexandre Starck [alexandre.starck@epita.fr]        #
 #                                                                              #

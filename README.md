@@ -7,9 +7,9 @@ Files :
 
 - `tool.ml`  : Tool Function, Type and Object Box.
 - `main.ml`  : Root of wins.
-- `wally.ml`  : Lua motor.
+- `wally.ml`  : Analysis motor.
 - `zak.ml`    : Scene manager.
 - `jed.ml`    : Display motor.
 - `max.ml`    : Animation motor.
-- `hoagie.ml` : Sound motor.
+- `bobbin.ml` : Sound motor.
 - `fred.ml`   : Time manager.

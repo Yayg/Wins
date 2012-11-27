@@ -2,7 +2,7 @@
 ################################################################################
 #    Wins is a "Point and Click" Game Motor written with OCaml                 #
 #    Copyright (C) 2013    Philémon Gardet [philemon.gardet@epita.fr]          #
-#                          Rafaël Gozlan [rafael.gozlan@epita.fr]              #
+#                          Rafael Gozlan [rafael.gozlan@epita.fr]              #
 #                          Lorry Guedj [lorry.guedj@epita.fr]                  #
 #                          Alexandre Starck [alexandre.starck@epita.fr]        #
 #                                                                              #
