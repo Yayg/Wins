@@ -25,10 +25,21 @@ open Lua_api
 open Tool
 open Expat
 
+(* Exceptions *****************************************************************)
+
 (* Types **********************************************************************)
-type xmlTree = 
-	| Element of string * (string * string) list * xmlTree
+type xmlElement = 
+	| Element of string * (string * string) list * xmlElement list
 	| Text of string
+;;
+
+(* Objects ********************************************************************)
+class treeXml = 
+	object (self) 
+		val data = ref ([]:(xmlElement list))
+		val curElement = "";
+		
+	end
 ;;
 
 (* Global Variables ***********************************************************)
