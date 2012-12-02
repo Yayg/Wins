@@ -34,10 +34,18 @@ type xmlElement =
 ;;
 
 (* Objects ********************************************************************)
-class treeXml = 
+	class treeXml = 
 	object (self) 
 		val data = ref ([]:(xmlElement list))
-		val curElement = "";
+		val curElement = ""
+		method add (element:xmlElement) (l:xmlElement list) =
+		element :: l
+		method search (element:xmlElement) (l:xmlElement list) =
+		match l with
+		[] 							-> invalid_arg "Not found!"
+		|hd::tl when hd = element 	-> hd
+		|hd::tl -> self#search element tl
+		
 		
 	end
 ;;
