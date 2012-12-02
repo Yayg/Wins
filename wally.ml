@@ -42,8 +42,8 @@ type xmlElement =
 		element :: l
 		method search (element:xmlElement) (l:xmlElement list) =
 		match l with
-		[] 							-> invalid_arg "Not found!"
-		|hd::tl when hd = element 	-> hd
+		[] -> invalid_arg "Error search: Element not found!"
+		|hd::tl when hd = element -> hd
 		|hd::tl -> self#search element tl
 		
 		
