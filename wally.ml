@@ -26,27 +26,42 @@ open Tool
 open Expat
 
 (* Exceptions *****************************************************************)
+exception Not_found
 
 (* Types **********************************************************************)
 type xmlElement = 
-	| Element of string * (string * string) list * xmlElement list
+	| Element of string * (string * string) list * (ref xmlElement) list
 	| Text of string
 ;;
 
 (* Objects ********************************************************************)
-	class treeXml = 
+class treeXml = 
 	object (self) 
 		val data = ref ([]:(xmlElement list))
-		val curElement = ""
+		val deep = Stack.create ()
+		
+		method private addChild newChild =
+			let parent = !(Stack.top deep) in
+			let (name, attrs, childs) = parent in
+			Stack.top deep := (name, attrs, newChild::childs)
+		method openElement name attrs =
+			let newElement = 
+				ref Element(name, attrs, ([]:(ref xmlElement) list)) in
+			if Stack.is_emply deep then
+				data := newElement::[]
+			else
+				addChild newElement
+			; Stack.push newElement deep
+		
+		(*	
 		method add (element:xmlElement) (l:xmlElement list) =
-		element :: l
+			element :: l
 		method search (element:xmlElement) (l:xmlElement list) =
-		match l with
-		[] -> invalid_arg "Error search: Element not found!"
-		|hd::tl when hd = element -> hd
-		|hd::tl -> self#search element tl
-		
-		
+			match l with
+				| [] -> raise Not_found
+				| hd::tl when hd = element -> hd
+				| hd::tl -> self#search element tl
+		*)
 	end
 ;;
 
