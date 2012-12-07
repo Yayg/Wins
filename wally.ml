@@ -30,7 +30,8 @@ exception Not_found
 
 (* Types **********************************************************************)
 type xmlElement = 
-	| Element of string * (string * string) list * (ref xmlElement) list
+	| BeginElement of string * string dictionary
+	| EndElement
 	| Text of string
 ;;
 
@@ -40,28 +41,7 @@ class treeXml =
 		val data = ref ([]:(xmlElement list))
 		val deep = Stack.create ()
 		
-		method private addChild newChild =
-			let parent = !(Stack.top deep) in
-			let (name, attrs, childs) = parent in
-			Stack.top deep := (name, attrs, newChild::childs)
-		method openElement name attrs =
-			let newElement = 
-				ref Element(name, attrs, ([]:(ref xmlElement) list)) in
-			if Stack.is_emply deep then
-				data := newElement::[]
-			else
-				addChild newElement
-			; Stack.push newElement deep
 		
-		(*	
-		method add (element:xmlElement) (l:xmlElement list) =
-			element :: l
-		method search (element:xmlElement) (l:xmlElement list) =
-			match l with
-				| [] -> raise Not_found
-				| hd::tl when hd = element -> hd
-				| hd::tl -> self#search element tl
-		*)
 	end
 ;;
 
