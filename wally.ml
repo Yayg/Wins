@@ -27,11 +27,12 @@ open Expat
 
 (* Exceptions *****************************************************************)
 exception Not_found
+exception Broken
 
 (* Types **********************************************************************)
 type xmlElement = 
 	| BeginElement of string * string dictionary
-	| EndElement
+	| EndElement of string
 	| Text of string
 ;;
 
@@ -39,9 +40,44 @@ type xmlElement =
 class treeXml = 
 	object (self) 
 		val data = ref ([]:(xmlElement list))
-		val deep = Stack.create ()
 		
-		
+		method copy () =
+			Oo.copy self
+		method private newElement (mem:(xmlElement list)) =
+			let saveData = !data in 
+			let element =
+				data := mem;
+				self#copy ()
+			in
+			data := saveData;
+			element
+		method private bodyElement (l:(xmlElement list)) =
+			let rec core d = function
+				| []                          -> raise Broken
+				| EndElement n::q when d = 0  -> EndElement(n)::[]
+				| BeginElement (n,a)::q       -> BeginElement(n,a)::core (d+1) q
+				| EndElement n::q when d <> 0 -> EndElement(n)::core (d-1) q
+				| e::q                        -> e::core d q
+			in core 0 l
+		method getElementById id =
+			let rec beginBrowser = function 
+				| []                                                    -> 
+					raise Not_found
+				| BeginElement(name, attrs)::q when attrs#get "id" = id ->
+					BeginElement(name, attrs)::q
+				| _::q                                                  -> 
+					beginBrowser q
+			in
+			self#newElement (self#bodyElement (beginBrowser !data))
+		method getElementsByTagName tagName = 
+			let rec browser = function
+				| []                                               -> []
+				| BeginElement(name, attrs)::q when name = tagName ->
+					self#newElement 
+					(self#bodyElement (BeginElement(name, attrs)::q))
+					::browser q
+				| _::q                                             -> browser q
+			in browser !data
 	end
 ;;
 
@@ -91,4 +127,3 @@ let load_xml file =
 	final parserXml;
 	parserXml
 ;;
-	
