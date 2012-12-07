@@ -31,52 +31,52 @@ class ['a] dictionary =
 		val data = ref ([]:((string * 'a) list))
 		
 		method get key =
-			let rec broswer = function
+			let rec browser = function
 				| []                    -> raise Not_found
 				| (k,_)::_ when k > key -> raise Not_found
 				| (k,e)::q when k = key -> e
-				| _::q                  -> broswer q
-			in broswer !data
+				| _::q                  -> browser q
+			in browser !data
 		method keys () =
-			let rec broswer = function
+			let rec browser = function
 				| []       -> []
-				| (k,_)::q -> k::broswer q
-			in broswer !data
+				| (k,_)::q -> k::browser q
+			in browser !data
 		method elements () =
-			let rec broswer = function
+			let rec browser = function
 				| []       -> []
-				| (_,e)::q -> e::broswer q
-			in broswer !data
+				| (_,e)::q -> e::browser q
+			in browser !data
 		method is_empty () = 
 			(function [] -> true | _::_ -> false) !data 
 		method clear () = 
 			data := []
 		method length () =
-			let rec broswer i = function
+			let rec browser i = function
 				| []   -> i
-				| _::q -> broswer (i+1) q
-			in broswer 0 !data
+				| _::q -> browser (i+1) q
+			in browser 0 !data
 		method put key element =
-			let rec broswer = function
+			let rec browser = function
 				| []                    -> (key,element)::[]
 				| (k,e)::q when k > key -> (key,element)::(k,e)::q
 				| (k,_)::_ when k = key -> raise Existing_entry
-				| c::q                  -> c::broswer q
-			in data := broswer !data
+				| c::q                  -> c::browser q
+			in data := browser !data
 		method update key element = 
-			let rec broswer = function
+			let rec browser = function
 				| []                    -> raise Not_found
 				| (k,_)::_ when k > key -> raise Not_found
 				| (k,_)::q when k = key -> (key,element)::q
-				| c::q                  -> c::broswer q
-			in data := broswer !data
+				| c::q                  -> c::browser q
+			in data := browser !data
 		method remove key =
-			let rec broswer = function
+			let rec browser = function
 				| []                    -> raise Not_found
 				| (k,_)::_ when k > key -> raise Not_found
 				| (k,e)::q when k = key -> q
-				| c::q                  -> c::broswer q
-			in data := broswer !data
+				| c::q                  -> c::browser q
+			in data := browser !data
 	end
 ;;
 
