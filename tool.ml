@@ -35,18 +35,18 @@ class ['a] dictionary =
 				| []                    -> raise Not_found
 				| (k,_)::_ when k > key -> raise Not_found
 				| (k,e)::q when k = key -> e
-				| _::q                  -> brower q
-			in brower !data
+				| _::q                  -> broswer q
+			in broswer !data
 		method keys () =
 			let rec broswer = function
 				| []       -> []
-				| (k,_)::q -> k::brower q
-			in brower !data
+				| (k,_)::q -> k::broswer q
+			in broswer !data
 		method elements () =
 			let rec broswer = function
 				| []       -> []
-				| (_,e)::q -> e::brower q
-			in brower !data
+				| (_,e)::q -> e::broswer q
+			in broswer !data
 		method is_empty () = 
 			(function [] -> true | _::_ -> false) !data 
 		method clear () = 
@@ -55,7 +55,7 @@ class ['a] dictionary =
 			let rec broswer i = function
 				| []   -> i
 				| _::q -> broswer (i+1) q
-			in brower 0 !data
+			in broswer 0 !data
 		method put key element =
 			let rec broswer = function
 				| []                    -> (key,element)::[]
@@ -69,7 +69,7 @@ class ['a] dictionary =
 				| (k,_)::_ when k > key -> raise Not_found
 				| (k,_)::q when k = key -> (key,element)::q
 				| c::q                  -> c::broswer q
-			in data := brower !data
+			in data := broswer !data
 		method remove key =
 			let rec broswer = function
 				| []                    -> raise Not_found
