@@ -31,19 +31,19 @@ class ['a] dictionary =
 		val data = ref ([]:((string * 'a) list))
 		
 		method get key =
-			let rec brower = function
+			let rec broswer = function
 				| []                    -> raise Not_found
 				| (k,_)::_ when k > key -> raise Not_found
 				| (k,e)::q when k = key -> e
 				| _::q                  -> brower q
 			in brower !data
 		method keys () =
-			let rec brower = function
+			let rec broswer = function
 				| []       -> []
 				| (k,_)::q -> k::brower q
 			in brower !data
 		method elements () =
-			let rec brower = function
+			let rec broswer = function
 				| []       -> []
 				| (_,e)::q -> e::brower q
 			in brower !data
@@ -52,31 +52,31 @@ class ['a] dictionary =
 		method clear () = 
 			data := []
 		method length () =
-			let rec brower i = function
+			let rec broswer i = function
 				| []   -> i
-				| _::q -> brower (i+1) q
+				| _::q -> broswer (i+1) q
 			in brower 0 !data
 		method put key element =
-			let rec brower = function
+			let rec broswer = function
 				| []                    -> (key,element)::[]
 				| (k,e)::q when k > key -> (key,element)::(k,e)::q
 				| (k,_)::_ when k = key -> raise Existing_entry
-				| c::q                  -> c::brower q
-			in data := brower !data
+				| c::q                  -> c::broswer q
+			in data := broswer !data
 		method update key element = 
-			let rec brower = function
+			let rec broswer = function
 				| []                    -> raise Not_found
 				| (k,_)::_ when k > key -> raise Not_found
 				| (k,_)::q when k = key -> (key,element)::q
-				| c::q                  -> c::brower q
+				| c::q                  -> c::broswer q
 			in data := brower !data
 		method remove key =
-			let rec brower = function
+			let rec broswer = function
 				| []                    -> raise Not_found
 				| (k,_)::_ when k > key -> raise Not_found
 				| (k,e)::q when k = key -> q
-				| c::q                  -> c::brower q
-			in data := brower !data
+				| c::q                  -> c::broswer q
+			in data := broswer !data
 	end
 ;;
 
