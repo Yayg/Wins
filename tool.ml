@@ -80,4 +80,12 @@ class ['a] dictionary =
 	end
 ;;
 
-
+(* Functions ******************************************************************)
+let load_file file =
+	let data = open_in file in
+	let n = in_channel_length data in
+	let s = String.create n in
+	really_input data s 0 n;
+	close_in data;
+  (s)
+;;
