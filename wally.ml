@@ -28,6 +28,7 @@ open Expat
 (* Exceptions *****************************************************************)
 exception Not_found
 exception Broken
+exception Void
 
 (* Types **********************************************************************)
 type xmlElement = 
@@ -40,6 +41,43 @@ type xmlElement =
 class treeXml = 
 	object (self) 
 		val data = ref ([]:(xmlElement list))
+		
+		method pushStartElement name attrs =
+			let dict = new dictionary in
+			let rec browser = function 
+					| (k,v)::q -> (dict#put k v; browser q)
+					| []       -> ()
+			in 
+			let newElement =
+				browser attrs;
+				BeginElement(name, dict)
+			in data := newElement::!data
+		method pushEndElement name =
+			data := EndElement(name)::!data
+		method pushText text =
+			data := Text(text)::!data
+		method reverse () =
+			let rec invert = function
+				| []     -> []
+				| a :: q -> a :: (invert q)
+			in invert !data
+			
+		method attributs () =
+ 			let dict =
+  				let rec browser = function
+   					| [] -> raise Void
+   					| BeginElement(_,d)::_ -> d
+  					| _::q -> browser q
+  				in browser !data
+ 			in dict#keys ()	
+		method getAttribut attr =
+			let dict = 
+				let rec browser = function
+					| []                    -> raise Void
+					| BeginElement(_,d)::[] -> d
+					| _::q                  -> browser q
+				in browser !data 
+			in dict#get attr
 		
 		method copy () =
 			Oo.copy self
