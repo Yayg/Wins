@@ -38,11 +38,21 @@ type xmlElement =
 ;;
 
 (* Objects ********************************************************************)
-class treeXml = 
+class treeXml xmlFile = 
 	object (self) 
 		val data = ref ([]:(xmlElement list))
 		
-		method pushStartElement name attrs =
+		initializer
+			let xmlFile = load_file xmlFile
+				and parser = parser_create ~encoding:(Some "UTF-8")
+			in
+			set_start_element_handler parser self#pushStartElement;
+			set_end_element_handler parser self#pushEndElement;
+			set_character_data_handler parser self#pushText;
+			parse parser xmlFile;
+			final parser;
+			self#endParse ()
+		method private pushStartElement name attrs =
 			let dict = new dictionary in
 			let rec browser = function 
 					| (k,v)::q -> (dict#put k v; browser q)
@@ -52,15 +62,15 @@ class treeXml =
 				browser attrs;
 				BeginElement(name, dict)
 			in data := newElement::!data
-		method pushEndElement name =
+		method private pushEndElement name =
 			data := EndElement(name)::!data
-		method pushText text =
+		method private pushText text =
 			data := Text(text)::!data
-		method reverse () =
+		method private endParse () =
 			let rec invert = function
-				| []     -> []
-				| a :: q -> a :: (invert q)
-			in invert !data
+				| []   -> []
+				| e::q -> e::(invert q)
+			in data := invert !data
 			
 		method attributs () =
  			let dict =
@@ -80,7 +90,7 @@ class treeXml =
 			in dict#get attr
 		
 		method copy () =
-			Oo.copy self
+			Oo.copy self	
 		method private newElement (mem:(xmlElement list)) =
 			let saveData = !data in 
 			let element =
@@ -89,6 +99,7 @@ class treeXml =
 			in
 			data := saveData;
 			element
+			
 		method private bodyElement (l:(xmlElement list)) =
 			let rec core d = function
 				| []                          -> raise Broken
@@ -148,20 +159,3 @@ let removeGlobalCount name =
 	globalCounts#remove name
 ;;
 
-let load_file file =
-	let data = open_in file in
-	let n = in_channel_length data in
-	let s = String.create n in
-	really_input data s 0 n;
-	close_in data;
-  (s)
-;;
-
-let load_xml file =
-	let data = load_file file
-	and parserXml = parser_create ~encoding:(Some "UTF-8")
-	in
-	parse parserXml data;
-	final parserXml;
-	parserXml
-;;
