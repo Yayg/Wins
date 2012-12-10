@@ -27,11 +27,12 @@ open Expat
 
 (* Exceptions *****************************************************************)
 exception Not_found
+exception Void
 
 (* Types **********************************************************************)
 type xmlElement = 
 	| BeginElement of string * string dictionary
-	| EndElement
+	| EndElement of string
 	| Text of string
 ;;
 
@@ -39,8 +40,43 @@ type xmlElement =
 class treeXml = 
 	object (self) 
 		val data = ref ([]:(xmlElement list))
-		val deep = Stack.create ()
 		
+		method pushStartElement name attrs =
+			let dict = new dictionary in
+			let rec browser = function 
+					| (k,v)::q -> (dict#put k v; browser q)
+					| []       -> ()
+			in 
+			let newElement =
+				browser attrs;
+				BeginElement(name, dict)
+			in data := newElement::!data
+		method pushEndElement name =
+			data := EndElement(name)::!data
+		method pushText text =
+			data := Text(text)::!data
+		method reverse () =
+			let rec invert = function
+				| []     -> []
+				| a :: q -> a :: (invert q)
+			in invert !data
+		method attributs () =
+ 			let dict =
+  				let rec browser = function
+   					| [] -> raise Void
+   					| BeginElement(_,d)::_ -> d
+  					| _::q -> browser q
+  				in browser !data
+ 			in dict#keys ()
+			
+		method getAttribut attr =
+			let dict = 
+				let rec browser = function
+					| []        -> raise Void
+					| (_,d)::[] -> d
+					| _::q      -> browser q
+				in browser !data 
+			in dict#get attr
 		
 	end
 ;;
@@ -91,4 +127,7 @@ let load_xml file =
 	final parserXml;
 	parserXml
 ;;
+
+
+	
 	
