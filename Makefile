@@ -39,23 +39,31 @@ RESULT     = wins
 SOURCES    = tool.ml wally.ml jed.ml main.ml
 
 INCDIRS    = -I +sdl -I /usr/local/lib/ocaml/3.12.1/lua/ -I +expat
-LIBS       = bigarray.cmxa sdl.cmxa sdlloader.cmxa sdlttf.cmxa sdlmixer.cmxa\
+LIBSOPT    = bigarray.cmxa sdl.cmxa sdlloader.cmxa sdlttf.cmxa sdlmixer.cmxa\
              lua.cmxa expat.cmxa
+LIBSTOP    = bigarray.cma sdl.cma sdlloader.cma sdlttf.cma sdlmixer.cma\
+             lua.cma expat.cma
 
 DOCDIR     = ./doc
 
 OCAMLOPT   = ocamlopt.opt
-OCAMLDOC   = ocamldoc.opt 
+OCAMLDOC   = ocamldoc.opt
+OCAMLTOP   = ocamlmktop
 
 ### Making #####################################################################
 .PHONY: doc clean
 
 ${RESULT}: ${SOURCES}
-	${OCAMLOPT} $(INCDIRS) $(LIBS) ${SOURCES} -o $@  
+	${OCAMLOPT} $(INCDIRS) $(LIBSOPT) ${SOURCES} -o $@  
 
+debug: 
+	${OCAMLTOP} -custom $(INCDIRS) $(LIBSTOP) ${SOURCES} -o debug
+	
 doc:
 	${OCAMLDOC} -g ${DOCDIR} $(INCDIRS) ${SOURCES}
 
 clean: 
-	rm -rf *.cmi rm -rf *.cmx rm -rf *.o
+	rm -rf *.cmi rm -rf *.cmx rm -rf *.o rm -rf *.cmo
 
+mrproper: clean
+	rm -rf $(RESULT) rm -rf debug
