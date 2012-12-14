@@ -56,7 +56,7 @@ OCAMLTOP   = ocamlmktop
 ${RESULT}: ${SOURCES}
 	${OCAMLOPT} $(INCDIRS) $(LIBSOPT) ${SOURCES} -o $@  
 
-debug: 
+debug: mrproper 
 	${OCAMLTOP} -custom $(INCDIRS) $(LIBSTOP) ${SOURCES} -o debug
 	
 doc:
