@@ -116,8 +116,7 @@ class treeXml xmlFile =
 					BeginElement(name, attrs)::q
 				| _::q                                                  -> 
 					beginBrowser q
-			in
-			self#newElement (self#bodyElement (beginBrowser !data))
+			in self#newElement (self#bodyElement (beginBrowser !data))
 		method getElementsByTagName tagName = 
 			let rec browser = function
 				| []                                               -> []
@@ -133,29 +132,11 @@ class treeXml xmlFile =
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
 let luaEnv = LuaL.newstate ();;
-(** Global Counters dictionary *)
-let globalCounts = new dictionary;;
 
 (* Functions ******************************************************************)
 LuaL.openlibs luaEnv;;
 
 let registerFunction name func = 
 	Lua.register luaEnv name !func
-;;
-
-let registerGlobalCount name (value:int) =
-	globalCounts#put name value
-;;
-
-let updateGlobalCount name value =
-	globalCounts#update name value
-;;
-
-let getGlobalCount name =
-	globalCounts#get name
-;;
-
-let removeGlobalCount name =
-	globalCounts#remove name
 ;;
 
