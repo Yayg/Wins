@@ -1,0 +1,8 @@
+<game name="The Fabulous Fake Game" icon="icon.png">
+	<resolution deep="32">
+		<x>640</x>
+		<y>860</y>
+	</resolution>
+	
+	<sonDir href="./sound"/>
+</game>
