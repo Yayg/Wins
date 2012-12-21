@@ -24,114 +24,70 @@
 open Lua_api
 open Tool
 open Expat
+open Stack
 
 (* Exceptions *****************************************************************)
-exception Not_found
-exception Broken
-exception Void
 
 (* Types **********************************************************************)
 type xmlElement = 
-	| BeginElement of string * string dictionary
-	| EndElement of string
-	| Text of string
+	| Element of string * string dictionary * xmlElement ref (* son *) 
+		* xmlElement ref  (* brother *)
+	| Text of string *  xmlElement ref (* brother *)
+	| Void
+
 ;;
 
 (* Objects ********************************************************************)
-class treeXml xmlFile = 
+	class treeXml = 
 	object (self) 
-		val data = ref ([]:(xmlElement list))
+		val data = ref Void
+		val curElement = Stack.create ()
 		
 		initializer
-			let xmlFile = load_file xmlFile
-				and parser = parser_create ~encoding:(Some "UTF-8")
-			in
-			set_start_element_handler parser self#pushStartElement;
-			set_end_element_handler parser self#pushEndElement;
-			set_character_data_handler parser self#pushText;
-			parse parser xmlFile;
-			final parser;
-			self#endParse ()
-		method private pushStartElement name attrs =
-			let dict = new dictionary in
-			let rec browser = function 
-					| (k,v)::q -> (dict#put k v; browser q)
-					| []       -> ()
-			in 
-			let newElement =
-				browser attrs;
-				BeginElement(name, dict)
-			in data := newElement::!data
-		method private pushEndElement name =
-			data := EndElement(name)::!data
-		method private pushText text =
-			data := Text(text)::!data
-		method private endParse () =
-			let rec invert = function
-				| []   -> []
-				| e::q -> e::(invert q)
-			in data := invert !data
-			
-		method attributs () =
- 			let dict =
-  				let rec browser = function
-   					| [] -> raise Void
-   					| BeginElement(_,d)::_ -> d
-  					| _::q -> browser q
-  				in browser !data
- 			in dict#keys ()	
-		method getAttribut attr =
-			let dict = 
-				let rec browser = function
-					| []                    -> raise Void
-					| BeginElement(_,d)::[] -> d
-					| _::q                  -> browser q
-				in browser !data 
-			in dict#get attr
+			push data curElement
 		
-		method copy () =
-			Oo.copy self	
-		method private newElement (mem:(xmlElement list)) =
-			let saveData = !data in 
-			let element =
-				data := mem;
-				self#copy ()
+		method private pushStartElement name attrs =
+			let dict = 
+				let rec browser dict = function 
+					| (k,v)::q -> (dict#put k v; browser dict q)
+					| []       -> dict
+				in browser (new dictionary) attrs; 
 			in
-			data := saveData;
-			element
-			
-		method private bodyElement (l:(xmlElement list)) =
-			let rec core d = function
-				| []                          -> raise Broken
-				| EndElement n::q when d = 0  -> EndElement(n)::[]
-				| BeginElement (n,a)::q       -> BeginElement(n,a)::core (d+1) q
-				| EndElement n::q when d <> 0 -> EndElement(n)::core (d-1) q
-				| e::q                        -> e::core d q
-			in core 0 l
-		method getElementById id =
-			let rec beginBrowser = function 
-				| []                                                    -> 
-					raise Not_found
-				| BeginElement(name, attrs)::q when attrs#get "id" = id ->
-					BeginElement(name, attrs)::q
-				| _::q                                                  -> 
-					beginBrowser q
-			in self#newElement (self#bodyElement (beginBrowser !data))
-		method getElementsByTagName tagName = 
-			let rec browser = function
-				| []                                               -> []
-				| BeginElement(name, attrs)::q when name = tagName ->
-					self#newElement 
-					(self#bodyElement (BeginElement(name, attrs)::q))
-					::browser q
-				| _::q                                             -> browser q
-			in browser !data
+			let browser = 
+				let element = ref (Element(name, dict, ref Void, ref Void)) 
+				in 
+				function
+					| Element(n,atts,son,broth) -> 
+						begin
+							let rec browseSon = function
+								| Void                      -> element
+								| Element(n,atts,son,broth) -> 
+									ref (Element(n,atts,browseSon !son,broth))
+								| Text(str,broth)           ->
+									ref (Text(str,browseSon !son))
+							in top curElement := 
+								Element(n,atts,browseSon !son,broth);
+							push element curElement
+						end
+					| Text(str,_)                           ->
+						top curElement := Text(str, element);
+						push element curElement
+					| _                                     ->
+						top curElement := !element
+			in browser !(top curElement)
+		
+				
+					
+					
+		
 	end
 ;;
 
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
 let luaEnv = LuaL.newstate ();;
+(** Global Counters dictionary *)
+let globalCounts = new dictionary;;
 
 (* Functions ******************************************************************)
 LuaL.openlibs luaEnv;;
@@ -140,3 +96,39 @@ let registerFunction name func =
 	Lua.register luaEnv name !func
 ;;
 
+let registerGlobalCount name (value:int) =
+	globalCounts#put name value
+;;
+
+let updateGlobalCount name value =
+	globalCounts#update name value
+;;
+
+let getGlobalCount name =
+	globalCounts#get name
+;;
+
+let removeGlobalCount name =
+	globalCounts#remove name
+;;
+
+let load_file file =
+	let data = open_in file in
+	let n = in_channel_length data in
+	let s = String.create n in
+	really_input data s 0 n;
+	close_in data;
+  (s)
+;;
+
+(*
+let load_xml file =
+	let data = load_file file
+	and parserXml = parser_create ~encoding:(Some "UTF-8")
+	in
+	parse parserXml data;
+	final parserXml;
+	parserXml
+;;
+*)
+	
