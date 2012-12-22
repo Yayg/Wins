@@ -46,6 +46,18 @@ type xmlElement =
 		initializer
 			push data curElement
 		
+		method private pushEndChildren element parent = 
+			let Element(name,attrs,children,brothers) = parent
+			in 
+			let rec browser = function
+				| Void                                  -> element
+				| Element(name,attrs,children,brothers) -> 
+					ref (Element(name,attrs,children,browser !brothers))
+				| Text(str,brothers)                    ->
+					ref (Text(str,browser !brothers))
+			in Element(name,attrs,browser !children,brothers)
+			
+		
 		method private pushStartElement name attrs =
 			let dict = 
 				let rec browser dict = function 
@@ -53,29 +65,47 @@ type xmlElement =
 					| []       -> dict
 				in browser (new dictionary) attrs; 
 			in
+			let element = ref (Element(name,dict,ref Void, ref Void))
+			in
+			let rec browser = function
+				| Void            -> element
+				| Element(name,attrs,children,brothers)   -> 
+						self#pushEndChildren element 
+						(Element(name,attrs,children,brothers))
+				| Text(s,brother) -> browser (!brother)
+			in browser !(top curElement)
+		
+		method private pushText text =
 			let browser = 
-				let element = ref (Element(name, dict, ref Void, ref Void)) 
+				let element = ref (Text(text,Void)) 
 				in 
 				function
 					| Element(n,atts,son,broth) -> 
 						begin
-							let rec browseSon = function
+							let rec browseText = function
 								| Void                      -> element
 								| Element(n,atts,son,broth) -> 
-									ref (Element(n,atts,browseSon !son,broth))
+									ref (Element(n,atts,browseText !son,broth))
 								| Text(str,broth)           ->
-									ref (Text(str,browseSon !son))
-							in top curElement := 
-								Element(n,atts,browseSon !son,broth);
+									(Text(str,element))
+							in browseText (Element(n,atts,son,broth));
 							push element curElement
 						end
 					| Text(str,_)                           ->
-						top curElement := Text(str, element);
-						push element curElement
+						begin
+							let rec browseBrother = function
+								| Void                      -> element
+								| Element(n,atts,son,broth) -> 
+									ref (Element(n,atts,browseText !son,broth))
+								| Text(str,broth)           ->
+									(Text(str,element))
+							in browseBrother (Element(n,atts,son,broth));
+							top curElement := Text(str, element);
+							push element curElement
+						end
 					| _                                     ->
 						top curElement := !element
 			in browser !(top curElement)
-		
 				
 					
 					
