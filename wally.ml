@@ -27,89 +27,84 @@ open Expat
 open Stack
 
 (* Exceptions *****************************************************************)
+exception BadStyleXmlTree of string
 
 (* Types **********************************************************************)
 type xmlElement = 
-	| Element of string * string dictionary * xmlElement ref (* son *) 
-		* xmlElement ref  (* brother *)
-	| Text of string *  xmlElement ref (* brother *)
-	| Void
-
+	| Element of string * string dictionary
+	| Text of string
 ;;
+
 
 (* Objects ********************************************************************)
 	class treeXml = 
 	object (self) 
-		val data = ref Void
-		val curElement = Stack.create ()
-		
-		initializer
-			push data curElement
-		
-		method private pushEndChildren element parent = 
-			let Element(name,attrs,children,brothers) = parent
-			in 
-			let rec browser = function
-				| Void                                  -> element
-				| Element(name,attrs,children,brothers) -> 
-					ref (Element(name,attrs,children,browser !brothers))
-				| Text(str,brothers)                    ->
-					ref (Text(str,browser !brothers))
-			in Element(name,attrs,browser !children,brothers)
-			
+		(* BinaryTree(xmlElement, BrotherTree, ChildrenTree) *)
+		val mutable data = VoidTree
+		val making = Stack.create ()
 		
 		method private pushStartElement name attrs =
-			let dict = 
+			let element = 
 				let rec browser dict = function 
 					| (k,v)::q -> (dict#put k v; browser dict q)
-					| []       -> dict
-				in browser (new dictionary) attrs; 
-			in
-			let element = ref (Element(name,dict,ref Void, ref Void))
-			in
-			let rec browser = function
-				| Void            -> element
-				| Element(name,attrs,children,brothers)   -> 
-						self#pushEndChildren element 
-						(Element(name,attrs,children,brothers))
-				| Text(s,brother) -> browser (!brother)
-			in browser !(top curElement)
-		
-		method private pushText text =
-			let browser = 
-				let element = ref (Text(text,Void)) 
-				in 
-				function
-					| Element(n,atts,son,broth) -> 
-						begin
-							let rec browseText = function
-								| Void                      -> element
-								| Element(n,atts,son,broth) -> 
-									ref (Element(n,atts,browseText !son,broth))
-								| Text(str,broth)           ->
-									(Text(str,element))
-							in browseText (Element(n,atts,son,broth));
-							push element curElement
-						end
-					| Text(str,_)                           ->
-						begin
-							let rec browseBrother = function
-								| Void                      -> element
-								| Element(n,atts,son,broth) -> 
-									ref (Element(n,atts,browseText !son,broth))
-								| Text(str,broth)           ->
-									(Text(str,element))
-							in browseBrother (Element(n,atts,son,broth));
-							top curElement := Text(str, element);
-							push element curElement
-						end
-					| _                                     ->
-						top curElement := !element
-			in browser !(top curElement)
+					| [] -> dict
+				in Element(name, browser (new dictionary) attrs)
+			in 
+			push (Node(element, VoidTree, VoidTree)) making
+		method private pushText text = 
+			push (Node(Text(text), VoidTree, VoidTree)) making
+		method private pushEndElement name =
+			let getNameElement node = 
+				let getElement = function
+					| VoidTree -> 
+						raise (BadStyleXmlTree 
+						"VoidTree in ending element (a closing tag is alone ?)")
+					| Node(element, _, _) -> element
+				and getName = function
+					| Text _ -> ""
+					| Element (name, _) -> name
+				in getName (getElement node)
+			and setBrotherTree brother = function
+				| VoidTree -> 
+					raise (BadStyleXmlTree 
+					"Attempted assignment of a brother in an Voidtree during ending element")
+				| Node(element, _, children) -> Node(element, brother, children)
+			and setChildrenTree children = function
+				| VoidTree ->
+					raise (BadStyleXmlTree 
+					"Attempted assignment of a children in an Voidtree during ending element")
+				| Node(element, brother, _) -> Node(element, brother, children)
+			
+			and previousNode = ref VoidTree
+			and currentNode = ref (pop making)
+			
+			in 
+			while getNameElement !currentNode <> name do
+				currentNode := setBrotherTree !previousNode !currentNode;
+				previousNode := !currentNode;
 				
-					
-					
-		
+				currentNode := pop making
+			done;
+			currentNode := setChildrenTree !previousNode !currentNode;
+			push !currentNode making
+		method private endParsing () =
+			let setBrotherTree brother = function
+				| VoidTree -> 
+					raise (BadStyleXmlTree 
+					"Attempted assignment of a brother in an Voidtree during ending parsing")
+				| Node(element, _, children) -> Node(element, brother, children)
+			
+			and previousNode = ref VoidTree
+			and currentNode = ref (pop making)
+			
+			in
+			while is_empty making do
+				previousNode := !currentNode;
+				currentNode := pop making;
+				
+				currentNode := setBrotherTree !previousNode !currentNode
+			done;
+			data <- !currentNode
 	end
 ;;
 

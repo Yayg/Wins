@@ -25,6 +25,12 @@
 exception Not_found
 exception Existing_entry
 
+(* Types **********************************************************************)
+type ('a) binaryTree =
+	| Node of 'a * ('a) binaryTree * ('a) binaryTree
+	| VoidTree
+;;
+
 (* Objects ********************************************************************)
 class ['a] dictionary = 
 	object (self)
