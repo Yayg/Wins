@@ -28,16 +28,51 @@ open Stack
 
 (* Exceptions *****************************************************************)
 exception BadStyleXmlTree of string
+exception IsNotXmlText
+exception IsNotXmlElement
+exception AttrNotFound
 
 (* Types **********************************************************************)
-type xmlElement = 
+type xmlElementType = 
 	| Element of string * string dictionary
 	| Text of string
 ;;
 
-
 (* Objects ********************************************************************)
-	class treeXml xmlFile = 
+class xmlElement dataXml =
+	object (self)
+		val data = dataXml
+	
+	method getType =
+		let xmlType = function
+			| Text(_) -> "Text"
+			| Element(_) -> "Element"
+		in xmlType data
+	method getString () =
+		let str = function
+			| Text(strg) -> strg
+			| Element(_) -> raise IsNotXmlText
+		in str data
+	method getName () = 
+		let name = function
+			| Text(_) -> raise IsNotXmlElement
+			| Element(name, _) -> name
+		in name data
+	
+	method getAttrs () =
+		let attrs = function
+			| Text(_) -> raise IsNotXmlElement
+			| Element(_, dict) -> dict#keys ()
+		in attrs data
+	method getAttr name =
+		let attr = function
+			| Text(_) -> raise IsNotXmlElement
+			| Element(_, dict) -> try dict#get name with Not_found -> raise AttrNotFound
+		in attr data
+end
+;;
+
+class treeXml xmlFile = 
 	object (self) 
 		(* BinaryTree(xmlElement, BrotherTree, ChildrenTree) *)
 		val mutable data = VoidTree
@@ -118,6 +153,44 @@ type xmlElement =
 				currentNode := setBrotherTree !previousNode !currentNode
 			done;
 			data <- !currentNode
+		
+		method private newXmlTree newData =
+			let saveData = data in
+			let xmlTree = 
+				data <- newData;
+				self#copy ()
+			in
+			data <- saveData;
+			xmlTree
+		
+		method copy () =
+			Oo.copy self
+		method is_empty () =
+			if data = VoidTree then true 
+			else false
+		
+		method getChildren () =
+			let children = function
+				| Node(_, _, children) -> children
+				| VoidTree -> VoidTree
+			in self#newXmlTree (children data)
+		method getNextBrother () =
+			let brother = function
+				| Node(_, brother, _) -> brother
+				| VoidTree -> VoidTree
+			in self#newXmlTree (brother data)
+		method getIthBrother i =
+			let rec browser i = function
+				| VoidTree -> VoidTree
+				| node when i = 0 -> node
+				| Node(_, brother, _) -> browser (i-1) brother
+			in self#newXmlTree (browser i data)
+		
+		method getXmlElement () =
+			let getElement = function
+				| VoidTree -> raise (BadStyleXmlTree "getXmlElement with a VoidTree")
+				| Node(element, _, _) -> element
+			in new xmlElement(getElement data)
 	end
 ;;
 
