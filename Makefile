@@ -34,6 +34,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.     #
 ################################################################################
 
+### Dependencies ###############################################################
+# OCamlSDL.....(in Ubuntu depots)
+# OCaml-Lua....(http://ocaml-lua.forge.ocamlcore.org/)
+# OCaml-Expat..(http://mmzeeman.home.xs4all.nl/ocaml/)
+
 ### Info #######################################################################
 RESULT     = wins
 SOURCES    = tool.ml wally.ml jed.ml main.ml
