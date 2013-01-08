@@ -37,23 +37,36 @@ type xmlElement =
 
 
 (* Objects ********************************************************************)
-	class treeXml = 
+	class treeXml xmlFile = 
 	object (self) 
 		(* BinaryTree(xmlElement, BrotherTree, ChildrenTree) *)
 		val mutable data = VoidTree
-		val making = Stack.create ()
 		
-		method private pushStartElement name attrs =
+		initializer
+			let xmlFile = load_file xmlFile
+			and parser = parser_create ~encoding:(Some "UTF-8")
+			and stack = Stack.create ()
+			
+			in
+			set_start_element_handler parser (self#pushStartElement stack);
+			set_end_element_handler parser (self#pushEndElement stack);
+			set_character_data_handler parser (self#pushText stack);
+			
+			parse parser xmlFile;
+			final parser;
+			self#endParsing stack
+		
+		method private pushStartElement stack name attrs =
 			let element = 
 				let rec browser dict = function 
 					| (k,v)::q -> (dict#put k v; browser dict q)
 					| [] -> dict
 				in Element(name, browser (new dictionary) attrs)
 			in 
-			push (Node(element, VoidTree, VoidTree)) making
-		method private pushText text = 
-			push (Node(Text(text), VoidTree, VoidTree)) making
-		method private pushEndElement name =
+			push (Node(element, VoidTree, VoidTree)) stack
+		method private pushText stack text = 
+			push (Node(Text(text), VoidTree, VoidTree)) stack
+		method private pushEndElement stack name =
 			let getNameElement node = 
 				let getElement = function
 					| VoidTree -> 
@@ -76,18 +89,18 @@ type xmlElement =
 				| Node(element, brother, _) -> Node(element, brother, children)
 			
 			and previousNode = ref VoidTree
-			and currentNode = ref (pop making)
+			and currentNode = ref (pop stack)
 			
 			in 
 			while getNameElement !currentNode <> name do
 				currentNode := setBrotherTree !previousNode !currentNode;
 				previousNode := !currentNode;
 				
-				currentNode := pop making
+				currentNode := pop stack
 			done;
 			currentNode := setChildrenTree !previousNode !currentNode;
-			push !currentNode making
-		method private endParsing () =
+			push !currentNode stack
+		method private endParsing stack =
 			let setBrotherTree brother = function
 				| VoidTree -> 
 					raise (BadStyleXmlTree 
@@ -95,12 +108,12 @@ type xmlElement =
 				| Node(element, _, children) -> Node(element, brother, children)
 			
 			and previousNode = ref VoidTree
-			and currentNode = ref (pop making)
+			and currentNode = ref (pop stack)
 			
 			in
-			while is_empty making do
+			while is_empty stack do
 				previousNode := !currentNode;
-				currentNode := pop making;
+				currentNode := pop stack;
 				
 				currentNode := setBrotherTree !previousNode !currentNode
 			done;
