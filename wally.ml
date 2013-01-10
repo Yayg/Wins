@@ -191,6 +191,31 @@ class treeXml xmlFile =
 				| VoidTree -> raise (BadStyleXmlTree "getXmlElement with a VoidTree")
 				| Node(element, _, _) -> element
 			in new xmlElement(getElement data)
+			
+		method getElementById idName =
+			let rec browser = function
+				| Node(Element(str, dict), brother, children) when 
+					try dict#get "id" = idName with Not_found -> false
+					-> Node(Element(str, dict), brother, children)
+				| Node(_, _, children) when children <> VoidTree -> browser children
+				| Node(_, brother, _) when brother <> VoidTree -> browser brother
+				| _ -> raise Not_found
+			in browser data
+		method getElementsByName name =
+			let rec browser = function
+				| Node(Element(str, dict), brother, children) when str = name ->
+					begin
+						match (brother, children) with
+							| _, children when children <> VoidTree -> 
+								Node(Element(str, dict), brother, children)::browser children
+							| brother, _ when brother <> VoidTree ->
+								Node(Element(str, dict), brother, children)::browser brother
+							| _ -> Node(Element(str, dict), brother, children)::[]
+					end
+				| Node(_, _, children) when children <> VoidTree -> browser children
+				| Node(_, brother, _) when brother <> VoidTree -> browser brother
+				| _ -> []
+			in browser data
 	end
 ;;
 
@@ -223,23 +248,3 @@ let removeGlobalCount name =
 	globalCounts#remove name
 ;;
 
-let load_file file =
-	let data = open_in file in
-	let n = in_channel_length data in
-	let s = String.create n in
-	really_input data s 0 n;
-	close_in data;
-  (s)
-;;
-
-(*
-let load_xml file =
-	let data = load_file file
-	and parserXml = parser_create ~encoding:(Some "UTF-8")
-	in
-	parse parserXml data;
-	final parserXml;
-	parserXml
-;;
-*)
-	
