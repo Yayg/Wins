@@ -223,24 +223,12 @@ class treeXml xmlFile =
 (** Lua runtime environment. *)
 let luaEnv = LuaL.newstate ();;
 (** Global Counters dictionary *)
-let globalCounts = new dictionary;;
+
 
 (* Functions ******************************************************************)
 LuaL.openlibs luaEnv;;
 
 let registerFunction name func = 
 	Lua.register luaEnv name !func
-;;
-
-let registerGlobalCount name (value:int) =
-	globalCounts#set name value
-;;
-
-let getGlobalCount name =
-	globalCounts#get name
-;;
-
-let removeGlobalCount name =
-	globalCounts#remove name
 ;;
 

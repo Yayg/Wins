@@ -1,8 +1,8 @@
-(* Jed - Display motor
+(* Zak - Scene manager
 ################################################################################
 #    Wins is a "Point and Click" Game Motor written with OCaml                 #
 #    Copyright (C) 2013    Philémon Gardet [philemon.gardet@epita.fr]          #
-#                          Rafael Gozlan [rafael.gozlan@epita.fr]              #
+#                          Rafaël Gozlan [rafael.gozlan@epita.fr]              #
 #                          Lorry Guedj [lorry.guedj@epita.fr]                  #
 #                          Alexandre Starck [alexandre.starck@epita.fr]        #
 #                                                                              #
@@ -21,32 +21,44 @@
 ################################################################################
 *)
 
-open Sdl
-open Sdlvideo
-open Sdlwm
+open Tool
 
 (* Objects ********************************************************************)
-class sdlWindow width height =
-	object (self) 
-		val window = ref (set_video_mode ~w:width ~h:height [`DOUBLEBUF])
-		val fullscreen = ref false
-		
-		method get_surface () =
-			!window
-		method toggle_fullscreen () =
-			fullscreen := toggle_fullscreen ()
-		method set_title title =
-			let (_,icon) = get_caption () 
-			in set_caption title icon
-		method set_icon icon =
-			let (title,_) = get_caption ()
-			in set_caption title icon
+class pnj speakable =
+	object
+		val speakable = speakable
+		(*val dialog*)
+		(*val anim*)
+			 
 	end
 ;;
 
 (* Global Variables ***********************************************************)
-
+let globalInt = new dictionary;;
+let globalString = new dictionary;;
 
 (* Functions ******************************************************************)
+let setGlobalInt name (value:int) =
+	globalInt#set name value
+;;
+
+let setGlobalString name (text:string) =
+	globalString#set name text
+
+let getGlobalInt name =
+	globalInt#get name
+;;
+
+let getGlobalString name =
+	globalString#get name
+;;
+
+let removeGlobalInt name =
+	globalInt#remove name
+;;
+
+let removeGlobalString name =
+	globalString#remove name
+;;
 
 
