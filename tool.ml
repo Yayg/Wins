@@ -23,7 +23,6 @@
 
 (* Exceptions *****************************************************************)
 exception Not_found
-exception Existing_entry
 
 (* Types **********************************************************************)
 type ('a) binaryTree =
@@ -62,17 +61,10 @@ class ['a] dictionary =
 				| []   -> i
 				| _::q -> browser (i+1) q
 			in browser 0 !data
-		method put key element =
+		method set key element =
 			let rec browser = function
 				| []                    -> (key,element)::[]
 				| (k,e)::q when k > key -> (key,element)::(k,e)::q
-				| (k,_)::_ when k = key -> raise Existing_entry
-				| c::q                  -> c::browser q
-			in data := browser !data
-		method update key element = 
-			let rec browser = function
-				| []                    -> raise Not_found
-				| (k,_)::_ when k > key -> raise Not_found
 				| (k,_)::q when k = key -> (key,element)::q
 				| c::q                  -> c::browser q
 			in data := browser !data

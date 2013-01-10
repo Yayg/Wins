@@ -94,7 +94,7 @@ class treeXml xmlFile =
 		method private pushStartElement stack name attrs =
 			let element = 
 				let rec browser dict = function 
-					| (k,v)::q -> (dict#put k v; browser dict q)
+					| (k,v)::q -> (dict#set k v; browser dict q)
 					| [] -> dict
 				in Element(name, browser (new dictionary) attrs)
 			in 
@@ -233,11 +233,7 @@ let registerFunction name func =
 ;;
 
 let registerGlobalCount name (value:int) =
-	globalCounts#put name value
-;;
-
-let updateGlobalCount name value =
-	globalCounts#update name value
+	globalCounts#set name value
 ;;
 
 let getGlobalCount name =
