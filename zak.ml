@@ -22,20 +22,33 @@
 *)
 
 open Tool
-
-(* Objects ********************************************************************)
-class pnj speakable =
-	object
-		val speakable = speakable
-		(*val dialog*)
-		(*val anim*)
-			 
-	end
-;;
+open Wally
 
 (* Global Variables ***********************************************************)
 let globalInt = new dictionary;;
 let globalString = new dictionary;;
+
+(* Objects ********************************************************************)
+class item name =
+	let itemDir = globalString#get "itemDir" in
+	object (self)
+		val data = 
+			(new treeXml (load_file (itemDir^name^"\\info.xml")))#getFirstByName "Item"
+		val script = load_file (itemDir^name^"script.lua")
+		
+		val mutable name = ""
+		val mutable image = ""
+		
+		initializer
+			name <- (data#getXmlElement ())#getAttr "name";
+			image <- ((data#getFirstByName "Image")#getXmlElement ())#getAttr "src"
+		
+		method getName =
+		 name
+		method getImage =
+			image
+	end
+;;
 
 (* Functions ******************************************************************)
 let setGlobalInt name (value:int) =
