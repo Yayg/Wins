@@ -200,30 +200,36 @@ class treeXml xmlFile =
 				| Node(_, _, children) when children <> VoidTree -> browser children
 				| Node(_, brother, _) when brother <> VoidTree -> browser brother
 				| _ -> raise Not_found
-			in browser data
+			in self#newXmlTree (browser data)
 		method getElementsByName name =
 			let rec browser = function
 				| Node(Element(str, dict), brother, children) when str = name ->
 					begin
 						match (brother, children) with
 							| _, children when children <> VoidTree -> 
-								Node(Element(str, dict), brother, children)::browser children
+								self#newXmlTree (Node(Element(str, dict), brother, children))::browser children
 							| brother, _ when brother <> VoidTree ->
-								Node(Element(str, dict), brother, children)::browser brother
-							| _ -> Node(Element(str, dict), brother, children)::[]
+								self#newXmlTree (Node(Element(str, dict), brother, children))::browser brother
+							| _ -> self#newXmlTree (Node(Element(str, dict), brother, children))::[]
 					end
 				| Node(_, _, children) when children <> VoidTree -> browser children
 				| Node(_, brother, _) when brother <> VoidTree -> browser brother
 				| _ -> []
 			in browser data
+		method getFirstByName name =
+			let rec browser = function
+				| Node(Element(str, dict), brother, children) when str = name ->
+					Node(Element(str, dict), brother, children)
+				| Node(_, _, children) when children <> VoidTree -> browser children
+				| Node(_, brother, _) when brother <> VoidTree -> browser brother
+				| _ -> raise Not_found
+			in self#newXmlTree (browser data)
 	end
 ;;
 
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
 let luaEnv = LuaL.newstate ();;
-(** Global Counters dictionary *)
-
 
 (* Functions ******************************************************************)
 LuaL.openlibs luaEnv;;
