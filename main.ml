@@ -38,6 +38,34 @@
 
 open Zak
 
+let usage_msg = "Usage : wins [gameFolder]\n";;
+
 let main () = ();;
 
-main ()
+let setup execDir = ();;
+
+let get_arguments () = 
+	let arg = ref "" in
+	Arg.parse ([]:((Arg.key * Arg.spec * Arg.doc) list)) 
+		(function str -> arg := str) usage_msg;
+	!arg
+;;
+let initialization execDir = 
+	try 
+		if not (Sys.is_directory execDir) then (
+			print_string "The specified path is not a folder.\n";
+			exit 2
+			)
+		else
+			envString#set "gameDir" execDir;
+			setup execDir;
+			main ()
+	with _ -> (
+		if execDir = "" then 
+			print_string usage_msg
+		else
+			print_string "The specified path is not valid.\n"
+		); exit 2
+;;
+
+initialization (get_arguments ())

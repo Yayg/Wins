@@ -25,12 +25,15 @@ open Tool
 open Wally
 
 (* Global Variables ***********************************************************)
+let envString = new dictionary;;
+let envInt = new dictionary;;
+
 let globalInt = new dictionary;;
 let globalString = new dictionary;;
 
 (* Objects ********************************************************************)
 class item name =
-	let itemDir = globalString#get "itemDir" in
+	let itemDir = envString#get "itemDir" in
 	object (self)
 		val data = 
 			(new treeXml (load_file (itemDir^name^"\\info.xml")))#getFirstByName "Item"
@@ -51,6 +54,12 @@ class item name =
 ;;
 
 (* Functions ******************************************************************)
+let getEnvString name =
+	(envString#get name:string)
+
+let getEnvInt name =
+	(envInt#get name:int)
+
 let setGlobalInt name (value:int) =
 	globalInt#set name value
 ;;
