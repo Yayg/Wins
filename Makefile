@@ -45,9 +45,9 @@ SOURCES    = tool.ml wally.ml zak.ml jed.ml main.ml
 
 INCDIRS    = -I +sdl -I /usr/local/lib/ocaml/3.12.1/lua/ -I +expat
 LIBSOPT    = bigarray.cmxa sdl.cmxa sdlloader.cmxa sdlttf.cmxa sdlmixer.cmxa\
-             lua.cmxa expat.cmxa
+             lua.cmxa expat.cmxa str.cmxa
 LIBSTOP    = bigarray.cma sdl.cma sdlloader.cma sdlttf.cma sdlmixer.cma\
-             lua.cma expat.cma
+             lua.cma expat.cma str.cma
 
 DOCDIR     = ./doc
 

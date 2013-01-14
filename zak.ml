@@ -26,7 +26,6 @@ open Wally
 
 (* Global Variables ***********************************************************)
 let envString = new dictionary;;
-let envInt = new dictionary;;
 
 let globalInt = new dictionary;;
 let globalString = new dictionary;;
@@ -56,9 +55,6 @@ class item name =
 (* Functions ******************************************************************)
 let getEnvString name =
 	(envString#get name:string)
-
-let getEnvInt name =
-	(envInt#get name:int)
 
 let setGlobalInt name (value:int) =
 	globalInt#set name value
