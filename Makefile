@@ -52,6 +52,7 @@ LIBSTOP    = bigarray.cma sdl.cma sdlloader.cma sdlttf.cma sdlmixer.cma\
 DOCDIR     = ./doc
 
 OCAMLOPT   = ocamlopt.opt
+OCAMLC     = ocamlc
 OCAMLDOC   = ocamldoc.opt
 OCAMLTOP   = ocamlmktop
 
@@ -61,8 +62,11 @@ OCAMLTOP   = ocamlmktop
 ${RESULT}: ${SOURCES}
 	${OCAMLOPT} $(INCDIRS) $(LIBSOPT) ${SOURCES} -o $@  
 
-debug: mrproper 
-	${OCAMLTOP} -custom $(INCDIRS) $(LIBSTOP) ${SOURCES} -o debug
+debug:
+	${OCAMLC} $(INCDIRS) $(LIBSTOP) ${SOURCES} -g -o $@
+
+top: mrproper 
+	${OCAMLTOP} -custom $(INCDIRS) $(LIBSTOP) ${SOURCES} -o $@
 	
 doc:
 	${OCAMLDOC} -g ${DOCDIR} $(INCDIRS) ${SOURCES}
