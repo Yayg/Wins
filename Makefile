@@ -62,8 +62,8 @@ OCAMLTOP   = ocamlmktop
 ${RESULT}: ${SOURCES}
 	${OCAMLOPT} $(INCDIRS) $(LIBSOPT) ${SOURCES} -o $@  
 
-debug:
-	${OCAMLC} $(INCDIRS) $(LIBSTOP) ${SOURCES} -g -o $@
+debug: mrproper 
+	${OCAMLC} $(INCDIRS) $(LIBSTOP) -g ${SOURCES} -o $@
 
 top: mrproper 
 	${OCAMLTOP} -custom $(INCDIRS) $(LIBSTOP) ${SOURCES} -o $@
@@ -75,4 +75,4 @@ clean:
 	rm -rf *.cmi rm -rf *.cmx rm -rf *.o rm -rf *.cmo
 
 mrproper: clean
-	rm -rf $(RESULT) rm -rf debug
+	rm -rf $(RESULT) rm -rf top rm -rf debug
