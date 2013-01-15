@@ -67,11 +67,8 @@ let setup execDir =
 ;;
 let get_arguments () = 
 	let arg = ref "" in
-	Arg.parse ([]:((Arg.key * Arg.spec * Arg.doc) list)) 
-		(function str -> arg := str) usage_msg;
-	if not (searchRegexp !arg "*/ \\| *\\") then(
-		arg := !arg^"/"
-	); !arg
+	Arg.parse ([]:((Arg.key * Arg.spec * Arg.doc) list)) (function str -> arg := str) usage_msg;
+	addEndDir !arg
 ;;
 let initialization execDir = 
 	try 
