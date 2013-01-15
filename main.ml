@@ -59,11 +59,11 @@ let setup execDir =
 	envString#set "icon" ((xmlGame#getXmlElement ())#getAttr "icon");
 	envString#set "xScreen" (dimension#getAttr "x");
 	envString#set "yScreen" (dimension#getAttr "y");
-	envString#set "name" execDir;
+	envString#set "dir" execDir;
 	envString#set "itemDir" (execDir^((xmlGame#getFirstByName "itemDir")#getXmlElement ())#getAttr "href");
 	envString#set "characterDir" (execDir^((xmlGame#getFirstByName "characterDir")#getXmlElement ())#getAttr "href");
 	envString#set "roomDir" (execDir^((xmlGame#getFirstByName "roomDir")#getXmlElement ())#getAttr "href");
-	print_string (envString#get "name"^" in "^envString#get "name")
+	print_string (envString#get "name"^" in "^envString#get "dir")
 ;;
 let get_arguments () = 
 	let arg = ref "" in
