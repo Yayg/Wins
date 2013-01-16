@@ -101,6 +101,7 @@ class treeXml xmlFile =
 			push (Node(element, VoidTree, VoidTree)) stack;
 			print_string ("pushStartElement : "^name^"\n")
 		method private pushText stack text =
+			if (text <> "")&&(text <> "\n")&&(text <> " ")&&(text <> "	") then
 			print_string ("pushText : "^text^"\n");
 			push (Node(Text(text), VoidTree, VoidTree)) stack
 		method private pushEndElement stack name =
@@ -152,7 +153,19 @@ class treeXml xmlFile =
 				currentNode := pop stack;
 				currentNode := setBrotherTree !previousNode !currentNode
 			done;
-			data <- !currentNode
+			data <- !currentNode;
+			let getNameElement node = 
+				let getElement = function
+					| VoidTree -> 
+						raise (BadStyleXmlTree 
+						"VoidTree in ending element (a closing tag is alone ?)")
+					| Node(element, _, _) -> element
+				and getName = function
+					| Text _ -> ""
+					| Element (name, _) -> name
+				in getName (getElement node)
+			in print_string ("Current node: "^getNameElement data^"\n")
+			
 		
 		method private newXmlTree newData =
 			let saveData = data in
