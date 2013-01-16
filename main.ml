@@ -63,12 +63,12 @@ let setup execDir =
 	envString#set "itemDir" (execDir^((xmlGame#getFirstByName "itemDir")#getXmlElement ())#getAttr "href");
 	envString#set "characterDir" (execDir^((xmlGame#getFirstByName "characterDir")#getXmlElement ())#getAttr "href");
 	envString#set "roomDir" (execDir^((xmlGame#getFirstByName "roomDir")#getXmlElement ())#getAttr "href");
-	print_string (envString#get "name"^" in "^envString#get "dir")
+	print_string (envString#get "name"^" is loaded in "^envString#get "dir"^"\n")
 ;;
 let get_arguments () = 
 	let arg = ref "" in
 	Arg.parse ([]:((Arg.key * Arg.spec * Arg.doc) list)) (function str -> arg := str) usage_msg;
-	addEndDir !arg
+	!arg
 ;;
 let initialization execDir = 
 	try 
