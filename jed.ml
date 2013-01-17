@@ -25,6 +25,7 @@ open Sdl
 open Sdlvideo
 open Sdlwm
 
+
 (* Objects ********************************************************************)
 class sdlWindow width height =
 	object (self) 
@@ -48,5 +49,6 @@ class sdlWindow width height =
 
 
 (* Functions ******************************************************************)
-
-
+let initWindow () =
+	new sdlWindow (int_of_string(Zak.envString#get "xScreen")) (int_of_string(Zak.envString#get "yScreen"))
+;;

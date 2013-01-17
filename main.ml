@@ -10,9 +10,9 @@
 #  Scumm !  `8'      `8'       o888o o888o o888o 8""888P'                      # 
 #                                                              Programmed by   #
 #    Philémon "Phil Gekni" Gardet [philemon.gardet@epita.fr]                   #
-#    Rafael Gozlan [rafael.gozlan@epita.fr]                                    #
+#    Rafael "Yayg" Gozlan [rafael.gozlan@epita.fr]                             #
 #    Lorry "Bardaf" Guedj [lorry.guedj@epita.fr]                               #
-#    Alexandre Starck [alexandre.starck@epita.fr]                              #
+#    Alexandre "Stawayld" Starck [alexandre.starck@epita.fr]                   #
 #                                                                              #
 ################################################################################
 #    Wins is a "Point and Click" Game Motor written with OCaml                 #
@@ -36,8 +36,65 @@
 ################################################################################
 *)
 
+open Wally
 open Zak
+open Tool
+
+let usage_msg = "Usage : wins [gameFolder]\n";;
 
 let main () = ();;
 
-main ()
+let setup execDir = 
+	let xmlPath = execDir^"game.xml" in
+	let xmlGame = 
+		if not (Sys.file_exists xmlPath) then
+			raise Not_found
+		else
+			(new treeXml xmlPath)#getFirstByName "game"
+	
+	in 
+	let dimension = ((xmlGame#getFirstByName "dimension")#getXmlElement ())
+	in
+	envString#set "name" ((xmlGame#getXmlElement ())#getAttr "name");
+	envString#set "icon" ((xmlGame#getXmlElement ())#getAttr "icon");
+	envString#set "xScreen" (dimension#getAttr "x");
+	envString#set "yScreen" (dimension#getAttr "y");
+	envString#set "dir" execDir;
+	envString#set "itemDir" (execDir^((xmlGame#getFirstByName "itemDir")#getXmlElement ())#getAttr "href");
+	envString#set "characterDir" (execDir^((xmlGame#getFirstByName "characterDir")#getXmlElement ())#getAttr "href");
+	envString#set "roomDir" (execDir^((xmlGame#getFirstByName "roomDir")#getXmlElement ())#getAttr "href");
+	print_string (envString#get "name"^" is loaded in "^envString#get "dir"^"\n")
+;;
+let get_arguments () = 
+	let arg = ref "" in
+	Arg.parse ([]:((Arg.key * Arg.spec * Arg.doc) list)) (function str -> arg := str) usage_msg;
+	!arg
+;;
+let initialization execDir = 
+	try 
+		if not (Sys.is_directory execDir) then (
+			print_string "The specified path is not a folder.\n";
+			exit 2
+			)
+		else 
+			(try 
+				envString#set "gameDir" execDir;
+				setup execDir;
+			with 
+				| Not_found ->
+					print_string "There is no file 'game.xml' in the directory of the game.";
+					exit 2
+				| _ -> 
+					print_string "The file 'game.xml' is invalid.";
+					exit 2
+			);
+			main ()
+	with _ -> (
+		if execDir = "" then 
+			print_string usage_msg
+		else
+			print_string "The specified path is not valid.\n"
+		); exit 2
+;;
+
+initialization (get_arguments ())

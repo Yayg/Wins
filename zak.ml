@@ -25,32 +25,40 @@ open Tool
 open Wally
 
 (* Global Variables ***********************************************************)
+let envString = new dictionary;;
+
 let globalInt = new dictionary;;
 let globalString = new dictionary;;
 
 (* Objects ********************************************************************)
 class item name =
-	let itemDir = globalString#get "itemDir" in
+	let itemDir = envString#get "itemDir" in
 	object (self)
+		val dir = itemDir^name^"/"
 		val data = 
-			(new treeXml (load_file (itemDir^name^"\\info.xml")))#getFirstByName "Item"
-		val script = load_file (itemDir^name^"script.lua")
+			(new treeXml (itemDir^name^"/info.xml"))#getFirstByName "Item"
+		val script = load_file (itemDir^name^"/script.lua")
 		
 		val mutable name = ""
 		val mutable image = ""
 		
 		initializer
 			name <- (data#getXmlElement ())#getAttr "name";
-			image <- ((data#getFirstByName "Image")#getXmlElement ())#getAttr "src"
+			image <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src"
 		
+		method getDir =
+			dir
 		method getName =
-		 name
+			name
 		method getImage =
 			image
 	end
 ;;
 
 (* Functions ******************************************************************)
+let getEnvString name =
+	(envString#get name:string)
+
 let setGlobalInt name (value:int) =
 	globalInt#set name value
 ;;

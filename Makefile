@@ -9,9 +9,9 @@
 #  Scumm !  `8'      `8'       o888o o888o o888o 8""888P'                      # 
 #                                                              Programmed by   #
 #    Philémon "Phil Gekni" Gardet [philemon.gardet@epita.fr]                   #
-#    Rafael Gozlan [rafael.gozlan@epita.fr]                                    #
+#    Rafael "Yayg" Gozlan [rafael.gozlan@epita.fr]                             #
 #    Lorry "Bardaf" Guedj [lorry.guedj@epita.fr]                               #
-#    Alexandre Starck [alexandre.starck@epita.fr]                              #
+#    Alexandre "Stawayld" Starck [alexandre.starck@epita.fr]                   #
 #                                                                              #
 ################################################################################
 #    Wins is a "Point and Click" Game Motor written with OCaml                 #
@@ -45,13 +45,14 @@ SOURCES    = tool.ml wally.ml zak.ml jed.ml main.ml
 
 INCDIRS    = -I +sdl -I /usr/local/lib/ocaml/3.12.1/lua/ -I +expat
 LIBSOPT    = bigarray.cmxa sdl.cmxa sdlloader.cmxa sdlttf.cmxa sdlmixer.cmxa\
-             lua.cmxa expat.cmxa
+             lua.cmxa expat.cmxa str.cmxa
 LIBSTOP    = bigarray.cma sdl.cma sdlloader.cma sdlttf.cma sdlmixer.cma\
-             lua.cma expat.cma
+             lua.cma expat.cma str.cma
 
 DOCDIR     = ./doc
 
 OCAMLOPT   = ocamlopt.opt
+OCAMLC     = ocamlc
 OCAMLDOC   = ocamldoc.opt
 OCAMLTOP   = ocamlmktop
 
@@ -62,7 +63,10 @@ ${RESULT}: ${SOURCES}
 	${OCAMLOPT} $(INCDIRS) $(LIBSOPT) ${SOURCES} -o $@  
 
 debug: mrproper 
-	${OCAMLTOP} -custom $(INCDIRS) $(LIBSTOP) ${SOURCES} -o debug
+	${OCAMLC} $(INCDIRS) $(LIBSTOP) -g ${SOURCES} -o $@
+
+top: mrproper 
+	${OCAMLTOP} -custom $(INCDIRS) $(LIBSTOP) ${SOURCES} -o $@
 	
 doc:
 	${OCAMLDOC} -g ${DOCDIR} $(INCDIRS) ${SOURCES}
@@ -71,4 +75,4 @@ clean:
 	rm -rf *.cmi rm -rf *.cmx rm -rf *.o rm -rf *.cmo
 
 mrproper: clean
-	rm -rf $(RESULT) rm -rf debug
+	rm -rf $(RESULT) rm -rf top rm -rf debug
