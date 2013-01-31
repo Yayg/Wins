@@ -24,6 +24,7 @@
 open Sdl
 open Sdlvideo
 open Sdlwm
+open Zak
 
 
 (* Objects ********************************************************************)
@@ -32,6 +33,9 @@ class sdlWindow width height =
 		val window = ref (set_video_mode ~w:width ~h:height [`DOUBLEBUF])
 		val fullscreen = ref false
 		
+		initializer
+			set_caption (envString#get "name") (envString#get "icon")
+
 		method get_surface () =
 			!window
 		method toggle_fullscreen () =

@@ -1,7 +1,0 @@
-<game name="The Fabulous Fake Game" icon="icon.png">
-	<dimension x="800" y="600"/>
-	
-	<itemDir href="./items"/>
-	<characterDir href="./characters"/>
-	<roomDir href="./rooms"/>
-</game>
