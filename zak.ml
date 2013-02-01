@@ -40,10 +40,14 @@ class item name =
 		val script = load_file (itemDir^name^"/script.lua")
 		
 		val mutable name = ""
+		val mutable y = 0
+		val mutable x = 0
 		val mutable image = ""
 		
 		initializer
 			name <- (data#getXmlElement ())#getAttr "name";
+			x <- int_of_string(((data#getFirstByName "Position")#getXmlElement ())#getAttr "x");
+			y <- int_of_string(((data#getFirstByName "Position")#getXmlElement ())#getAttr "y");
 			image <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src"
 		
 		method getDir =
@@ -55,9 +59,34 @@ class item name =
 	end
 ;;
 
+class room name =
+	let roomDir = envString#get "roomDir" in
+	object (self)
+		val dir = roomDir^name^"/"
+		val data = 
+			(new treeXml (roomDir^name^"/info.xml"))#getFirstByName "Room"
+		val script = load_file (roomDir^name^"/script.lua")
+		
+		val mutable name = ""
+		val mutable background = ""
+		
+		initializer
+			name <- (data#getXmlElement ())#getAttr "name";
+			background <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src"
+		
+		method getDir =
+			dir
+		method getName =
+			name
+		method getBackground =
+			background
+	end
+;;
+
 (* Functions ******************************************************************)
 let getEnvString name =
 	(envString#get name:string)
+;;
 
 let setGlobalInt name (value:int) =
 	globalInt#set name value
