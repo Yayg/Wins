@@ -44,10 +44,10 @@ RESULT     = wins
 SOURCES    = tool.ml wally.ml zak.ml bobbin.ml jed.ml main.ml
 
 INCDIRS    = -I +sdl -I /usr/local/lib/ocaml/3.12.1/lua/ -I +expat
-LIBSOPT    = bigarray.cmxa sdl.cmxa sdlloader.cmxa sdlttf.cmxa sdlmixer.cmxa\
-             lua.cmxa expat.cmxa str.cmxa
-LIBSTOP    = bigarray.cma sdl.cma sdlloader.cma sdlttf.cma sdlmixer.cma\
-             lua.cma expat.cma str.cma
+LIBSOPT    = unix.cmxa threads.cmxa bigarray.cmxa sdl.cmxa sdlloader.cmxa\
+             sdlttf.cmxa sdlmixer.cmxa lua.cmxa expat.cmxa str.cmxa
+LIBSTOP    = unix.cma threads.cma bigarray.cma sdl.cma sdlloader.cma sdlttf.cma\
+             sdlmixer.cma lua.cma expat.cma str.cma
 
 DOCDIR     = ./doc
 
@@ -60,13 +60,13 @@ OCAMLTOP   = ocamlmktop
 .PHONY: doc clean
 
 ${RESULT}: ${SOURCES}
-	${OCAMLOPT} $(INCDIRS) $(LIBSOPT) ${SOURCES} -o $@  
+	${OCAMLOPT} -thread $(INCDIRS) $(LIBSOPT) ${SOURCES} -o $@  
 
 debug: mrproper 
-	${OCAMLC} $(INCDIRS) $(LIBSTOP) -g ${SOURCES} -o $@
+	${OCAMLC} -thread $(INCDIRS) $(LIBSTOP) -g ${SOURCES} -o $@
 
 top: mrproper 
-	${OCAMLTOP} -custom $(INCDIRS) $(LIBSTOP) ${SOURCES} -o $@
+	${OCAMLTOP} -thread -custom $(INCDIRS) $(LIBSTOP) ${SOURCES} -o $@
 	
 doc:
 	${OCAMLDOC} -g ${DOCDIR} $(INCDIRS) ${SOURCES}
