@@ -30,15 +30,18 @@ let envString = new dictionary;;
 let globalInt = new dictionary;;
 let globalString = new dictionary;;
 
+let items = new dictionary;;
+
 (* Objects ********************************************************************)
-class item name =
+class item dirName =
 	let itemDir = envString#get "itemDir" in
 	object (self)
-		val dir = itemDir^name^"/"
+		val dir = itemDir^dirName^"/"
 		val data = 
-			(new treeXml (itemDir^name^"/info.xml"))#getFirstByName "Item"
-		val script = load_file (itemDir^name^"/script.lua")
+			(new treeXml (itemDir^dirName^"/info.xml"))#getFirstByName "Item"
+		val script = load_file (itemDir^dirName^"/script.lua")
 		
+		val mutable taken = false
 		val mutable name = ""
 		val mutable y = 0
 		val mutable x = 0
@@ -46,8 +49,10 @@ class item name =
 		
 		initializer
 			name <- (data#getXmlElement ())#getAttr "name";
-			x <- int_of_string(((data#getFirstByName "Position")#getXmlElement ())#getAttr "x");
-			y <- int_of_string(((data#getFirstByName "Position")#getXmlElement ())#getAttr "y");
+			x <- int_of_string(((data#getFirstByName "Position")#
+				getXmlElement ())#getAttr "x");
+			y <- int_of_string(((data#getFirstByName "Position")#
+				getXmlElement ())#getAttr "y");
 			image <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src"
 		
 		method getDir =
@@ -59,20 +64,32 @@ class item name =
 	end
 ;;
 
-class room name =
+class room dirName =
 	let roomDir = envString#get "roomDir" in
 	object (self)
-		val dir = roomDir^name^"/"
+		val dir = roomDir^dirName^"/"
 		val data = 
-			(new treeXml (roomDir^name^"/info.xml"))#getFirstByName "Room"
-		val script = load_file (roomDir^name^"/script.lua")
+			(new treeXml (roomDir^dirName^"/info.xml"))#getFirstByName "Room"
+		val script = load_file (roomDir^dirName^"/script.lua")
 		
 		val mutable name = ""
 		val mutable background = ""
+		val mutable itemsUsed = ([]:item list)
 		
 		initializer
+			let itemsRead = 
+				let listName = 
+					cut ((((data#getFirstByName "Position")#getChildren ())#
+					getXmlElement ())#getString ())
+				in
+				let rec getItems = function
+					| [] -> []
+					| e::q -> items#get e::getItems q
+				in getItems listName
+			in
 			name <- (data#getXmlElement ())#getAttr "name";
-			background <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src"
+			background <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src";
+			itemsUsed <- itemsRead
 		
 		method getDir =
 			dir
@@ -111,4 +128,19 @@ let removeGlobalString name =
 	globalString#remove name
 ;;
 
-
+let loadItems () =
+	let dirNameItems =
+		let itemDir = envString#get "itemDir" in
+		let elements = Array.to_list (Sys.readdir itemDir) in
+		let rec sort = function
+			| [] -> []
+			| e::q when Sys.is_directory ((Filename.concat itemDir) e) -> 
+				e::sort q
+			| _::q -> sort q
+		in sort elements
+	in 
+	let rec browser = function 
+		| [] -> ()
+		| e::q -> items#set e (new item e); browser q
+	in browser dirNameItems
+;;
