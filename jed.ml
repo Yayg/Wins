@@ -26,6 +26,7 @@ open Sdl
 open Sdlvideo
 open Sdlwm
 open Zak
+open Sdlloader
 
 (* Objects ********************************************************************)
 class sdlWindow width height =
@@ -40,16 +41,18 @@ class sdlWindow width height =
 			set_caption (envString#get "name") (envString#get "icon");
 			exLoop <- Some (create self#loop ())
 
-		method get_surface () =
+		method getSurface =
 			!window
-		method toggle_fullscreen () =
+		method toggleFullscreen () =
 			fullscreen <- toggle_fullscreen ()
-		method set_title title =
+		method setTitle title =
 			let (_,icon) = get_caption () 
 			in set_caption title icon
-		method set_icon icon =
+		method setIcon icon =
 			let (title,_) = get_caption ()
 			in set_caption title icon
+		method getImage path = 
+			load_image path
 			
 		method loop () =
 			while run do
