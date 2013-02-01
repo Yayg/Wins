@@ -26,6 +26,11 @@ open Sdl
 open Sdlvideo
 open Sdlwm
 open Zak
+open Sdlloader
+
+
+(* Exceptions *****************************************************************)
+exception Sdl_not_initialized
 
 (* Objects ********************************************************************)
 class sdlWindow width height =
@@ -40,17 +45,23 @@ class sdlWindow width height =
 			set_caption (envString#get "name") (envString#get "icon");
 			exLoop <- Some (create self#loop ())
 
-		method get_surface () =
+		method getSurface =
 			!window
-		method toggle_fullscreen () =
+		method toggleFullscreen () =
 			fullscreen <- toggle_fullscreen ()
-		method set_title title =
+		method setTitle title =
 			let (_,icon) = get_caption () 
 			in set_caption title icon
-		method set_icon icon =
+		method setIcon icon =
 			let (title,_) = get_caption ()
 			in set_caption title icon
-			
+		method displayImage path x y =
+			let src =  load_image path 
+			and dst = !window 
+			and dst_rect = (rect x y 0 0)
+			and rect = (rect x y 0 0) in
+			blit_surface ~src ~dst ~dst_rect ();
+			update_rect ~rect !window 
 		method loop () =
 			while run do
 				flip !window;
@@ -70,4 +81,8 @@ let window = ref None
 (* Functions ******************************************************************)
 let initW () =
 	window := Some (new sdlWindow (int_of_string(Zak.envString#get "xScreen")) (int_of_string(Zak.envString#get "yScreen")))
+
+let getWindow () = match !window with
+			|None -> raise Sdl_not_initialized
+			|Some a -> a
 ;;
