@@ -88,6 +88,25 @@ let load_file file =
   (s)
 ;;
 
+let cut str =
+	let t = String.length str
+	and (i,l) = (ref 0, ref 0)
+	and o = ref ([]:string list)
+	in
+	while !i < t do
+		(match str.[!i] with
+			| ' ' | '\012' | '\n' | '\r' | '\t' -> 
+				o := String.sub str !l (!i-(!l))::!o;
+				l := !i+1
+			| _ when !i = t-1 -> 
+				o := String.sub str !l (t-(!l))::!o
+			| _ -> ()
+		); i := !i + 1
+	done;
+	
+	!o
+;;
+	
 let searchRegexp str exp =
 	let re = Str.regexp (String.lowercase exp)
 	in
