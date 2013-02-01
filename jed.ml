@@ -55,14 +55,16 @@ class sdlWindow width height =
 		method setIcon icon =
 			let (title,_) = get_caption ()
 			in set_caption title icon
-		method displayImage path x y =
-			let src =  load_image path 
-			and dst = !window 
-			and dst_rect = (rect x y 0 0)
-			and rect = (rect x y 0 0) in
-			blit_surface ~src ~dst ~dst_rect ();
-			update_rect ~rect !window 
-		method loop () =
+		method displayImage src x y = 
+			let dst = !window 
+			and dst_rect = (rect x y 0 0) in
+			blit_surface ~src ~dst ~dst_rect ()
+		method move image a b = 
+			let dst_rect = rect a b 0 0 in
+			set_clip_rect image dst_rect
+		method update rect image =
+			update_rect ~rect image
+		method loop () = 
 			while run do
 				flip !window;
 				begin match Sdlevent.poll () with
@@ -79,6 +81,13 @@ class sdlWindow width height =
 let window = ref None
 
 (* Functions ******************************************************************)
+
+let loadImage path = 
+	load_image path
+
+let point x y = 
+	rect x y 0 0
+
 let initW () =
 	window := Some (new sdlWindow (int_of_string(Zak.envString#get "xScreen")) (int_of_string(Zak.envString#get "yScreen")))
 
