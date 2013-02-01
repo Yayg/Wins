@@ -21,38 +21,53 @@
 ################################################################################
 *)
 
+open Thread
 open Sdl
 open Sdlvideo
 open Sdlwm
 open Zak
 
-
 (* Objects ********************************************************************)
 class sdlWindow width height =
 	object (self) 
 		val window = ref (set_video_mode ~w:width ~h:height [`DOUBLEBUF])
-		val fullscreen = ref false
+		val mutable exLoop = None
+		
+		val mutable fullscreen = false
+		val mutable run = true
 		
 		initializer
-			set_caption (envString#get "name") (envString#get "icon")
+			set_caption (envString#get "name") (envString#get "icon");
+			exLoop <- Some (create self#loop ())
 
 		method get_surface () =
 			!window
 		method toggle_fullscreen () =
-			fullscreen := toggle_fullscreen ()
+			fullscreen <- toggle_fullscreen ()
 		method set_title title =
 			let (_,icon) = get_caption () 
 			in set_caption title icon
 		method set_icon icon =
 			let (title,_) = get_caption ()
 			in set_caption title icon
+			
+		method loop () =
+			while run do
+				flip !window;
+				begin match Sdlevent.poll () with
+					| Some Sdlevent.QUIT -> Sdl.quit (); run <- false
+					| None -> ()
+					| _ -> ()
+				end;
+				delay 0.016666667 (*60 fps*)
+			done
 	end
 ;;
 
 (* Global Variables ***********************************************************)
-
+let window = ref None
 
 (* Functions ******************************************************************)
-let initWindow () =
-	new sdlWindow (int_of_string(Zak.envString#get "xScreen")) (int_of_string(Zak.envString#get "yScreen"))
+let initW () =
+	window := Some (new sdlWindow (int_of_string(Zak.envString#get "xScreen")) (int_of_string(Zak.envString#get "yScreen")))
 ;;
