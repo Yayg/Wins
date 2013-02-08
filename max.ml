@@ -30,7 +30,7 @@ type animationUpAction =
 (* Objects ********************************************************************)
 class animation =
 	object (self)
-		val name = ""
+		val name = "42"
 		
 		method getName =
 			name
