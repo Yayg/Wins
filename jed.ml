@@ -22,12 +22,15 @@
 *)
 
 open Thread
-open Sdl
-open Sdlvideo
-open Sdlwm
-open Zak
-open Sdlloader
 open Queue
+
+open Sdl
+open Sdlwm
+open Sdlvideo
+open Sdlloader
+
+open Zak
+open Max
 open Tool
 
 
@@ -35,17 +38,16 @@ open Tool
 exception Sdl_not_initialized
 
 (* Types **********************************************************************)
-type displayUpAction =
+type movingUpAction =
 	| Moving of (int*int)
-	| Animation of surface
 	| Nop
 ;;
 
 type displayElement = {
 	mutable img : surface;
 	mutable pos : (int  * int);
-	posUpdates : displayUpAction Queue.t;
-	imgUpdates : displayUpAction Queue.t
+	posUpdates : movingUpAction Queue.t;
+	imgUpdates : animation
 	}
 ;;
 
@@ -68,7 +70,7 @@ class sdlWindow width height =
 		(** Storing Data **)
 		method addDisplayElement name surface position =
 			displayData#set name 
-			{img=surface; pos=position; posUpdates=(Queue.create ()); imgUpdates=(Queue.create ())}
+			{img=surface; pos=position; posUpdates=(Queue.create ()); imgUpdates=(new animation)}
 		method removeDisplayElement name =
 			displayData#remove name
 		
