@@ -27,10 +27,27 @@ open Sdlvideo
 open Sdlwm
 open Zak
 open Sdlloader
+open Queue
+open Tool
 
 
 (* Exceptions *****************************************************************)
 exception Sdl_not_initialized
+
+(* Types **********************************************************************)
+type displayUpAction =
+	| Moving of (int*int)
+	| Animation of surface
+	| Nop
+;;
+
+type displayElement = {
+	mutable img : surface;
+	mutable pos : (int  * int);
+	posUpdates : displayUpAction Queue.t;
+	imgUpdates : displayUpAction Queue.t
+	}
+;;
 
 (* Objects ********************************************************************)
 class sdlWindow width height =
@@ -40,14 +57,27 @@ class sdlWindow width height =
 		
 		val mutable fullscreen = false
 		val mutable run = true
+		val mutable ticks = 0
+		
+		val displayData = new dictionary
 		
 		initializer
 			set_caption (envString#get "name") (envString#get "icon");
-			exLoop <- Some (create self#loop ())
-
+			exLoop <- Some (Thread.create self#loop ())
+		
+		(** Storing Data **)
+		method addDisplayElement name surface position =
+			displayData#set name 
+			{img=surface; pos=position; posUpdates=(Queue.create ()); imgUpdates=(Queue.create ())}
+		method removeDisplayElement name =
+			displayData#remove name
+		
+		
+		
+		(** Window Manager **)
 		method getSurface =
 			!window
-		method toggleFullscreen () =
+		method toggleFullscreen =
 			fullscreen <- toggle_fullscreen ()
 		method setTitle title =
 			let (_,icon) = get_caption () 
@@ -55,24 +85,27 @@ class sdlWindow width height =
 		method setIcon icon =
 			let (title,_) = get_caption ()
 			in set_caption title icon
-		method displayImage src x y = 
+		
+		(** Low Level Displaying **)
+		method private displayImage src x y = 
 			let dst = !window 
 			and dst_rect = (rect x y 0 0) in
 			blit_surface ~src ~dst ~dst_rect ()
-		method move image a b = 
-			let dst_rect = rect a b 0 0 in
-			set_clip_rect image dst_rect
-		method update rect image =
-			update_rect ~rect image
-		method loop () = 
+		
+		
+		method private loop ()= 
 			while run do
+				ticks <- 17 + Sdltimer.get_ticks (); (*17 ms -> 60fps*)
+				
 				flip !window;
+				
 				begin match Sdlevent.poll () with
 					| Some Sdlevent.QUIT -> Sdl.quit (); run <- false
 					| None -> ()
 					| _ -> ()
 				end;
-				delay 0.016666667 (*60 fps*)
+				
+				while (Sdltimer.get_ticks ()) <= ticks do () done
 			done
 	end
 ;;
