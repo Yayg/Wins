@@ -100,6 +100,36 @@ class room dirName =
 	end
 ;;
 
+
+class character dirName =
+	let charDir = envString#get "characterDir" in
+	object (self)
+		val dir = charDir^dirName^"/"
+		val personage = new treeXml (charDir^dirName^"/info.xml")
+		val script = load_file (charDir^dirName^"/script.lua")
+		
+		val mutable name = ""
+		val mutable y = 0 
+		val mutable x = 0
+		val mutable image = ""
+		
+		initializer
+		name <- (personage#getXmlElement ())#getAttr "name";
+		y <- int_of_string (((personage#getFirstByName "position")#getXmlElement ())#getAttr "y");
+		x <- int_of_string (((personage#getFirstByName "position")#getXmlElement ())#getAttr "x");
+		image <- ((personage#getFirstByName "image")#getXmlElement ())#getAttr "src";
+		
+		method getDir =
+			dir
+		method getName =
+			name
+		method getImage =
+			image
+		method getPos = 
+			(x,y)
+	end
+;;
+
 (* Functions ******************************************************************)
 let getEnvString name =
 	(envString#get name:string)
