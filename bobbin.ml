@@ -14,13 +14,6 @@ let playMusic path =
 ;;
 
 
-let lowSound percentage delay channel =
-	let a = (int_of_float (volume_channel channel)) in
-	let b = a*percentage/100 in
-	setvolume_channel channel (float_of_int b);
-	Sdltimer.delay(delay);
-	setvolume_channel channel (float_of_int a)
-;;
 (*
 let channelplay path =
 	allocate_channels 3;
@@ -41,15 +34,7 @@ let playSample sound =
 	let son = loadWAV sound in
 	play_channel son
 ;;
-(*
-let lowSound ?retard:(r = 0) percentage delay =
-	Sdltimer.delay(r);
-	let a = (int_of_float (volume_channel 0)) in
-	let b = a*percentage/100 in
-	setvolume_channel 0 (float_of_int b);
-	Sdltimer.delay(delay);
-	setvolume_channel 0 (float_of_int a)
-;;*)
+
 
 let lowSound ?retard:(r = 0) percentage delay =
 	Sdltimer.delay(r);
