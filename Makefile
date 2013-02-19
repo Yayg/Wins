@@ -41,7 +41,7 @@
 
 ### Info #######################################################################
 RESULT     = wins
-SOURCES    = tool.ml wally.ml zak.ml bobbin.ml max.ml jed.ml main.ml
+SOURCES    = tool.ml max.ml wally.ml zak.ml jed.ml bobbin.ml main.ml
 
 INCDIRS    = -I +sdl -I /usr/local/lib/ocaml/3.12.1/lua/ -I +expat
 LIBSOPT    = unix.cmxa threads.cmxa bigarray.cmxa sdl.cmxa sdlloader.cmxa\

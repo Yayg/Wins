@@ -46,8 +46,7 @@ type movingUpAction =
 type displayElement = {
 	mutable img : surface;
 	mutable pos : (int  * int);
-	posUpdates : movingUpAction Queue.t;
-	imgUpdates : animation
+	updating : displayUpdating
 	}
 ;;
 
@@ -61,20 +60,51 @@ class sdlWindow width height =
 		val mutable run = true
 		val mutable ticks = 0
 		
+		val mutable background = get_video_surface ()
 		val displayData = new dictionary
 		
 		initializer
 			set_caption (envString#get "name") (envString#get "icon");
 			exLoop <- Some (Thread.create self#loop ())
 		
+		
+		(** Update Data **)
+		(*!
+		method private updataDisplayData =
+			let rec browser = function
+				| [] -> ()
+				| element::q ->
+					let posUpdates = element.posUpdates in
+					begin if not(is_empty posUpdates) then
+						let action = pop posUpdates in
+						match action with
+							| Nop -> ()
+							| Moving pos -> element.pos <- pos 
+					end; browser q
+			in browser (displayData#elements ())
+		method private displayData = 
+			let rec browser = function
+				| [] -> ()
+				| element::q -> 
+					let surface = element.img
+					and position = element.pos
+					in
+					self#displayImage surface position;
+					browser q
+			in browser (displayData#elements ())
+		
 		(** Storing Data **)
+		method setBackgroud surface =
+			background <- surface
+		
 		method addDisplayElement name surface position =
 			displayData#set name 
-			{img=surface; pos=position; posUpdates=(Queue.create ()); imgUpdates=(new animation)}
+			{img=surface; pos=position; posUpdates=(Queue.create()); imgUpdates=(new animationUpdating)}
 		method removeDisplayElement name =
 			displayData#remove name
-		
-		
+		method fushDisplayData () =
+			displayData#clear ()
+		*)
 		
 		(** Window Manager **)
 		method getSurface =
@@ -87,18 +117,18 @@ class sdlWindow width height =
 		method setIcon icon =
 			let (title,_) = get_caption ()
 			in set_caption title icon
+			
 		
 		(** Low Level Displaying **)
-		method private displayImage src x y = 
-			let dst = !window 
+		method private displayImage src (x,y) = 
+			let dst = !window
 			and dst_rect = (rect x y 0 0) in
 			blit_surface ~src ~dst ~dst_rect ()
 		
-		
-		method private loop ()= 
+		(** Loop Displaying Event **)
+		method private loop () = 
 			while run do
 				ticks <- 17 + Sdltimer.get_ticks (); (*17 ms -> 60fps*)
-				
 				flip !window;
 				
 				begin match Sdlevent.poll () with
@@ -109,7 +139,8 @@ class sdlWindow width height =
 				
 				while (Sdltimer.get_ticks ()) <= ticks do () done
 			done
-	end
+			
+
 ;;
 
 (* Global Variables ***********************************************************)

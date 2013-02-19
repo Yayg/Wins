@@ -21,14 +21,25 @@
 ################################################################################
 *)
 
+open Sdlvideo
+
 (* Types **********************************************************************)
 type animationUpAction =
-	| Animation of Sdlvideo.surface
+	| Animation of surface
 	| Nop
 ;;
 
 (* Objects ********************************************************************)
-class animation =
+class animation animationDir =
+	object (self)
+	
+	val mutable map = (None:surface option)
+	
+	
+	end
+;;
+
+class displayUpdating =
 	object (self)
 		val name = "42"
 		
