@@ -140,7 +140,9 @@ class sdlWindow width height =
 				while (Sdltimer.get_ticks ()) <= ticks do () done
 			done
 			
+		(** Print Error **)
 
+	end
 ;;
 
 (* Global Variables ***********************************************************)
