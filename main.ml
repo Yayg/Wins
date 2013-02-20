@@ -45,7 +45,7 @@ let usage_msg = "Usage : wins [gameFolder]\n";;
 let main () = ();;
 
 let setup execDir = 
-	let xmlPath = execDir^"game.xml" in
+	let xmlPath = execDir//"game.xml" in
 	let xmlGame = 
 		if not (Sys.file_exists xmlPath) then
 			raise Not_found
@@ -60,9 +60,9 @@ let setup execDir =
 	envString#set "xScreen" (dimension#getAttr "x");
 	envString#set "yScreen" (dimension#getAttr "y");
 	envString#set "dir" execDir;
-	envString#set "itemDir" (execDir^((xmlGame#getFirstByName "itemDir")#getXmlElement ())#getAttr "href");
-	envString#set "characterDir" (execDir^((xmlGame#getFirstByName "characterDir")#getXmlElement ())#getAttr "href");
-	envString#set "roomDir" (execDir^((xmlGame#getFirstByName "roomDir")#getXmlElement ())#getAttr "href");
+	envString#set "itemDir" (execDir//((xmlGame#getFirstByName "itemDir")#getXmlElement ())#getAttr "href");
+	envString#set "characterDir" (execDir//((xmlGame#getFirstByName "characterDir")#getXmlElement ())#getAttr "href");
+	envString#set "roomDir" (execDir//((xmlGame#getFirstByName "roomDir")#getXmlElement ())#getAttr "href");
 	print_string (envString#get "name"^" is loaded in "^envString#get "dir"^"\n")
 ;;
 let get_arguments () = 
@@ -78,7 +78,6 @@ let initialization execDir =
 			)
 		else 
 			(try 
-				envString#set "gameDir" execDir;
 				setup execDir;
 			with 
 				| Not_found ->
