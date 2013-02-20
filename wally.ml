@@ -204,6 +204,9 @@ class treeXml xmlFile =
 				| VoidTree -> raise (BadStyleXmlTree "getXmlElement with a VoidTree")
 				| Node(element, _, _) -> element
 			in new xmlElement(getElement data)
+		method getAttr name =
+			let element = self#getXmlElement () in
+			element#getAttr name
 			
 		method getElementById idName =
 			let rec browser = function
