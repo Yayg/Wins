@@ -107,16 +107,17 @@ let cut str =
 	!o
 ;;
 	
-let searchRegexp str exp =
-	let re = Str.regexp (String.lowercase exp)
-	in
-		try ignore (Str.search_forward re (String.lowercase str) 0); true
-		with Not_found -> false
+let regexp str exp =
+	let re = Str.regexp_case_fold exp in
+	try 
+		ignore(Str.search_forward re str 0);
+		true
+	with _-> false
 ;;
 
-let addEndDir path =
-	if not (searchRegexp path "*/ \\| *\\") then
-		path^"/"
+let (//) dir path =
+	if not (regexp dir "/$") then
+		dir^"/"^path
 	else
-		path
+		dir^path
 ;;
