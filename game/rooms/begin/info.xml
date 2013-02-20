@@ -1,0 +1,5 @@
+<Room name="begin">
+	<Background src="background.png"/>
+	
+	<Items>duck</Items>
+</Room>

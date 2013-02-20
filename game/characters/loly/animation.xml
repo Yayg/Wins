@@ -1,0 +1,14 @@
+<animations id="idle" file="idle.png" h="32" w="32" direction="3" key="6">
+	<frame time="1">
+	<frame time="15">
+	<frame time="25">
+	<frame time="40">
+	<frame time="45">
+	<frame time="60">
+</animation>
+
+<animations id="manger" file="manger.png" h="32" w="32" direction="3" key="3">
+	<frame time="1">
+	<frame time="15">
+	<frame time="25">
+</animation>

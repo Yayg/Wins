@@ -1,0 +1,5 @@
+<Item name="duck">
+	<Image src="duck.png"/>
+	
+	<Position x="100" y="100"/>
+</Item>
