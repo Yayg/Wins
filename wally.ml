@@ -98,11 +98,11 @@ class treeXml xmlFile =
 					| [] -> dict
 				in Element(name, browser (new dictionary) attrs)
 			in 
-			push (Node(element, VoidTree, VoidTree)) stack;
-			print_string ("pushStartElement : "^name^"\n")
+			push (Node(element, VoidTree, VoidTree)) stack
+			;print_string ("pushStartElement : "^name^"\n")
 		method private pushText stack text =
 			if (text <> "")&&(text <> "\n")&&(text <> " ")&&(text <> "	") then
-			print_string ("pushText : "^text^"\n");
+			(*Debug*print_string ("pushText : "^text^"\n");*)
 			push (Node(Text(text), VoidTree, VoidTree)) stack
 		method private pushEndElement stack name =
 			let getNameElement node = 
@@ -135,8 +135,8 @@ class treeXml xmlFile =
 				currentNode := (pop stack)
 			done;
 			currentNode := setChildrenTree !previousNode !currentNode;
-			push !currentNode stack;
-			print_string ("pushEndElement : "^name^"\n")
+			push !currentNode stack
+			(*Debug*;print_string ("pushEndElement : "^name^"\n")*)
 		method private endParsing stack =
 			let setBrotherTree brother = function
 				| VoidTree -> 
@@ -153,8 +153,9 @@ class treeXml xmlFile =
 				currentNode := pop stack;
 				currentNode := setBrotherTree !previousNode !currentNode
 			done;
-			data <- !currentNode;
-			let getNameElement node = 
+			data <- !currentNode
+			(*Debug*
+			;let getNameElement node = 
 				let getElement = function
 					| VoidTree -> 
 						raise (BadStyleXmlTree 
@@ -165,7 +166,7 @@ class treeXml xmlFile =
 					| Element (name, _) -> name
 				in getName (getElement node)
 			in print_string ("Current node: "^getNameElement data^"\n")
-			
+			*)
 		
 		method private newXmlTree newData =
 			let saveData = data in
@@ -211,7 +212,7 @@ class treeXml xmlFile =
 		method getElementById idName =
 			let rec browser = function
 				| Node(Element(str, dict), brother, children) when 
-					try dict#get "id" = idName with Not_found -> false
+					try String.lowercase (dict#get "id") = String.lowercase idName with Not_found -> false
 					-> Node(Element(str, dict), brother, children)
 				| Node(_, _, children) when children <> VoidTree -> browser children
 				| Node(_, brother, _) when brother <> VoidTree -> browser brother
@@ -219,7 +220,7 @@ class treeXml xmlFile =
 			in self#newXmlTree (browser data)
 		method getElementsByName name =
 			let rec browser = function
-				| Node(Element(str, dict), brother, children) when str = name ->
+				| Node(Element(str, dict), brother, children) when String.lowercase str = String.lowercase name ->
 					begin
 						match (brother, children) with
 							| _, children when children <> VoidTree -> 
@@ -234,7 +235,7 @@ class treeXml xmlFile =
 			in browser data
 		method getFirstByName name =
 			let rec browser = function
-				| Node(Element(str, dict), brother, children) when str = name ->
+				| Node(Element(str, dict), brother, children) when String.lowercase str = String.lowercase name ->
 					Node(Element(str, dict), brother, children)
 				| Node(_, _, children) when children <> VoidTree -> browser children
 				| Node(_, brother, _) when brother <> VoidTree -> browser brother
