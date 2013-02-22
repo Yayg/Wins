@@ -31,15 +31,16 @@ let globalInt = new dictionary;;
 let globalString = new dictionary;;
 
 let items = new dictionary;;
+let characters = new dictionary;;
 
 (* Objects ********************************************************************)
 class item dirName =
 	let itemDir = envString#get "itemDir" in
 	object (self)
-		val dir = itemDir^dirName^"/"
+		val dir = itemDir//dirName
 		val data = 
-			(new treeXml (itemDir^dirName^"/info.xml"))#getFirstByName "Item"
-		val script = load_file (itemDir^dirName^"/script.lua")
+			(new treeXml (itemDir//dirName//"info.xml"))#getFirstByName "Item"
+		val script = load_file (itemDir//dirName//"script.lua")
 		
 		val mutable taken = false
 		val mutable name = ""
@@ -67,10 +68,10 @@ class item dirName =
 class room dirName =
 	let roomDir = envString#get "roomDir" in
 	object (self)
-		val dir = roomDir^dirName^"/"
+		val dir = roomDir//dirName
 		val data = 
-			(new treeXml (roomDir^dirName^"/info.xml"))#getFirstByName "Room"
-		val script = load_file (roomDir^dirName^"/script.lua")
+			(new treeXml (roomDir//dirName//"info.xml"))#getFirstByName "Room"
+		val script = load_file (roomDir//dirName//"script.lua")
 		
 		val mutable name = ""
 		val mutable background = ""
@@ -104,20 +105,16 @@ class room dirName =
 class character dirName =
 	let charDir = envString#get "characterDir" in
 	object (self)
-		val dir = charDir^dirName^"/"
-		val personage = new treeXml (charDir^dirName^"/info.xml")
-		val script = load_file (charDir^dirName^"/script.lua")
+		val dir = charDir//dirName
+		val data = (new treeXml (charDir//dirName//"info.xml"))#getFirstByName "Character"
+		val script = load_file (charDir//dirName//"script.lua")
 		
 		val mutable name = ""
-		val mutable y = 0 
-		val mutable x = 0
 		val mutable image = ""
 		
 		initializer
-		name <- (personage#getXmlElement ())#getAttr "name";
-		y <- int_of_string (((personage#getFirstByName "position")#getXmlElement ())#getAttr "y");
-		x <- int_of_string (((personage#getFirstByName "position")#getXmlElement ())#getAttr "x");
-		image <- ((personage#getFirstByName "image")#getXmlElement ())#getAttr "src";
+		name <- data#getAttr "name";
+		image <- (data#getFirstByName "Image")#getAttr "src";
 		
 		method getDir =
 			dir
@@ -125,16 +122,16 @@ class character dirName =
 			name
 		method getImage =
 			image
-		method getPos = 
-			(x,y)
 	end
 ;;
 
 (* Functions ******************************************************************)
+(* Accessor environement variables *)
 let getEnvString name =
 	(envString#get name:string)
 ;;
 
+(* Accessor and modifier global game variables *)
 let setGlobalInt name (value:int) =
 	globalInt#set name value
 ;;
@@ -158,6 +155,7 @@ let removeGlobalString name =
 	globalString#remove name
 ;;
 
+(* Setup items and characters objects *)
 let loadItems () =
 	let dirNameItems =
 		let itemDir = envString#get "itemDir" in
@@ -173,4 +171,30 @@ let loadItems () =
 		| [] -> ()
 		| e::q -> items#set e (new item e); browser q
 	in browser dirNameItems
+;;
+
+let loadCharacters () =
+	let dirNameCharacters =
+		let charDir = envString#get "characterDir" in
+		let elements = Array.to_list (Sys.readdir charDir) in
+		let rec sort = function
+			| [] -> []
+			| e::q when Sys.is_directory ((Filename.concat charDir) e) -> 
+				e::sort q
+			| _::q -> sort q
+		in sort elements
+	in 
+	let rec browser = function 
+		| [] -> ()
+		| e::q -> characters#set e (new character e); browser q
+	in browser dirNameCharacters
+;;
+
+(* Accessor items and characters objects *)
+let getItem name =
+	items#get name
+;;
+
+let getCharacter name =
+	characters#get name
 ;;

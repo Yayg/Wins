@@ -45,6 +45,7 @@ let usage_msg = "Usage : wins [gameFolder]\n";;
 let main () = ();;
 
 let setup execDir = 
+	(* Setup Environement variables *)
 	let xmlPath = execDir//"game.xml" in
 	let xmlGame = 
 		if not (Sys.file_exists xmlPath) then
@@ -63,7 +64,13 @@ let setup execDir =
 	envString#set "itemDir" (execDir//((xmlGame#getFirstByName "itemDir")#getXmlElement ())#getAttr "href");
 	envString#set "characterDir" (execDir//((xmlGame#getFirstByName "characterDir")#getXmlElement ())#getAttr "href");
 	envString#set "roomDir" (execDir//((xmlGame#getFirstByName "roomDir")#getXmlElement ())#getAttr "href");
-	print_string (envString#get "name"^" is loaded in "^envString#get "dir"^"\n")
+	print_string (envString#get "name"^" is loaded in "^envString#get "dir"^"\n");
+	
+	(* Setup Item and Character object *)
+	try 
+		loadItems ();
+		loadCharacters ();
+	with _ -> print_string "Error during loading data game...\n"
 ;;
 let get_arguments () = 
 	let arg = ref "" in
