@@ -45,6 +45,12 @@ let usage_msg = "Usage : wins [gameFolder]\n";;
 let main () = ();;
 
 let setup execDir = 
+	(* motd *)
+	print_string "╒═════════════════════════════╕\n";
+	print_string "╎ Wins        Version alpha 2 ╎\n";
+	print_string "╎  The Point and Click Motor  ╎\n";
+	print_string "╞═════════════════════════════╛\n";
+	
 	(* Open Xml gobal file *)
 	let xmlPath = execDir//"game.xml" in
 	let xmlGame = 
@@ -65,13 +71,19 @@ let setup execDir =
 	envString#set "itemDir" (execDir//((xmlGame#getFirstByName "itemDir")#getXmlElement ())#getAttr "href");
 	envString#set "characterDir" (execDir//((xmlGame#getFirstByName "characterDir")#getXmlElement ())#getAttr "href");
 	envString#set "roomDir" (execDir//((xmlGame#getFirstByName "roomDir")#getXmlElement ())#getAttr "href");
-	print_string (envString#get "name"^" is loaded in "^envString#get "dir"^"\n");
+	print_string "┝┅ Runtime variables loaded.\n";
 	
 	(* Setup Item and Character object *)
-	try 
+	(try 
 		loadItems ();
 		loadCharacters ();
-	with _ -> print_string "Error during loading data game...\n"
+	with 
+		| Failure e -> print_string ("☢ Error during loading data game : "^e^" \n"); exit 2
+		| _ -> print_string "☢ Error during loading data game...\n"; exit 2
+	); print_string "┝┅ game data loaded.\n";
+	
+	(* End Setup ! *)
+	print_string ("╘══ "^(envString#get "name")^" is loaded in "^envString#get "dir"^"\n");
 ;;
 let get_arguments () = 
 	let arg = ref "" in

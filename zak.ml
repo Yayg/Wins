@@ -38,15 +38,20 @@ class item dirName =
 	let itemDir = envString#get "itemDir" in
 	object (self)
 		val dir = itemDir//dirName
-		val data = 
-			(new treeXml (itemDir//dirName//"info.xml"))#getFirstByName "Item"
-		val script = load_file (itemDir//dirName//"script.lua")
+		val data =
+			try (new treeXml (itemDir//dirName//"info.xml"))#getFirstByName "Item"
+			with _ -> failwith ("read info.xml of item "^dirName^" failed.")
+		val animation = 
+			try new treeXml (itemDir//dirName//"animation.xml")
+			with _ -> failwith ("read animation.xml of item "^dirName^" failed.")
+		val script = 
+			try load_file (itemDir//dirName//"script.lua")
+			with _ -> failwith ("read script.lua of item "^dirName^" failed.")
 		
 		val mutable taken = false
 		val mutable name = ""
 		val mutable y = 0
 		val mutable x = 0
-		val mutable image = ""
 		
 		initializer
 			name <- (data#getXmlElement ())#getAttr "name";
@@ -54,14 +59,45 @@ class item dirName =
 				getXmlElement ())#getAttr "x");
 			y <- int_of_string(((data#getFirstByName "Position")#
 				getXmlElement ())#getAttr "y");
-			image <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src"
+			print_string ("├ Item "^dirName^" loaded.\n")
 		
 		method getDir =
 			dir
 		method getName =
 			name
-		method getImage =
-			image
+		method getPosition =
+			(x,y)
+		method getDataAnim =
+			animation
+	end
+;;
+
+class character dirName =
+	let charDir = envString#get "characterDir" in
+	object (self)
+		val dir = charDir//dirName
+		val data = 
+			try (new treeXml (charDir//dirName//"info.xml"))#getFirstByName "Character"
+			with _ -> failwith ("read info.xml of character "^dirName^" failed.")
+		val animation = 
+			try new treeXml (charDir//dirName//"animation.xml")
+			with _ -> failwith ("read animation.xml of character "^dirName^" failed.")
+		val script = 
+			try load_file (charDir//dirName//"script.lua")
+			with _ -> failwith ("read script.lua of character "^dirName^" failed.")
+		
+		val mutable name = ""
+		
+		initializer
+			name <- data#getAttr "name";
+			print_string ("├ Character "^dirName^" loaded.\n")
+		
+		method getDir =
+			dir
+		method getName =
+			name
+		method getDataAnim =
+			animation
 	end
 ;;
 
@@ -98,30 +134,6 @@ class room dirName =
 			name
 		method getBackground =
 			background
-	end
-;;
-
-
-class character dirName =
-	let charDir = envString#get "characterDir" in
-	object (self)
-		val dir = charDir//dirName
-		val data = (new treeXml (charDir//dirName//"info.xml"))#getFirstByName "Character"
-		val script = load_file (charDir//dirName//"script.lua")
-		
-		val mutable name = ""
-		val mutable image = ""
-		
-		initializer
-		name <- data#getAttr "name";
-		image <- (data#getFirstByName "Image")#getAttr "src";
-		
-		method getDir =
-			dir
-		method getName =
-			name
-		method getImage =
-			image
 	end
 ;;
 
