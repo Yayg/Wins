@@ -56,13 +56,14 @@ class displayUpdating window =
 
 (* Type ***********************************************************************)
 type displayElement = {
+	data : 
 	mutable img : surface;
 	mutable pos : (int  * int);
 	updating : displayUpdating
 	}
 ;;
 
-(* Objects ********************************************************************)
+(* Object *********************************************************************)
 class sdlWindow width height =
 	object (self) 
 		val window = ref (set_video_mode ~w:width ~h:height [`DOUBLEBUF])
@@ -113,10 +114,12 @@ class sdlWindow width height =
 		method addDisplayElement name surface position =
 			displayData#set name 
 			{img=surface; pos=position; updating=(new displayUpdating window)}
+		(*
 		method removeDisplayElement name =
 			displayData#remove name
 		method fushDisplayData () =
 			displayData#clear ()
+		*)
 		
 		(** Window Manager **)
 		method getSurface =
