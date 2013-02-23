@@ -45,15 +45,16 @@ let usage_msg = "Usage : wins [gameFolder]\n";;
 let main () = ();;
 
 let setup execDir = 
-	(* Setup Environement variables *)
+	(* Open Xml gobal file *)
 	let xmlPath = execDir//"game.xml" in
 	let xmlGame = 
 		if not (Sys.file_exists xmlPath) then
 			raise Not_found
 		else
 			(new treeXml xmlPath)#getFirstByName "game"
-	
 	in 
+	
+	(* Setup Environement variables *)
 	let dimension = ((xmlGame#getFirstByName "dimension")#getXmlElement ())
 	in
 	envString#set "name" ((xmlGame#getXmlElement ())#getAttr "name");

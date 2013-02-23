@@ -37,12 +37,24 @@ open Tool
 (* Exceptions *****************************************************************)
 exception Sdl_not_initialized
 
-(* Types **********************************************************************)
-type movingUpAction =
-	| Moving of (int*int)
+(* Type ***********************************************************************)
+type updateAction =
+	| Position of (int*int)
+	| Animation of surface
 	| Nop
 ;;
 
+(* Object *********************************************************************)
+class displayUpdating window =
+	object (self)
+		
+		val animationUpdate = Queue.create ()
+		val positionUpdate = Queue.create ()
+		
+	end
+;;
+
+(* Type ***********************************************************************)
 type displayElement = {
 	mutable img : surface;
 	mutable pos : (int  * int);
@@ -92,6 +104,7 @@ class sdlWindow width height =
 					self#displayImage surface position;
 					browser q
 			in browser (displayData#elements ())
+		*)
 		
 		(** Storing Data **)
 		method setBackgroud surface =
@@ -99,12 +112,11 @@ class sdlWindow width height =
 		
 		method addDisplayElement name surface position =
 			displayData#set name 
-			{img=surface; pos=position; posUpdates=(Queue.create()); imgUpdates=(new animationUpdating)}
+			{img=surface; pos=position; updating=(new displayUpdating window)}
 		method removeDisplayElement name =
 			displayData#remove name
 		method fushDisplayData () =
 			displayData#clear ()
-		*)
 		
 		(** Window Manager **)
 		method getSurface =
@@ -122,7 +134,7 @@ class sdlWindow width height =
 		(** Low Level Displaying **)
 		method private displayImage src (x,y) = 
 			let dst = !window
-			and dst_rect = (rect x y 0 0) in
+			and dst_rect = rect x y 0 0 in
 			blit_surface ~src ~dst ~dst_rect ()
 		
 		(** Loop Displaying Event **)
@@ -139,9 +151,6 @@ class sdlWindow width height =
 				
 				while (Sdltimer.get_ticks ()) <= ticks do () done
 			done
-			
-		(** Print Error **)
-
 	end
 ;;
 
@@ -152,9 +161,6 @@ let window = ref None
 
 let loadImage path = 
 	load_image path
-
-let point x y = 
-	rect x y 0 0
 
 let initW () =
 	window := Some (new sdlWindow (int_of_string(Zak.envString#get "xScreen")) (int_of_string(Zak.envString#get "yScreen")))
