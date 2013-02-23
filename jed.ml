@@ -30,7 +30,6 @@ open Sdlvideo
 open Sdlloader
 
 open Zak
-open Max
 open Tool
 
 
@@ -51,14 +50,195 @@ class displayUpdating window =
 		val animationUpdate = Queue.create ()
 		val positionUpdate = Queue.create ()
 		
+		method getLine (a,b) (x,y) =
+			let dx = ref (x - a) 
+			and dy = ref (y - b)
+			and a = ref a
+			and b = ref b
+			and x = ref x
+			and y = ref y
+			in
+			if (!dx <> 0) then
+				begin
+				if (!dx > 0) then 
+					begin
+					if (!dy <> 0) then
+						begin
+						if (!dy > 0) then
+							begin
+							if (!dx >= !dy) then (* 1er octant *)
+								let e = ref !dx 
+								in
+								dx := !e * 2;
+								dy := !dy * 2;
+								while (!a <> !x) do
+									push (!a,!b) (positionUpdate);
+									begin
+									a := !a + 1;
+									e := !e - !dy;
+									if ( !e < 0) then
+										b := !b + 1 ;
+										e := !e + !dx
+									end
+								done
+							else (* 2eme octant *)
+								let e = ref !dy
+								in
+								dx := !dx * 2;
+								dy := !e * 2 ;
+								while (!b <> !y) do
+									push (!a,!b) (positionUpdate);
+									begin
+									b := !b + 1;
+									e := !e - !dx;
+									if (!e < 0) then
+										e := !e + !dy;
+										a := !a + 1;
+										end
+								done
+							end
+						else (* dy < 0 *)
+							begin
+							if (!dx >= (-1) * !dy) then (* 8eme octant *)
+								let e = ref !dx 
+								in
+								dx := !e * 2;
+								dy := !dy * 2;
+								while (!a <> !x) do
+									push (!a,!b) (positionUpdate);
+									begin
+									a := !a + 1 ;
+									e := !e + !dy ;
+									if (!e < 0) then
+										b := !b - 1;
+										e := !e + !dx;
+									end
+								done
+							else (* 7eme octant *)
+								let e = ref !dy
+								in
+								dx := !dx * 2;
+								dy := !e * 2;
+								while (!b <> !y) do
+									push (!a,!b) (positionUpdate);
+									begin
+									b := !b - 1;
+									e := !e + !dy;
+									if (!e > 0) then
+										e := !e + !dx;
+										a := !a + 1;
+									end
+								done
+							end
+						end
+					else (* dy = 0 *)
+						while (!a <> !x) do
+							a := !a + 1;
+							push (!a,!b) (positionUpdate);
+						done
+					end
+				else (* dx < 0 *)
+					begin
+					if (!dy <> 0) then
+						begin
+						if (!dy > 0) then
+							begin
+							if ((-1) * !dx >= !dy) then (* 4eme octant *)
+								let e = ref !dx 
+								in
+								dx := !e * 2;
+								dy := !dy * 2;
+								while (!a <> !x) do
+									push (!a,!b) (positionUpdate);
+									begin
+									a := !a - 1 ;
+									e := !e + !dy;
+									if (!e >= 0) then
+										e := !e + !dx;
+										b := !b + 1;
+									end
+								done
+							else (* 3eme octant *)
+								let e = ref !dy 
+								in
+								dx := !dx * 2;
+								dy := !e * 2;
+								while (!b <> !y) do
+									push (!a,!b) (positionUpdate);
+									begin
+									b := !b + 1 ;
+									e := !e + !dx;
+									if (!e <= 0) then
+										e := !e + !dy;
+										a := !a - 1;
+									end
+								done
+							end
+						else (* dy < 0 *)
+							begin
+							if (!dx <= !dy) then (* 5eme octant *)
+								let e = ref !dx
+								in
+								dx := !e * 2;
+								dy := !dy * 2;
+								while (!a <> !x) do
+									push (!a,!b) (positionUpdate);
+									begin
+									a := !a - 1 ;
+									e := !e + !dy;
+									if (!e >= 0) then
+										e := !e + !dx;
+										b := !b - 1;
+									end
+								done
+							else
+								let e = ref !dy
+								in
+								dx := !dx * 2;
+								dy := !e * 2;
+								while (!b <> !y) do
+									push (!a,!b) (positionUpdate);
+									begin
+									b := !b - 1;
+									e := !e - !dx;
+									if (!e >= 0) then
+										e := !e + !dy;
+										a := !a - 1;
+									end
+								done
+							end
+						end
+					else (* dy = 0 *)
+						while (!a <> !b) do
+							push (!a,!b) (positionUpdate);
+						done
+					end
+				end
+			else
+				begin
+				if (!dy <> 0) then
+					begin
+					if (!dy > 0) then
+						while (!b <> !y) do
+						b := !b + 1;
+						push (!a,!b) (positionUpdate);
+						done
+					else (* dy = 0 *)
+						while (!b <> !y) do
+						b := !b - 1;
+						push (!a,!b) (positionUpdate);
+						done
+					end
+				end
+				
+		(* fin de la method *)
 	end
 ;;
 
 (* Type ***********************************************************************)
 type displayElement = {
-	data : 
 	mutable img : surface;
-	mutable pos : (int  * int);
+	mutable pos : (int * int);
 	updating : displayUpdating
 	}
 ;;
