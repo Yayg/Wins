@@ -30,34 +30,81 @@ open Sdlvideo
 open Sdlloader
 
 open Zak
-open Max
 open Tool
 
 
 (* Exceptions *****************************************************************)
 exception Sdl_not_initialized
 
-(* Type ***********************************************************************)
+(* Types **********************************************************************)
 type updateAction =
 	| Position of (int*int)
-	| Animation of surface
+	| Animation of rect
 	| Nop
 ;;
 
 (* Object *********************************************************************)
-class displayUpdating window =
+class displayUpdating window element =
 	object (self)
 		
 		val animationUpdate = Queue.create ()
 		val positionUpdate = Queue.create ()
 		
+		val mutable nameAnimation = "idle"
+		val mutable actualSurface = load_image (element#getDir//"animation/idle.png")
+		val mutable loopAnimation = false
+		val mutable w = 0
+		val mutable h = 0
+		
+		method setAnimation name =
+			let noper n =
+				for i = 0 to (n-1) do
+					push Nop animationUpdate
+				done
+			and animation = element#getDataAnim#getElementById name in
+			let frames = (animation#getChildren ())#getElementsByName "frame" in
+			let rec browser i t = function (*! Ne prend pas en compte l'orientation il faut mutiplier y par le numéro de l'orientation *)
+				| [] -> ()
+				| f::q -> 
+					let time = int_of_string(f#getAttr "time") in
+					push (Animation (rect (i*w) h w h)) animationUpdate;
+					noper (time-t);
+					browser (i+1) time q
+			in
+			actualSurface <- 
+				load_image (element#getDir//"animation/"^(animation#getAttr "file"));
+			loopAnimation <- bool_of_string(animation#getAttr "loop");
+			w <- int_of_string(animation#getAttr "w");
+			h <- int_of_string(animation#getAttr "h");
+			browser 0 1 frames;
+			nameAnimation <- name
+		method getActions =
+			let actionAnimation =
+				if is_empty animationUpdate then
+					if loopAnimation then
+						begin
+							self#setAnimation nameAnimation;
+							pop animationUpdate
+						end
+					else Nop
+				else
+					pop animationUpdate
+			and actionPosition =
+				if is_empty positionUpdate then
+					Nop
+				else
+					pop positionUpdate
+			in 
+			(actionAnimation, actionPosition)
+		method getSurface =
+			actualSurface
 	end
 ;;
 
 (* Type ***********************************************************************)
 type displayElement = {
-	data : 
-	mutable img : surface;
+	data : displayable;
+	mutable img : rect;
 	mutable pos : (int  * int);
 	updating : displayUpdating
 	}
@@ -82,44 +129,66 @@ class sdlWindow width height =
 		
 		
 		(** Update Data **)
-		(*!
 		method private updataDisplayData =
 			let rec browser = function
 				| [] -> ()
 				| element::q ->
-					let posUpdates = element.posUpdates in
-					begin if not(is_empty posUpdates) then
-						let action = pop posUpdates in
-						match action with
-							| Nop -> ()
-							| Moving pos -> element.pos <- pos 
-					end; browser q
+					let (actionAnimation,actionPosition) = 
+						element.updating#getActions in
+					begin
+						match actionAnimation with
+							| Animation r -> element.img <- r
+							| _ -> ()
+					end;
+					begin
+						match actionPosition with
+							| Position p -> element.pos <- p
+							| _ -> ()
+					end;
+					browser q
 			in browser (displayData#elements ())
-		method private displayData = 
+		method private display = 
 			let rec browser = function
 				| [] -> ()
 				| element::q -> 
-					let surface = element.img
+					let surface = element.updating#getSurface
+					and clip = element.img
 					and position = element.pos
 					in
-					self#displayImage surface position;
+					self#displayImage clip surface position;
 					browser q
 			in browser (displayData#elements ())
-		*)
 		
 		(** Storing Data **)
 		method setBackgroud surface =
 			background <- surface
 		
-		method addDisplayElement name surface position =
-			displayData#set name 
-			{img=surface; pos=position; updating=(new displayUpdating window)}
-		(*
+		method addItemToDisplay name (x,y) =
+			let item = getItem name in
+			let element =
+				{
+					data = (item :> displayable);
+					img = rect 0 0 0 0; 
+					pos = (x,y); 
+					updating = (new displayUpdating window (item :> displayable))
+				}
+			in
+			displayData#set name element
+		method addCharacterToDisplay name (x,y) =
+			let character = getCharacter name in
+			let element =
+				{
+					data = (character :> displayable);
+					img = rect 0 0 0 0;
+					pos = (x,y);
+					updating = (new displayUpdating window (character :> displayable))
+				}
+			in displayData#set name element
+		
 		method removeDisplayElement name =
 			displayData#remove name
 		method fushDisplayData () =
 			displayData#clear ()
-		*)
 		
 		(** Window Manager **)
 		method getSurface =
@@ -135,10 +204,10 @@ class sdlWindow width height =
 			
 		
 		(** Low Level Displaying **)
-		method private displayImage src (x,y) = 
+		method private displayImage clip src (x,y) = 
 			let dst = !window
 			and dst_rect = rect x y 0 0 in
-			blit_surface ~src ~dst ~dst_rect ()
+			blit_surface ~src ~src_rect:clip ~dst ~dst_rect ()
 		
 		(** Loop Displaying Event **)
 		method private loop () = 
