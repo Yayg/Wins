@@ -287,7 +287,7 @@ class displayUpdating window element =
 				| [] -> ()
 				| f::q -> 
 					let time = int_of_string(f#getAttr "time") in
-					push (Animation (rect (i*w) h w h)) animationUpdate;
+					push (Animation (rect (i*w) 0 w h)) animationUpdate;
 					noper (time-t);
 					browser (i+1) time q
 			in

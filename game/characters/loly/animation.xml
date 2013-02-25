@@ -1,11 +1,10 @@
 <animations>
-	<animation id="idle" loop="false" file="idle.png" h="32" w="32" direction="1" key="6">
+	<animation id="idle" loop="false" file="idle.png" w="33" h="41" direction="1" key="5">
 		<frame time="1"/>
+		<frame time="5"/>
+		<frame time="10"/>
 		<frame time="15"/>
-		<frame time="25"/>
-		<frame time="40"/>
-		<frame time="45"/>
-		<frame time="60"/>
+		<frame time="20"/>
 	</animation>
 	<animation id="manger" loop="false" file="manger.png" h="32" w="32" direction="1" key="3">
 		<frame time="1"/>
