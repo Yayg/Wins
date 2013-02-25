@@ -33,6 +33,15 @@ let globalString = new dictionary;;
 let items = new dictionary;;
 let characters = new dictionary;;
 
+(* Interface ******************************************************************)
+class type displayable =
+	object
+		method getDir : string
+		method getName : string
+		method getDataAnim : treeXml
+	end
+;;
+
 (* Objects ********************************************************************)
 class item dirName =
 	let itemDir = envString#get "itemDir" in
@@ -50,23 +59,15 @@ class item dirName =
 		
 		val mutable taken = false
 		val mutable name = ""
-		val mutable y = 0
-		val mutable x = 0
 		
 		initializer
 			name <- (data#getXmlElement ())#getAttr "name";
-			x <- int_of_string(((data#getFirstByName "Position")#
-				getXmlElement ())#getAttr "x");
-			y <- int_of_string(((data#getFirstByName "Position")#
-				getXmlElement ())#getAttr "y");
 			print_string ("├ Item "^dirName^" loaded.\n")
 		
 		method getDir =
 			dir
 		method getName =
 			name
-		method getPosition =
-			(x,y)
 		method getDataAnim =
 			animation
 	end
@@ -98,6 +99,8 @@ class character dirName =
 			name
 		method getDataAnim =
 			animation
+		method sayHello =
+			"hello"
 	end
 ;;
 
