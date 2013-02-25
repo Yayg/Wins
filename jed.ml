@@ -342,31 +342,41 @@ class sdlWindow width height =
 					in
 					self#displayImage clip surface position;
 					browser q
-			in browser (displayData#elements ())
+			in 
+			blit_surface ~src:background ~dst:(!window) ();
+			browser (displayData#elements ())
 		
 		(** Storing Data **)
-		method setBackgroud surface =
+		method setBackground surface =
 			background <- surface
 		
 		method addItemToDisplay name (x,y) =
-			let item = getItem name in
+			let item = (getItem name :> displayable) in
+			let animation = item#getDataAnim#getElementById "idle" in
+			let w = int_of_string(animation#getAttr "w")
+			and h = int_of_string(animation#getAttr "h")
+			in
 			let element =
 				{
-					data = (item :> displayable);
-					img = rect 0 0 0 0; 
+					data = item;
+					img = rect 0 0 w h; 
 					pos = (x,y); 
-					updating = (new displayUpdating window (item :> displayable))
+					updating = (new displayUpdating window item)
 				}
 			in
 			displayData#set name element
 		method addCharacterToDisplay name (x,y) =
-			let character = getCharacter name in
+			let character = (getCharacter name :> displayable) in
+			let animation = character#getDataAnim#getElementById "idle" in
+			let w = int_of_string(animation#getAttr "w")
+			and h = int_of_string(animation#getAttr "h")
+			in
 			let element =
 				{
-					data = (character :> displayable);
-					img = rect 0 0 0 0;
+					data = character;
+					img = rect 0 0 w h;
 					pos = (x,y);
-					updating = (new displayUpdating window (character :> displayable))
+					updating = (new displayUpdating window character)
 				}
 			in displayData#set name element
 		
@@ -383,7 +393,6 @@ class sdlWindow width height =
 		method moveTo objectName newPosition =
 			let actualPosition = (displayData#get objectName).pos in
 			(displayData#get objectName).updating#getLine actualPosition newPosition
-		
 		
 		(** Window Manager **)
 		method getSurface =
@@ -408,6 +417,9 @@ class sdlWindow width height =
 		method private loop () = 
 			while run do
 				ticks <- 17 + Sdltimer.get_ticks (); (*17 ms -> 60fps*)
+				
+				self#updataDisplayData;
+				self#display;
 				flip !window;
 				
 				begin match Sdlevent.poll () with
@@ -416,7 +428,7 @@ class sdlWindow width height =
 					| _ -> ()
 				end;
 				
-				while (Sdltimer.get_ticks ()) <= ticks do () done
+				while (Sdltimer.get_ticks ()) <= ticks do () done;
 			done
 	end
 ;;
@@ -436,3 +448,12 @@ let getWindow () = match !window with
 			|None -> raise Sdl_not_initialized
 			|Some a -> a
 ;;
+
+let test () =
+	let _ = initW () in
+	let w = getWindow ()
+	and b = loadImage "./game/game.png" in
+	w#setBackground b;
+	w
+;;
+

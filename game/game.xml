@@ -1,5 +1,5 @@
 <game name="The Fabulous Fake Game" icon="icon.png">
-	<dimension x="1000" y="600"/>
+	<dimension x="1000" y="570"/>
 	
 	<itemDir href="items/"/>
 	<characterDir href="characters/"/>
