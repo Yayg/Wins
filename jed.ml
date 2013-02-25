@@ -350,7 +350,7 @@ class sdlWindow width height =
 			exLoop <- Some (Thread.create self#loop ())
 		
 		
-		(** Update Data **)
+		(** Update Display **)
 		method private updataDisplayData =
 			let rec browser = function
 				| [] -> ()
@@ -411,6 +411,16 @@ class sdlWindow width height =
 			displayData#remove name
 		method fushDisplayData () =
 			displayData#clear ()
+		
+		(** Update Data **)
+		method setAnimation objectName animationName =
+			(displayData#get objectName).updating#setAnimation animationName
+		method placeTo objectName newPosition =
+			(displayData#get objectName).pos <- newPosition
+		method moveTo objectName newPosition =
+			let actualPosition = (displayData#get objectName).pos in
+			(displayData#get objectName).updating#getLine actualPosition newPosition
+		
 		
 		(** Window Manager **)
 		method getSurface =
