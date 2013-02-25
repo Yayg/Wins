@@ -57,6 +57,41 @@ class displayUpdating window element =
 		val mutable h = 0
 		
 		(* Draw Moving *)
+		
+		method getLine (c,d) (e,f) = 
+			let rec line (a,b) (x,y) =
+		match (a,b,x,y) with
+		(* diagonales *)
+		|(a,b,x,y) when (x > a)&&(y > b) -> 
+			push (a,b) (positionUpdate);
+			line (a + 1,b + 1) (x,y)
+		|(a,b,x,y) when (x > a)&&(y < b) -> 
+			push (a,b) (positionUpdate);
+			line (a + 1,b - 1) (x,y)
+		|(a,b,x,y) when (x < a)&&(y < b) -> 
+			push (a,b) (positionUpdate);
+			line (a - 1,b - 1) (x,y)
+		|(a,b,x,y) when (x < a)&&(y > b) -> 
+			push (a,b) (positionUpdate);
+			line (a - 1,b + 1) (x,y)
+		(* hauteurs *)
+		|(a,b,x,y) when (x = a)&&(y > b) -> 
+			push (a,b) (positionUpdate);
+			line (a,b + 1) (x,y)
+		|(a,b,x,y) when (x = a)&&(y < b) -> 
+			push (a,b) (positionUpdate);
+			line (a,b - 1) (x,y)
+		|(a,b,x,y) when (x > a)&&(y = b) -> 
+			push (a,b) (positionUpdate);
+			line (a + 1,b) (x,y)
+		|(a,b,x,y) when (x < a)&&(y = b) -> 
+			push (a,b) (positionUpdate);
+			line (a - 1,b) (x,y)
+		|_ -> 
+			push (a,b) (positionUpdate);
+			in line (c,d) (e,f)
+			
+			(*
 		method getLine (a,b) (x,y) =
 			let dx = ref (x - a) 
 			and dy = ref (y - b)
@@ -236,7 +271,9 @@ class displayUpdating window element =
 						push (!a,!b) (positionUpdate);
 						done
 					end
-				end
+				end;
+			push (!x,!y) (positionUpdate)
+			*)
 		
 		(* Update Methods *)
 		method setAnimation name =
@@ -437,6 +474,46 @@ class sdlWindow width height =
 let window = ref None
 
 (* Functions ******************************************************************)
+
+let rec line (a,b) (x,y) = 
+		match (a,b,x,y) with
+		(* diagonales *)
+		|(a,b,x,y) when (x > a)&&(y > b) -> 
+			print_string(string_of_int(a)^","^string_of_int(b)); 
+			print_newline();
+			line (a + 1,b + 1) (x,y)
+		|(a,b,x,y) when (x > a)&&(y < b) -> 
+			print_string(string_of_int(a)^","^string_of_int(b)); 
+			print_newline();
+			line (a + 1,b - 1) (x,y)
+		|(a,b,x,y) when (x < a)&&(y < b) -> 
+			print_string(string_of_int(a)^","^string_of_int(b)); 
+			print_newline();
+			line (a - 1,b - 1) (x,y)
+		|(a,b,x,y) when (x < a)&&(y > b) -> 
+			print_string(string_of_int(a)^","^string_of_int(b)); 
+			print_newline();
+			line (a - 1,b + 1) (x,y)
+		(* hauteurs *)
+		|(a,b,x,y) when (x = a)&&(y > b) -> 
+			print_string(string_of_int(a)^","^string_of_int(b)); 
+			print_newline();
+			line (a,b + 1) (x,y)
+		|(a,b,x,y) when (x = a)&&(y < b) -> 
+			print_string(string_of_int(a)^","^string_of_int(b)); 
+			print_newline();
+			line (a,b - 1) (x,y)
+		|(a,b,x,y) when (x > a)&&(y = b) -> 
+			print_string(string_of_int(a)^","^string_of_int(b)); 
+			print_newline();
+			line (a + 1,b) (x,y)
+		|(a,b,x,y) when (x < a)&&(y = b) -> 
+			print_string(string_of_int(a)^","^string_of_int(b)); 
+			print_newline();
+			line (a - 1,b) (x,y)
+		|_ -> 
+			print_string(string_of_int(a)^","^string_of_int(b)); 
+			print_newline()
 
 let loadImage path = 
 	load_image path
