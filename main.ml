@@ -101,10 +101,10 @@ let initialization execDir =
 				setup execDir;
 			with 
 				| Not_found ->
-					print_string "There is no file 'game.xml' in the directory of the game.\n";
+					print_string "☢ There is no file 'game.xml' in the directory of the game.\n";
 					exit 2
 				| _ -> 
-					print_string "The file 'game.xml' is invalid.\n";
+					print_string "☢ The file 'game.xml' is invalid.\n";
 					exit 2
 			);
 			main ()
