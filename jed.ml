@@ -58,222 +58,71 @@ class displayUpdating window element =
 		
 		(* Draw Moving *)
 		
-		method getLine (c,d) (e,f) = 
-			let rec line (a,b) (x,y) =
-		match (a,b,x,y) with
-		(* diagonales *)
-		|(a,b,x,y) when (x > a)&&(y > b) -> 
-			push (a,b) (positionUpdate);
-			line (a + 1,b + 1) (x,y)
-		|(a,b,x,y) when (x > a)&&(y < b) -> 
-			push (a,b) (positionUpdate);
-			line (a + 1,b - 1) (x,y)
-		|(a,b,x,y) when (x < a)&&(y < b) -> 
-			push (a,b) (positionUpdate);
-			line (a - 1,b - 1) (x,y)
-		|(a,b,x,y) when (x < a)&&(y > b) -> 
-			push (a,b) (positionUpdate);
-			line (a - 1,b + 1) (x,y)
-		(* hauteurs *)
-		|(a,b,x,y) when (x = a)&&(y > b) -> 
-			push (a,b) (positionUpdate);
-			line (a,b + 1) (x,y)
-		|(a,b,x,y) when (x = a)&&(y < b) -> 
-			push (a,b) (positionUpdate);
-			line (a,b - 1) (x,y)
-		|(a,b,x,y) when (x > a)&&(y = b) -> 
-			push (a,b) (positionUpdate);
-			line (a + 1,b) (x,y)
-		|(a,b,x,y) when (x < a)&&(y = b) -> 
-			push (a,b) (positionUpdate);
-			line (a - 1,b) (x,y)
-		|_ -> 
-			push (a,b) (positionUpdate);
-			in line (c,d) (e,f)
+		let getLine (g,h) (i,j) = 
+		
+			let rec line (a,b) (x,y) = 
+					match (a,b,x,y) with
+						(* diagonales *)
+						|(a,b,x,y) when (x > a)&&(y > b) -> 
+							push (a,b) (positionUpdate);
+							line (a + 1,b + 1) (x,y)
+						|(a,b,x,y) when (x > a)&&(y < b) -> 
+							push (a,b) (positionUpdate);
+							line (a + 1,b - 1) (x,y)
+						|(a,b,x,y) when (x < a)&&(y < b) -> 
+							push (a,b) (positionUpdate);
+							line (a - 1,b - 1) (x,y)
+						|(a,b,x,y) when (x < a)&&(y > b) -> 
+							push (a,b) (positionUpdate);
+							line (a - 1,b + 1) (x,y)
+						(* hauteurs *)
+						|(a,b,x,y) when (x = a)&&(y > b) -> 
+							push (a,b) (positionUpdate);
+							line (a,b + 1) (x,y)
+						|(a,b,x,y) when (x = a)&&(y < b) -> 
+							push (a,b) (positionUpdate);
+							line (a,b - 1) (x,y)
+						|(a,b,x,y) when (x > a)&&(y = b) -> 
+							push (a,b) (positionUpdate);
+							line (a + 1,b) (x,y)
+						|(a,b,x,y) when (x < a)&&(y = b) -> 
+							push (a,b) (positionUpdate);
+							line (a - 1,b) (x,y)
+						|_ -> 
+							push (a,b) (positionUpdate);
 			
-			(*
-		method getLine (a,b) (x,y) =
-			let dx = ref (x - a) 
-			and dy = ref (y - b)
-			and a = ref a
-			and b = ref b
-			and x = ref x
-			and y = ref y
+			and func (a,b) (x,y) =
+				let a = float_of_int (a)
+				and b = float_of_int (b)
+				and x = float_of_int (x)
+				and y = float_of_int (y)
+				in
+				let p = (y -. b)/.(x -. a)
+				in 
+				let o = (y -. p *. x)
+				in
+				let f (h:int) = int_of_float(p *. (float_of_int(h)) +. o)
+				in
+				f
+				in 
+				
+				let f = func (g,h) (i,j)
+				
+				in
+			
+			let rec final (a,b) (x,y) =
+				match (a,b) with 
+				|(a,b) when (a = x)||(b = y) -> line (a,b) (x,y);
+				|(a,b) ->
+				let c = a + 1
+				in
+				let d = f a
+				in
+				line (a,b) (c,d);
+				final (c,d) (x,y)
 			in
-			if (!dx <> 0) then
-				begin
-				if (!dx > 0) then 
-					begin
-					if (!dy <> 0) then
-						begin
-						if (!dy > 0) then
-							begin
-							if (!dx >= !dy) then (* 1er octant *)
-								let e = ref !dx 
-								in
-								dx := !e * 2;
-								dy := !dy * 2;
-								while (!a <> !x) do
-									push (!a,!b) (positionUpdate);
-									begin
-									a := !a + 1;
-									e := !e - !dy;
-									if ( !e < 0) then
-										b := !b + 1 ;
-										e := !e + !dx
-									end
-								done
-							else (* 2eme octant *)
-								let e = ref !dy
-								in
-								dx := !dx * 2;
-								dy := !e * 2 ;
-								while (!b <> !y) do
-									push (!a,!b) (positionUpdate);
-									begin
-									b := !b + 1;
-									e := !e - !dx;
-									if (!e < 0) then
-										e := !e + !dy;
-										a := !a + 1;
-										end
-								done
-							end
-						else (* dy < 0 *)
-							begin
-							if (!dx >= (-1) * !dy) then (* 8eme octant *)
-								let e = ref !dx 
-								in
-								dx := !e * 2;
-								dy := !dy * 2;
-								while (!a <> !x) do
-									push (!a,!b) (positionUpdate);
-									begin
-									a := !a + 1 ;
-									e := !e + !dy ;
-									if (!e < 0) then
-										b := !b - 1;
-										e := !e + !dx;
-									end
-								done
-							else (* 7eme octant *)
-								let e = ref !dy
-								in
-								dx := !dx * 2;
-								dy := !e * 2;
-								while (!b <> !y) do
-									push (!a,!b) (positionUpdate);
-									begin
-									b := !b - 1;
-									e := !e + !dy;
-									if (!e > 0) then
-										e := !e + !dx;
-										a := !a + 1;
-									end
-								done
-							end
-						end
-					else (* dy = 0 *)
-						while (!a <> !x) do
-							a := !a + 1;
-							push (!a,!b) (positionUpdate);
-						done
-					end
-				else (* dx < 0 *)
-					begin
-					if (!dy <> 0) then
-						begin
-						if (!dy > 0) then
-							begin
-							if ((-1) * !dx >= !dy) then (* 4eme octant *)
-								let e = ref !dx 
-								in
-								dx := !e * 2;
-								dy := !dy * 2;
-								while (!a <> !x) do
-									push (!a,!b) (positionUpdate);
-									begin
-									a := !a - 1 ;
-									e := !e + !dy;
-									if (!e >= 0) then
-										e := !e + !dx;
-										b := !b + 1;
-									end
-								done
-							else (* 3eme octant *)
-								let e = ref !dy 
-								in
-								dx := !dx * 2;
-								dy := !e * 2;
-								while (!b <> !y) do
-									push (!a,!b) (positionUpdate);
-									begin
-									b := !b + 1 ;
-									e := !e + !dx;
-									if (!e <= 0) then
-										e := !e + !dy;
-										a := !a - 1;
-									end
-								done
-							end
-						else (* dy < 0 *)
-							begin
-							if (!dx <= !dy) then (* 5eme octant *)
-								let e = ref !dx
-								in
-								dx := !e * 2;
-								dy := !dy * 2;
-								while (!a <> !x) do
-									push (!a,!b) (positionUpdate);
-									begin
-									a := !a - 1 ;
-									e := !e + !dy;
-									if (!e >= 0) then
-										e := !e + !dx;
-										b := !b - 1;
-									end
-								done
-							else
-								let e = ref !dy
-								in
-								dx := !dx * 2;
-								dy := !e * 2;
-								while (!b <> !y) do
-									push (!a,!b) (positionUpdate);
-									begin
-									b := !b - 1;
-									e := !e - !dx;
-									if (!e >= 0) then
-										e := !e + !dy;
-										a := !a - 1;
-									end
-								done
-							end
-						end
-					else (* dy = 0 *)
-						while (!a <> !b) do
-							push (!a,!b) (positionUpdate);
-						done
-					end
-				end
-			else
-				begin
-				if (!dy <> 0) then
-					begin
-					if (!dy > 0) then
-						while (!b <> !y) do
-						b := !b + 1;
-						push (!a,!b) (positionUpdate);
-						done
-					else (* dy = 0 *)
-						while (!b <> !y) do
-						b := !b - 1;
-						push (!a,!b) (positionUpdate);
-						done
-					end
-				end;
-			push (!x,!y) (positionUpdate)
-			*)
+			final (g,h) (i,j)
+			
 		
 		(* Update Methods *)
 		method setAnimation name =
@@ -463,9 +312,11 @@ let window = ref None
 
 (* Functions ******************************************************************)
 
-let rec line (a,b) (x,y) = 
-		match (a,b,x,y) with
-		(* diagonales *)
+let getLine (g,h) (i,j) = 
+		
+			let rec line (a,b) (x,y) = 
+				match (a,b,x,y) with
+				(* diagonales *)
 		|(a,b,x,y) when (x > a)&&(y > b) -> 
 			print_string(string_of_int(a)^","^string_of_int(b)); 
 			print_newline();
@@ -502,6 +353,39 @@ let rec line (a,b) (x,y) =
 		|_ -> 
 			print_string(string_of_int(a)^","^string_of_int(b)); 
 			print_newline()
+			
+			and func (a,b) (x,y) =
+				let a = float_of_int (a)
+				and b = float_of_int (b)
+				and x = float_of_int (x)
+				and y = float_of_int (y)
+				in
+				let p = (y -. b)/.(x -. a)
+				in 
+				let o = (y -. p *. x)
+				in
+				let f (h:int) = int_of_float(p *. (float_of_int(h)) +. o)
+				in
+				f
+				in 
+				
+				let f = func (g,h) (i,j)
+				
+				in
+			
+			let rec final (a,b) (x,y) =
+				match (a,b) with 
+				|(a,b) when (a = x)||(b = y) -> line (a,b) (x,y);
+				|(a,b) ->
+				let c = a + 1
+				in
+				let d = f a
+				in
+				line (a,b) (c,d);
+				final (c,d) (x,y)
+			in
+			final (g,h) (i,j)
+
 
 let loadImage path = 
 	load_image path
