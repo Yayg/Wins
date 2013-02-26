@@ -83,7 +83,7 @@ let setup execDir =
 	); print_string "┝┅ game data loaded.\n";
 	
 	(* End Setup ! *)
-	print_string ("╘══ "^(envString#get "name")^" is loaded in "^envString#get "dir"^"\n");
+	print_string ("╘══ "^(envString#get "name")^" is loaded in "^envString#get "dir"^"\n")
 ;;
 let get_arguments () = 
 	let arg = ref "" in
