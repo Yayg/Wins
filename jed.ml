@@ -58,7 +58,7 @@ class displayUpdating window element =
 		
 		(* Draw Moving *)
 		
-		let getLine (g,h) (i,j) = 
+		method getLine (g,h) (i,j) = 
 		
 			let rec line (a,b) (x,y) = 
 					match (a,b,x,y) with
