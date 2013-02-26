@@ -112,14 +112,18 @@ class displayUpdating window element =
 			
 			let rec final (a,b) (x,y) =
 				match (a,b) with 
-				|(a,b) when (a = x)||(b = y) -> line (a,b) (x,y);
+				|(a,b) when (a = x)||(b = y) -> 
+					line (a,b) (x,y)
+				|(a,b) when x > a ->
+					let c = a + 1 in
+					let d = f a in
+					line (a,b) (c,d);
+					final (c,d) (x,y)
 				|(a,b) ->
-				let c = a + 1
-				in
-				let d = f a
-				in
-				line (a,b) (c,d);
-				final (c,d) (x,y)
+					let c = a - 1 in
+					let d = f a in
+					line (a,b) (c,d);
+					final (c,d) (x,y)
 			in
 			final (g,h) (i,j)
 			
@@ -387,14 +391,18 @@ let getLine (g,h) (i,j) =
 			
 			let rec final (a,b) (x,y) =
 				match (a,b) with 
-				|(a,b) when (a = x)||(b = y) -> line (a,b) (x,y);
+				|(a,b) when (a = x)||(b = y) -> 
+					line (a,b) (x,y)
+				|(a,b) when x > a->
+					let c = a + 1 in
+					let d = f a in
+					line (a,b) (c,d);
+					final (c,d) (x,y)
 				|(a,b) ->
-				let c = a + 1
-				in
-				let d = f a
-				in
-				line (a,b) (c,d);
-				final (c,d) (x,y)
+					let c = a - 1 in
+					let d = f a in
+					line (a,b) (c,d);
+					final (c,d) (x,y)
 			in
 			final (g,h) (i,j)
 
