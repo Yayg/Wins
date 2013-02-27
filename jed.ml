@@ -156,7 +156,7 @@ class displayUpdating window element =
 		method getActions =
 			let actionAnimation =
 				if is_empty animationUpdate then
-					if loopAnimation then
+					if loopAnimation && not(is_empty positionUpdate) then
 						begin
 							self#setAnimation nameAnimation;
 							pop animationUpdate
@@ -426,3 +426,7 @@ let test () =
 	w
 ;;
 
+let lol w (x,y) =
+	let _ = w#moveTo "loly" (x,y) in
+	w#setAnimation "loly" "idle"
+;;
