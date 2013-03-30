@@ -252,6 +252,22 @@ let luaEnv = LuaL.newstate ();;
 LuaL.openlibs luaEnv;;
 
 let registerFunction name func = 
-	Lua.register luaEnv name !func
+	Lua.register luaEnv name func
 ;;
+
+let runScript path =
+	LuaL.dofile luaEnv path
+;;
+(* Test ***********************************************************************)
+let print_debug state =
+	let str = (Lua.tostring state 1) 
+	and printStr = function
+		| Some s -> print_string s
+		| _ -> ()
+	in printStr str;
+	0
+;;
+
+registerFunction "printDebug" print_debug;;
+
 
