@@ -110,7 +110,7 @@ class room dirName =
 		val dir = roomDir//dirName
 		val data = 
 			(new treeXml (roomDir//dirName//"info.xml"))#getFirstByName "Room"
-		val script = load_file (roomDir//dirName//"script.lua")
+		val script = newLua(roomDir//dirName//"script.lua")
 		
 		val mutable name = ""
 		val mutable background = ""

@@ -251,23 +251,48 @@ let luaEnv = LuaL.newstate ();;
 (* Functions ******************************************************************)
 LuaL.openlibs luaEnv;;
 
-let registerFunction name func = 
+let getGlobalRuntime () =
+	luaEnv
+;;
+
+let registerGlobalFunction name func = 
 	Lua.register luaEnv name func
 ;;
 
-let runScript path =
+let addGlobalScript path =
 	LuaL.dofile luaEnv path
 ;;
-(* Test ***********************************************************************)
-let print_debug state =
-	let str = (Lua.tostring state 1) 
-	and printStr = function
-		| Some s -> print_string s
-		| _ -> ()
-	in printStr str;
-	0
+
+let doGlobalString str =
+	LuaL.dostring luaEnv str
 ;;
 
-registerFunction "printDebug" print_debug;;
+let print_debug state =
+        let str = (Lua.tostring state 1)
+        and printStr = function
+                | Some s -> print_string s
+                | _ -> ()
+        in printStr str;
+        0
+in registerGlobalFunction "printDebug" print_debug;;
 
+(* Class **********************************************************************)
+class luaRuntime =
+	object (self)
+		val env = Lua.newthread (getGlobalRuntime ())
+		
+		method registreFunction name func =
+			Lua.register env name func
+		method doString str =
+			LuaL.dostring env str 
+		method addScript path =
+			LuaL.dofile env path
 
+	end
+;;
+
+let newLua scriptPath =
+	let l = new luaRuntime in
+	ignore(l#addScript scriptPath);
+	l
+;;
