@@ -249,8 +249,6 @@ class treeXml xmlFile =
 let luaEnv = LuaL.newstate ();;
 
 (* Functions ******************************************************************)
-LuaL.openlibs luaEnv;;
-
 let getGlobalRuntime () =
 	luaEnv
 ;;
@@ -296,3 +294,16 @@ let newLua scriptPath =
 	ignore(l#addScript scriptPath);
 	l
 ;;
+
+(* InitGlobal Lua Runtime ****************************************************)
+let loadGlobalScripts scriptDir =
+	let _ = LuaL.openlibs luaEnv in
+	let elements = Array.to_list (Sys.readdir scriptDir) in
+	let rec browser = function
+		| [] -> []
+		| f::q when Sys.file_exists ((Filename.concat scriptDir) f) ->
+			ignore(addGlobalScript (scriptDir//f)); browser q
+		| _::q -> browser q
+	in browser elements
+;;
+	 
