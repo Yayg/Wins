@@ -30,6 +30,11 @@ type ('a) binaryTree =
 	| VoidTree
 ;;
 
+type 'a graph = 
+	| Point of 'a * 'a graph list
+	| Void
+;;
+
 (* Objects ********************************************************************)
 class ['a] dictionary = 
 	object (self)
@@ -77,6 +82,7 @@ class ['a] dictionary =
 			in data := browser !data
 	end
 ;;
+
 
 (* Functions ******************************************************************)
 let load_file file =
