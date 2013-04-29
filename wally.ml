@@ -252,7 +252,7 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 		val mutable tree = new treeXml (xmlFile)
 		val mutable nodes = []
 		val mutable distance = new dictionary (* (name,(links,distance) list)) dictionary *)
-		val mutable links = new dictionary (* (name,((x,y),links list)) dictionary *)
+		val mutable links = new dictionary (* (p,((x,y),links list)) dictionary *)
 		
 			initializer
 			self#getNodes;
@@ -301,11 +301,18 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 						((h,(self#getDistance point p)) :: (browser point t))
 					end
 			in 
-			(name,(browser (x,y) l))
+			distance#set name (-1,(browser (x,y) l))
 			
 		method getDistance (x,y) (a,b) =
-			let square x = x *. x in
-			square(float_of_int(((y-b)*(y-b))*((x-a)*(x-a))))
+			let d1 = (y-b) and d2 = (x-a) in
+			if ((d1 < 0)&&(d2 < 0)) then
+					-(d1 + d2)
+			else if (d1 < (0)) then
+				-(d1) + d2
+			else if (d1 < (0)) then
+				-(d2) + d1
+			else
+				d1 + d2
 			
 		method initDistance =
 			let rec coor = function
@@ -349,7 +356,7 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 			nodes
 		
 		method getD =
-			distance
+			(distance : (int * (string * int) list) dictionary)
 		method getLinks =
 			links
 		method getCoor name =
