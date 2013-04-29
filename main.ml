@@ -71,12 +71,19 @@ let setup execDir =
 	envString#set "itemDir" (execDir//((xmlGame#getFirstByName "itemDir")#getXmlElement ())#getAttr "href");
 	envString#set "characterDir" (execDir//((xmlGame#getFirstByName "characterDir")#getXmlElement ())#getAttr "href");
 	envString#set "roomDir" (execDir//((xmlGame#getFirstByName "roomDir")#getXmlElement ())#getAttr "href");
+	envString#set "fontDir" (execDir//(xmlGame#getFirstByName "fontDir")#getAttr "href");
+	
 	print_string "┝┅ Runtime variables loaded.\n";
+	
+	(* SdlTtf *)
+	Sdlttf.init ();
+	at_exit (Sdlttf.quit);
 	
 	(* Setup Item and Character object *)
 	(try 
 		loadItems ();
 		loadCharacters ();
+		Jed.loadFonts (envString#get "fontDir");
 	with 
 		| Failure e -> print_string ("☢ Error during loading data game : "^e^" \n"); exit 2
 		| _ -> print_string "☢ Error during loading data game...\n"; exit 2
@@ -116,4 +123,5 @@ let initialization execDir =
 		); exit 2
 ;;
 
+(* Run !!! *)
 initialization (get_arguments ())

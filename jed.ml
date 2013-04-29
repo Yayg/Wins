@@ -199,7 +199,9 @@ class sdlWindow width height =
 		val displayData = new dictionary
 		
 		initializer
+			let mask = Sdlevent.make_mask (Sdlevent.QUIT_EVENT::Sdlevent.MOUSEBUTTONUP_EVENT::Sdlevent.KEYUP_EVENT::[]) in
 			set_caption (envString#get "name") (envString#get "icon");
+			Sdlevent.enable_events mask;
 			exLoop <- Some (Thread.create self#loop ())
 		
 		
@@ -303,6 +305,10 @@ class sdlWindow width height =
 			and dst_rect = rect x y 0 0 in
 			blit_surface ~src ~src_rect:clip ~dst ~dst_rect ()
 		
+		(** Read Input User and run the function corresponding with event **)
+		method private inputUser = function 
+			| _ -> ()
+		
 		(** Loop Displaying Event **)
 		method private loop () = 
 			while run do
@@ -315,7 +321,7 @@ class sdlWindow width height =
 				begin match Sdlevent.poll () with
 					| Some Sdlevent.QUIT -> Sdl.quit (); run <- false
 					| None -> ()
-					| _ -> ()
+					| event -> self#inputUser event
 				end;
 				
 				while (Sdltimer.get_ticks ()) <= ticks do () done;
@@ -325,87 +331,24 @@ class sdlWindow width height =
 
 (* Global Variables ***********************************************************)
 let window = ref None
+let fonts = new dictionary
 
 (* Functions ******************************************************************)
 
-let getLine (g,h) (i,j) = 
-		
-			let rec line (a,b) (x,y) = 
-				match (a,b,x,y) with
-				(* diagonales *)
-		|(a,b,x,y) when (x > a)&&(y > b) -> 
-			print_string(string_of_int(a)^","^string_of_int(b)); 
-			print_newline();
-			line (a + 1,b + 1) (x,y)
-		|(a,b,x,y) when (x > a)&&(y < b) -> 
-			print_string(string_of_int(a)^","^string_of_int(b)); 
-			print_newline();
-			line (a + 1,b - 1) (x,y)
-		|(a,b,x,y) when (x < a)&&(y < b) -> 
-			print_string(string_of_int(a)^","^string_of_int(b)); 
-			print_newline();
-			line (a - 1,b - 1) (x,y)
-		|(a,b,x,y) when (x < a)&&(y > b) -> 
-			print_string(string_of_int(a)^","^string_of_int(b)); 
-			print_newline();
-			line (a - 1,b + 1) (x,y)
-		(* hauteurs *)
-		|(a,b,x,y) when (x = a)&&(y > b) -> 
-			print_string(string_of_int(a)^","^string_of_int(b)); 
-			print_newline();
-			line (a,b + 1) (x,y)
-		|(a,b,x,y) when (x = a)&&(y < b) -> 
-			print_string(string_of_int(a)^","^string_of_int(b)); 
-			print_newline();
-			line (a,b - 1) (x,y)
-		|(a,b,x,y) when (x > a)&&(y = b) -> 
-			print_string(string_of_int(a)^","^string_of_int(b)); 
-			print_newline();
-			line (a + 1,b) (x,y)
-		|(a,b,x,y) when (x < a)&&(y = b) -> 
-			print_string(string_of_int(a)^","^string_of_int(b)); 
-			print_newline();
-			line (a - 1,b) (x,y)
-		|_ -> 
-			print_string(string_of_int(a)^","^string_of_int(b)); 
-			print_newline()
-			
-			and func (a,b) (x,y) =
-				let a = float_of_int (a)
-				and b = float_of_int (b)
-				and x = float_of_int (x)
-				and y = float_of_int (y)
-				in
-				let p = (y -. b)/.(x -. a)
-				in 
-				let o = (y -. p *. x)
-				in
-				let f (h:int) = int_of_float(p *. (float_of_int(h)) +. o)
-				in
-				f
-				in 
-				
-				let f = func (g,h) (i,j)
-				
-				in
-			
-			let rec final (a,b) (x,y) =
-				match (a,b) with 
-				|(a,b) when (a = x)||(b = y) -> 
-					line (a,b) (x,y)
-				|(a,b) when x > a->
-					let c = a + 1 in
-					let d = f a in
-					line (a,b) (c,d);
-					final (c,d) (x,y)
-				|(a,b) ->
-					let c = a - 1 in
-					let d = f a in
-					line (a,b) (c,d);
-					final (c,d) (x,y)
-			in
-			final (g,h) (i,j)
-
+let loadFonts fontDir =
+	let data = 
+		try (new Wally.treeXml (fontDir//"info.xml"))#getFirstByName "fonts"
+		with _ -> failwith ("read info.xml of fonts failed.")
+	in
+	let rec browser = function 
+		| e when e#is_empty () -> ()
+		| e -> 
+			let name = e#getAttr "name"
+			and size = int_of_string (e#getAttr "size")
+			and path = e#getAttr "file"
+			in fonts#set name (Sdlttf.open_font path size);
+			browser (e#getNextBrother ())
+	in browser (data#getChildren ())
 
 let loadImage path = 
 	load_image path
