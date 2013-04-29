@@ -21,6 +21,8 @@
 ################################################################################
 *)
 
+open Char
+open String
 open Lua_api
 open Tool
 open Expat
@@ -243,6 +245,119 @@ class treeXml xmlFile =
 			in self#newXmlTree (browser data)
 	end
 ;;
+
+class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begin/graph.xml";; *)
+	object (self)
+		
+		val mutable tree = new treeXml (xmlFile)
+		val mutable nodes = []
+		val mutable distance = new dictionary (* (name,(links,distance) list)) dictionary *)
+		val mutable links = new dictionary (* (name,((x,y),links list)) dictionary *)
+		
+			initializer
+			self#getNodes;
+			tree <- tree#getChildren ();
+			self#init;
+			self#dicoFusion
+		
+		method init =
+			let rec browser = function
+				| t when t#getElementsByName "node" = [] -> ()
+				| t ->
+				begin
+					let attrs = (t#getXmlElement ())#getAttrs () in
+					let key :: l :: x :: y :: [] = attrs in
+					let element =
+					(
+					(int_of_string(t#getAttr(x)),int_of_string(t#getAttr(y))),
+					self#strParse (t#getAttr(l))
+					)
+					in
+					links#set (t#getAttr(key)) element;
+					browser (t#getNextBrother ())
+				end
+			in
+			browser tree
+			
+		method dicoFusion =
+			let dist = self#initDistance and keys = links#keys in
+			let rec browser = function
+				| [] -> ()
+				| h :: t ->
+					begin
+						let (d,link) = (links#get h) in
+						self#addE h link d;
+						browser t
+					end
+			in 
+			browser (keys ())
+			
+		method addE name l (x,y) = (* (name,((x,y),links list)) dictionary *)
+			let rec browser point = function
+				| [] -> []
+				| h :: t ->
+					begin
+						let (p,_) = (links#get h) in
+						((h,(self#getDistance point p)) :: (browser point t))
+					end
+			in 
+			(name,(browser (x,y) l))
+			
+		method getDistance (x,y) (a,b) =
+			let square x = x *. x in
+			square(float_of_int(((y-b)*(y-b))*((x-a)*(x-a))))
+			
+		method initDistance =
+			let rec coor = function
+				| [] -> []
+				| (c,_) :: t -> c :: coor t
+			in
+			let rec browser = function
+				| ([],[]) -> []
+				| (a::b,c::d) -> (a,c) :: browser (b,d)
+				| (_,_) -> 
+					print_string("Error : Xml file not correctly written. You should have coordinates for each point.");
+					raise AttrNotFound
+			in 
+			browser (links#keys (),coor (links#elements ()))
+			
+		method strParse str =
+			begin
+				let i = ref (String.length str - 1) and acc = ref "" and final = ref [] in
+				while (0 <= !i) do
+					(if (str.[!i] = ',') then
+						(final := !acc :: !final;
+						acc := "")
+					else
+						acc := Char.escaped(str.[!i]) ^ !acc);
+					i := !i - 1
+				done;
+				final := !acc :: !final;
+				!final
+			end
+		method getNodes =
+			print_string(((tree#getFirstByName "graph")#getXmlElement ())#getName ()); (* test de conformité du fichier graph *)
+			nodes <- tree#getElementsByName "node"
+		method getFirst =
+			let n = nodes in
+			match n with
+				| [] -> tree
+				| h::t -> h
+		method getName =
+			tree#getAttr ((tree#getXmlElement ())#getName ())
+		method displayNodes = 
+			nodes
+		
+		method getD =
+			distance
+		method getLinks =
+			links
+		method getCoor name =
+			let (x,_) = links#get name in x
+		
+		
+	end
+
 
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
