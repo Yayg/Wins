@@ -298,7 +298,6 @@ class sdlWindow width height =
 			let (title,_) = get_caption ()
 			in set_caption title icon
 			
-		
 		(** Low Level Displaying **)
 		method private displayImage clip src (x,y) = 
 			let dst = !window
@@ -332,26 +331,44 @@ class sdlWindow width height =
 (* Global Variables ***********************************************************)
 let window = ref None
 let fonts = new dictionary
+let colors = new dictionary
 
 (* Functions ******************************************************************)
 
 let loadFonts fontDir =
-	let data = 
-		try (new Wally.treeXml (fontDir//"info.xml"))#getFirstByName "fonts"
-		with _ -> failwith ("read info.xml of fonts failed.")
+	let (dataF, dataC) = 
+		try (
+			let file = new Wally.treeXml (fontDir//"info.xml") in
+			(file#getFirstByName "fonts", file#getFirstByName "colors")
+		) with _ -> failwith ("read info.xml of fonts failed.")
 	in
-	let rec browser = function 
+	let rec browserF = function 
 		| e when e#is_empty () -> ()
 		| e -> 
 			let name = e#getAttr "name"
 			and size = int_of_string (e#getAttr "size")
 			and path = e#getAttr "file"
 			in fonts#set name (Sdlttf.open_font path size);
-			browser (e#getNextBrother ())
-	in browser (data#getChildren ())
+			browserF (e#getNextBrother ())
+	in 
+	let rec browserC = function
+		| e when e#is_empty () -> ()
+		| e -> 
+			let name = e#getAttr "name"
+			and red = int_of_string(e#getAttr "r")
+			and green = int_of_string(e#getAttr "g")
+			and blue = int_of_string(e#getAttr "b")
+			in colors#set name ((red,green,blue):color);
+			browserC (e#getNextBrother ())
+	in
+	browserF (dataF#getChildren ());
+	browserC (dataC#getChildren ())
+;;
+
 
 let loadImage path = 
 	load_image path
+;;
 
 let initW () =
 	window := Some (new sdlWindow (int_of_string(Zak.envString#get "xScreen")) (int_of_string(Zak.envString#get "yScreen")))
