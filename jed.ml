@@ -36,6 +36,11 @@ open Tool
 (* Exceptions *****************************************************************)
 exception Sdl_not_initialized
 
+(* Globals Variables **********************************************************)
+let window = ref None
+let fonts = new dictionary
+let colors = new dictionary
+
 (* Types **********************************************************************)
 type updateAction =
 	| Position of (int*int)
@@ -43,7 +48,104 @@ type updateAction =
 	| Nop
 ;;
 
+type tirade = {
+	emitter : string;
+	mutable time : int;
+	offs : (int * int);
+	text : string
+	}
+;;
 (* Object *********************************************************************)
+class dialog (xmlDialog:Wally.treeXml) id =
+	object (self)
+	val buffer = Queue.create ()
+	val image = Queue.create ()
+	val mutable computing = None
+	
+	initializer
+		let rec browser = function
+			| e when e#is_empty () -> ()
+			| e -> 
+				let transmitter = (e#getXmlElement ())#getName ()
+				and t = int_of_string((e#getAttr "time"))
+				and x = int_of_string(e#getAttr "x")
+				and y = int_of_string(e#getAttr "y")
+				and str = ((e#getChildren ())#getXmlElement ())#getString ()
+				in
+				add {emitter=transmitter; time=t; offs=(x,y); text=str} buffer;
+				browser (e#getNextBrother ())
+		in let _ = browser (xmlDialog#getElementById id)
+		in computing <- Some (Thread.create (Queue.iter (self#makeSurface)) buffer)
+
+	method is_empty () =
+		Queue.is_empty buffer
+	method update () =
+		let time = (top buffer).time in
+		if time = 0 then
+			(pop buffer, pop image)
+		else
+			let frame = (top buffer, top image) in
+			(top buffer).time <- time-1;
+			frame
+	
+	method private makeSurface frame =
+		let nameChar = frame.emitter
+		and text = frame.text
+		in
+		let (fontN, colorN) = (getCharacter nameChar)#getFont in
+		let font =  fonts#get fontN
+		and color = colors#get colorN
+		in 
+		let size = (Sdlttf.font_height font) / 10
+		and txtS = Sdlttf.render_utf8_solid font text ~fg:color 
+		in let (w, h, _) = surface_dims txtS
+		in let (nw, nh) = (2*size+w, 2*size+h)
+		and offset = rect size size 0 0
+		in let outline = create_RGB_surface_format txtS [`SWSURFACE] ~w:nw ~h:nh
+		in let setPoint (x,y) =
+			let x = x+size
+			and y = y+size
+			in
+			let x =
+				if x < 0 then 0
+				else if x > nw then nw
+				else x
+			and y = 
+				if y < 0 then 0
+				else if y > nh then nh
+				else y
+			in put_pixel_color outline ~x ~y black 
+		and endingWork () =
+			unlock txtS;
+			unlock outline
+		and (i, j, za, zb) = (ref 0, ref 0, ref 0, ref 0)
+		in let getAlpha () =
+			let (_, alpha) = get_RGBA txtS (get_pixel txtS !i !j)
+			in alpha
+		in let _ = 
+			lock txtS;
+			lock outline
+		in let _ = 
+			while !i < w do j := 0;
+				while !j < h do
+					begin
+					if getAlpha () > 0 then za := 0;
+						while !za < size do zb := 0;
+							while !zb < size do
+								setPoint (!za-(size/2), !zb-(size/2));
+							zb := !zb + 1; done;
+						za := !za + 1; done;
+					end;
+				j := !j + 1; done;
+			i := !i + 1; done;
+		in
+		endingWork ();
+		blit_surface ~src:txtS ~dst:outline ~dst_rect:offset ();
+		add outline image
+		
+	end
+;;
+
 class displayUpdating window element =
 	object (self)
 		
@@ -195,7 +297,9 @@ class sdlWindow width height =
 		val mutable run = true
 		val mutable ticks = 0
 		
+		val mutable currentDialog = None
 		val mutable background = get_video_surface ()
+		
 		val displayData = new dictionary
 		
 		initializer
@@ -237,6 +341,19 @@ class sdlWindow width height =
 			in 
 			blit_surface ~src:background ~dst:(!window) ();
 			browser (displayData#elements ())
+		method private displayDialog = match currentDialog with
+			| None -> ()
+			| Some d when d#is_empty () -> currentDialog <- None
+			| Some d -> 
+				let (data, image) = d#update () in
+				let character = data.emitter
+				and offset = (data:tirade).offs
+				in
+				let (ox, oy) = offset
+				and (cx, cy) = (displayData#get character).pos
+				in let position = rect (cx+ox) (cy+oy) 0 0
+				in blit_surface ~src:image ~dst:(!window) ~dst_rect:position ()
+			
 		
 		(** Storing Data **)
 		method setBackground surface =
@@ -278,6 +395,8 @@ class sdlWindow width height =
 			displayData#clear ()
 		
 		(** Update Data **)
+		method setDialog xmlDialog id =
+			currentDialog <- Some (new dialog xmlDialog id)
 		method setAnimation objectName animationName =
 			(displayData#get objectName).updating#setAnimation animationName
 		method placeTo objectName newPosition =
@@ -315,6 +434,7 @@ class sdlWindow width height =
 				
 				self#updataDisplayData;
 				self#display;
+				self#displayDialog;
 				flip !window;
 				
 				begin match Sdlevent.poll () with
@@ -327,11 +447,6 @@ class sdlWindow width height =
 			done
 	end
 ;;
-
-(* Global Variables ***********************************************************)
-let window = ref None
-let fonts = new dictionary
-let colors = new dictionary
 
 (* Functions ******************************************************************)
 
@@ -378,6 +493,7 @@ let getWindow () = match !window with
 			|Some a -> a
 ;;
 
+(* Debug *********************************************************************)
 let test () =
 	let _ = initW () in
 	let w = getWindow ()
