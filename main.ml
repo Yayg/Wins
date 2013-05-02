@@ -75,15 +75,21 @@ let setup execDir =
 	envString#set "itemDir" (execDir//((xmlGame#getFirstByName "itemDir")#getXmlElement ())#getAttr "href");
 	envString#set "characterDir" (execDir//((xmlGame#getFirstByName "characterDir")#getXmlElement ())#getAttr "href");
 	envString#set "roomDir" (execDir//((xmlGame#getFirstByName "roomDir")#getXmlElement ())#getAttr "href");
+	envString#set "fontDir" (execDir//(xmlGame#getFirstByName "fontDir")#getAttr "href");
+	
 	print_string "┝┅ Runtime variables loaded.\n";
 	
 	(* Setup Item and Character object *)
 	(try 
 		loadItems ();
 		loadCharacters ();
+		Jed.loadFonts (envString#get "fontDir");
 	with 
 		| Failure e -> print_string ("☢ Error during loading data game : "^e^" \n"); exit 2
-		| _ -> print_string "☢ Error during loading data game...\n"; exit 2
+		| e -> 
+			let str = Printexc.to_string e in
+			print_string ("☢ Error during loading data game of kind "^str^"\n");
+			exit 2
 	); print_string "┝┅ game data loaded.\n";
 	
 	(* End Setup ! *)
@@ -120,4 +126,5 @@ let initialization execDir =
 		); exit 2
 ;;
 
+(* Run !!! *)
 initialization (get_arguments ())

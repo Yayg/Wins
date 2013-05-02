@@ -43,7 +43,8 @@
 RESULT     = wins
 SOURCES    = tool.ml wally.ml zak.ml jed.ml bobbin.ml main.ml
 
-INCDIRS    = -I +sdl -I /usr/local/lib/ocaml/3.12.1/lua/ -I +expat
+INCDIRS    = -I +sdl -I +lua -I +expat
+
 LIBSOPT    = unix.cmxa threads.cmxa bigarray.cmxa sdl.cmxa sdlloader.cmxa\
              sdlttf.cmxa sdlmixer.cmxa lua.cmxa expat.cmxa str.cmxa
 LIBSTOP    = unix.cma threads.cma bigarray.cma sdl.cma sdlloader.cma sdlttf.cma\

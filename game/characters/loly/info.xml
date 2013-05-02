@@ -1,1 +1,3 @@
-<character name="loly"/>
+<character name="loly">
+	<font name="default" color="red"/>
+</character>
