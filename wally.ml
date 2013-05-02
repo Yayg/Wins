@@ -99,7 +99,7 @@ class treeXml xmlFile =
 				in Element(name, browser (new dictionary) attrs)
 			in 
 			push (Node(element, VoidTree, VoidTree)) stack
-			(*;print_string ("pushStartElement : "^name^"\n")*)
+			;print_string ("pushStartElement : "^name^"\n")
 		method private pushText stack text =
 			if (text <> "")&&(text <> "\n")&&(text <> " ")&&(text <> "	") then
 			(*Debug*print_string ("pushText : "^text^"\n");*)
@@ -211,36 +211,55 @@ class treeXml xmlFile =
 			
 		method getElementById idName =
 			let rec browser = function
+				| VoidTree -> VoidTree
 				| Node(Element(str, dict), brother, children) when 
-					try String.lowercase (dict#get "id") = String.lowercase idName with Not_found -> false
-					-> Node(Element(str, dict), brother, children)
-				| Node(_, _, children) when children <> VoidTree -> browser children
-				| Node(_, brother, _) when brother <> VoidTree -> browser brother
-				| _ -> raise Not_found
-			in self#newXmlTree (browser data)
+                                        try String.lowercase (dict#get "id") = 
+						String.lowercase idName with Not_found -> false
+                                        -> Node(Element(str, dict), brother, children)
+				| Node(_, brother, children) ->
+					let resultChildren = browser children in
+					if resultChildren = VoidTree then
+						browser brother
+					else
+						resultChildren
+			in
+			let result = browser data in
+			if result = VoidTree then
+				raise Not_found
+			else
+				self#newXmlTree result
 		method getElementsByName name =
+			let result = ref [] in
 			let rec browser = function
+				| VoidTree -> ()
 				| Node(Element(str, dict), brother, children) when String.lowercase str = String.lowercase name ->
-					begin
-						match (brother, children) with
-							| _, children when children <> VoidTree -> 
-								self#newXmlTree (Node(Element(str, dict), brother, children))::browser children
-							| brother, _ when brother <> VoidTree ->
-								self#newXmlTree (Node(Element(str, dict), brother, children))::browser brother
-							| _ -> self#newXmlTree (Node(Element(str, dict), brother, children))::[]
-					end
-				| Node(_, _, children) when children <> VoidTree -> browser children
-				| Node(_, brother, _) when brother <> VoidTree -> browser brother
-				| _ -> []
-			in browser data
+					let e = self#newXmlTree (Node(Element(str, dict), brother, children)) in
+					result := e::!result;
+					browser children;
+					browser brother
+				| Node(_, brother, children) -> 
+					browser children;
+					browser brother
+			in browser data; !result
 		method getFirstByName name =
 			let rec browser = function
-				| Node(Element(str, dict), brother, children) when String.lowercase str = String.lowercase name ->
-					Node(Element(str, dict), brother, children)
-				| Node(_, _, children) when children <> VoidTree -> browser children
-				| Node(_, brother, _) when brother <> VoidTree -> browser brother
-				| _ -> raise Not_found
-			in self#newXmlTree (browser data)
+                                | VoidTree -> VoidTree
+                                | Node(Element(str, dict), brother, children) when
+                                        try String.lowercase (dict#get "name") =
+                                                String.lowercase name with Not_found -> false
+                                        -> Node(Element(str, dict), brother, children)
+                                | Node(_, brother, children) ->
+                                        let resultChildren = browser children in
+                                        if resultChildren = VoidTree then
+                                                browser brother
+                                        else
+                                                resultChildren
+                        in
+                        let result = browser data in
+                        if result = VoidTree then
+                                raise Not_found
+                        else
+                                self#newXmlTree result
 	end
 ;;
 
