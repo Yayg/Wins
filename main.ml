@@ -42,7 +42,11 @@ open Tool
 
 let usage_msg = "Usage : wins [gameFolder]\n";;
 
-let main () = ();;
+let main () = 
+	let w = Jed.test () in
+	while true do
+		w#loop ()
+	done
 
 let setup execDir = 
 	(* motd *)
