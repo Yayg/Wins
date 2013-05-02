@@ -244,10 +244,9 @@ class treeXml xmlFile =
 		method getFirstByName name =
 			let rec browser = function
                                 | VoidTree -> VoidTree
-                                | Node(Element(str, dict), brother, children) when
-                                        try String.lowercase (dict#get "name") =
-                                                String.lowercase name with Not_found -> false
-                                        -> Node(Element(str, dict), brother, children)
+                                | Node(Element(str, dict), brother, children) 
+					when String.lowercase str = String.lowercase name ->
+					Node(Element(str, dict), brother, children)
                                 | Node(_, brother, children) ->
                                         let resultChildren = browser children in
                                         if resultChildren = VoidTree then
