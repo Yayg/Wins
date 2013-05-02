@@ -54,7 +54,7 @@ class ['a] dictionary =
 		method is_empty () =
 			length data = 0 
 		method clear () = 
-			reset data
+			clear data
 		method length () =
 			length data
 		method set (key:string) (element:'a) =
