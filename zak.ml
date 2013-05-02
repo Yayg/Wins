@@ -88,9 +88,15 @@ class character dirName =
 			with _ -> failwith ("read script.lua of character "^dirName^" failed.")
 		
 		val mutable name = ""
+		val mutable font = ""
+		val mutable color = ""
 		
 		initializer
+			let fontData = data#getFirstByName "font"
+			in
 			name <- data#getAttr "name";
+			font <- fontData#getAttr "name";
+			color <-fontData#getAttr "color"; 
 			print_string ("├ Character "^dirName^" loaded.\n")
 		
 		method getDir =
@@ -99,6 +105,8 @@ class character dirName =
 			name
 		method getDataAnim =
 			animation
+		method getFont =
+			(font,color)
 		method sayHello =
 			"hello"
 	end
@@ -110,6 +118,8 @@ class room dirName =
 		val dir = roomDir//dirName
 		val data = 
 			(new treeXml (roomDir//dirName//"info.xml"))#getFirstByName "Room"
+		val dialog = 
+			(new treeXml (roomDir//dirName//"dialog.xml"))#getFirstByName "Dialogs"
 		val script = load_file (roomDir//dirName//"script.lua")
 		
 		val mutable name = ""

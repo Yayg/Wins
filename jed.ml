@@ -452,10 +452,19 @@ class sdlWindow width height =
 
 let loadFonts fontDir =
 	let (dataF, dataC) = 
-		try (
-			let file = new Wally.treeXml (fontDir//"info.xml") in
-			(file#getFirstByName "fonts", file#getFirstByName "colors")
-		) with _ -> failwith ("read info.xml of fonts failed.")
+		let file = try ((new Wally.treeXml (fontDir//"info.xml"))#getFirstByName "infoFonts" 
+		) with 
+			| Expat.Expat_error msg ->
+				let str = Expat.xml_error_to_string msg in
+				failwith ("error during opening info.xml of fonts:"^str)
+			| e -> failwith ("open info.xml of fonts failed with  "^(Printexc.to_string e))
+		in
+		try ((file#getFirstByName "fonts", file#getFirstByName "colors")
+		) with
+			| Expat.Expat_error msg ->
+				let str = Expat.xml_error_to_string msg in
+				failwith ("error during reading info.xml of fonts:"^str)
+			| e -> failwith ("read info.xml of fonts failed:"^(Printexc.to_string e))
 	in
 	let rec browserF = function 
 		| e when e#is_empty () -> ()
