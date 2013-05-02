@@ -451,6 +451,10 @@ class sdlWindow width height =
 (* Functions ******************************************************************)
 
 let loadFonts fontDir =
+	let _ =
+		Sdlttf.init ();
+		at_exit Sdlttf.quit
+	in 
 	let (dataF, dataC) = 
 		let file = try ((new Wally.treeXml (fontDir//"info.xml"))#getFirstByName "infoFonts" 
 		) with 
@@ -468,15 +472,19 @@ let loadFonts fontDir =
 	in
 	let rec browserF = function 
 		| e when e#is_empty () -> ()
+		| e when (e#getXmlElement ())#getType = "Text" ->
+			browserF (e#getNextBrother ())
 		| e -> 
 			let name = e#getAttr "name"
 			and size = int_of_string (e#getAttr "size")
 			and path = e#getAttr "file"
-			in fonts#set name (Sdlttf.open_font path size);
+			in fonts#set name (Sdlttf.open_font (fontDir//path) size);
 			browserF (e#getNextBrother ())
 	in 
 	let rec browserC = function
 		| e when e#is_empty () -> ()
+		| e when (e#getXmlElement ())#getType = "Text" ->
+                        browserC (e#getNextBrother ())
 		| e -> 
 			let name = e#getAttr "name"
 			and red = int_of_string(e#getAttr "r")
@@ -485,10 +493,11 @@ let loadFonts fontDir =
 			in colors#set name ((red,green,blue):color);
 			browserC (e#getNextBrother ())
 	in
-	browserF (dataF#getChildren ());
-	browserC (dataC#getChildren ())
+	print_string "┝┅ Fonts loading...\n";
+	browserF ((dataF#getChildren ())#getFirstByName "font");
+	print_string "┝┅ Color fonts loading...\n";
+	browserC ((dataC#getChildren ())#getFirstByName "color")
 ;;
-
 
 let loadImage path = 
 	load_image path

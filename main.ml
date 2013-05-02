@@ -75,10 +75,6 @@ let setup execDir =
 	
 	print_string "┝┅ Runtime variables loaded.\n";
 	
-	(* SdlTtf *)
-	Sdlttf.init ();
-	at_exit (Sdlttf.quit);
-	
 	(* Setup Item and Character object *)
 	(try 
 		loadItems ();
@@ -86,7 +82,10 @@ let setup execDir =
 		Jed.loadFonts (envString#get "fontDir");
 	with 
 		| Failure e -> print_string ("☢ Error during loading data game : "^e^" \n"); exit 2
-		| _ -> print_string "☢ Error during loading data game...\n"; exit 2
+		| e -> 
+			let str = Printexc.to_string e in
+			print_string ("☢ Error during loading data game of kind "^str^"\n");
+			exit 2
 	); print_string "┝┅ game data loaded.\n";
 	
 	(* End Setup ! *)
