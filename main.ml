@@ -47,7 +47,7 @@ let main () = ();;
 let setup execDir = 
 	(* motd *)
 	print_string "╒═════════════════════════════╕\n";
-	print_string "╎ Wins        Version alpha 2 ╎\n";
+	print_string "╎ Wins     Version alpha 3.14 ╎\n";
 	print_string "╎  The Point and Click Motor  ╎\n";
 	print_string "╞═════════════════════════════╛\n";
 	
