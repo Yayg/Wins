@@ -404,7 +404,7 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 			keys
 		
 		method initMatrix = 
-			Array.make ((Tool.length keys)) (Array.make ((Tool.length keys)) Infinite)
+			Array.make ((List.length keys)) (Array.make ((List.length keys)) Infinite)
 			
 		method displayArray a =
 			let rec browser a = function
