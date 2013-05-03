@@ -27,20 +27,14 @@ open Lua_api
 open Tool
 open Expat
 open Stack
-open List
-open Array
 
 (* Exceptions *****************************************************************)
 exception BadStyleXmlTree of string
 exception IsNotXmlText
 exception IsNotXmlElement
 exception AttrNotFound
-exception Not_found
 
 (* Types **********************************************************************)
-
-type len = Finite of float | Infinite
-
 type xmlElementType = 
 	| Element of string * string dictionary
 	| Text of string
@@ -275,10 +269,8 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 		
 		val mutable tree = new treeXml (xmlFile)
 		val mutable nodes = []
-		val mutable distance = new dictionary (* (name,(p,((link,distance) list)))) dictionary *)
-		val mutable links = new dictionary (* (((x,y),links list)) dictionary *)
-		val mutable keys = []
-		val mutable n = ref (-1)
+		val mutable distance = new dictionary (* (name,(links,distance) list)) dictionary *)
+		val mutable links = new dictionary (* (p,((x,y),links list)) dictionary *)
 		
 			initializer
 			self#getNodes;
@@ -286,31 +278,27 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 			self#init;
 			self#dicoFusion
 		
-(* Initialisation des graphs **************************************************)
-		
 		method init =
 			let rec browser = function
 				| t when t#getElementsByName "node" = [] -> ()
 				| t ->
 				begin
 					let attrs = (t#getXmlElement ())#getAttrs () in
-					 match (attrs) with
-						| key :: l :: x :: y :: [] ->
-							let element =
-							(
-							(int_of_string(t#getAttr(x)),int_of_string(t#getAttr(y))),
-							self#strParse (t#getAttr(l))
-							)
-							in
-							links#set (t#getAttr(key)) element;
-							browser (t#getNextBrother ())
-						| _ ->  raise Not_found
+					let key :: l :: x :: y :: [] = attrs in
+					let element =
+					(
+					(int_of_string(t#getAttr(x)),int_of_string(t#getAttr(y))),
+					self#strParse (t#getAttr(l))
+					)
+					in
+					links#set (t#getAttr(key)) element;
+					browser (t#getNextBrother ())
 				end
 			in
 			browser tree
 			
 		method dicoFusion =
-			let keys = links#keys in
+			let dist = self#initDistance and keys = links#keys in
 			let rec browser = function
 				| [] -> ()
 				| h :: t ->
@@ -331,13 +319,18 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 						((h,(self#getDistance point p)) :: (browser point t))
 					end
 			in 
-			n := !n + 1;
-			distance#set name (!n,(browser (x,y) l))
+			distance#set name (-1,(browser (x,y) l))
 			
 		method getDistance (x,y) (a,b) =
 			let d1 = (y-b) and d2 = (x-a) in
-			let d = float_of_int((d1 * d1) + (d2 * d2)) in 
-			sqrt(d)
+			if ((d1 < 0)&&(d2 < 0)) then
+					-(d1 + d2)
+			else if (d1 < (0)) then
+				-(d1) + d2
+			else if (d1 < (0)) then
+				-(d2) + d1
+			else
+				d1 + d2
 			
 		method initDistance =
 			let rec coor = function
@@ -368,7 +361,7 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 				!final
 			end
 		method getNodes =
-			print_string(((tree#getFirstByName "graph")#getXmlElement ())#getName ()^"\n"); (* test de conformité du fichier graph *)
+			print_string(((tree#getFirstByName "graph")#getXmlElement ())#getName ()); (* test de conformité du fichier graph *)
 			nodes <- tree#getElementsByName "node"
 		method getFirst =
 			let n = nodes in
@@ -381,27 +374,11 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 			nodes
 		
 		method getD =
-			(distance : (int * (string * float) list) dictionary)
+			(distance : (int * (string * int) list) dictionary)
 		method getLinks =
 			links
 		method getCoor name =
 			let (x,_) = links#get name in x
-			
-		method getId name = 
-			let rec browser (n:string) = function
-				| [] -> raise Not_found
-				| ((i:int),h) :: t when h = n -> i
-				| _ :: t -> browser n t
-			in browser name keys
-			
-		method initKeys =
-			keys <- (let rec browser i = function 
-						| [] -> []
-						| h::t -> let (p,_) = distance#get h in
-							(p,h) :: (browser (i+1) t)
-					in browser 0 (distance#keys ()));
-		method getKey =
-			keys
 		
 		method initMatrix = 
 			Array.make ((List.length keys)) (Array.make ((List.length keys)) Infinite)
@@ -463,19 +440,14 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 						| _ -> browser v min a (i+1)
 					)
 			in browser 0 Infinite a 0
-				
-		
-
 	end
+
+
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
 let luaEnv = LuaL.newstate ();;
 
 (* Functions ******************************************************************)
-let test h =
-	let w = new graphMove "./game/rooms/begin/graph.xml" in
-	w#graphToMatrix
-;;
 LuaL.openlibs luaEnv;;
 
 let registerFunction name func = 
