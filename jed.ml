@@ -303,7 +303,8 @@ class sdlWindow width height =
 		val displayData = new dictionary
 		
 		initializer
-			set_caption (envString#get "name") (envString#get "icon")
+			set_caption (envString#get "name") (envString#get "icon");
+			exLoop <- Some (Thread.create self#loop ())
 		
 		
 		(** Update Display **)
@@ -425,7 +426,7 @@ class sdlWindow width height =
 			| _ -> ()
 		
 		(** Loop Displaying Event **)
-		method loop () = 
+		method private loop () = 
 			while run do
 				ticks <- 17 + Sdltimer.get_ticks (); (*17 ms -> 60fps*)
 				
