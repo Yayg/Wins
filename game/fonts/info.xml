@@ -1,9 +1,10 @@
 <infoFonts>
 	<fonts>
-		<font name ="Default" size="12" file="FreeSans.ttf"/>
+		<font name ="default" size="22" file="FreeSans.ttf"/>
 	</fonts>
 	<colors>
 		<color name="back" r="0" g="0" b="0"/>
-		<color name="red" r="150" g="0" b="0"/>
+		<color name="blue" r="0" g="130" b="200"/>
+		<color name="red" r="200" g="0" b="0"/>
 	</colors>
 </infoFonts>

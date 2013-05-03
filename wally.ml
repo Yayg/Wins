@@ -99,7 +99,7 @@ class treeXml xmlFile =
 				in Element(name, browser (new dictionary) attrs)
 			in 
 			push (Node(element, VoidTree, VoidTree)) stack
-			;print_string ("pushStartElement : "^name^"\n")
+			(*Debug*;print_string ("pushStartElement : "^name^"\n")*)
 		method private pushText stack text =
 			if (text <> "")&&(text <> "\n")&&(text <> " ")&&(text <> "	") then
 			(*Debug*print_string ("pushText : "^text^"\n");*)

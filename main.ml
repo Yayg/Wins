@@ -44,6 +44,9 @@ let usage_msg = "Usage : wins [gameFolder]\n";;
 
 let main () = 
 	let w = Jed.test () in
+	w#addCharacterToDisplay "loly" (400,400);
+	w#addCharacterToDisplay "kedu" (550,450);
+	w#setDialog (new Wally.treeXml "./game/rooms/begin/dialog.xml");
 	while true do
 		w#loop ()
 	done
@@ -101,29 +104,30 @@ let get_arguments () =
 	!arg
 ;;
 let initialization execDir = 
-	try 
-		if not (Sys.is_directory execDir) then (
-			print_string "The specified path is not a folder.\n";
-			exit 2
-			)
-		else 
-			(try 
-				setup execDir;
-			with 
-				| Not_found ->
-					print_string "☢ There is no file 'game.xml' in the directory of the game.\n";
-					exit 2
-				| _ -> 
-					print_string "☢ The file 'game.xml' is invalid.\n";
-					exit 2
-			);
-			main ()
-	with _ -> (
-		if execDir = "" then 
-			print_string usage_msg
-		else
-			print_string "The specified path is not valid.\n"
-		); exit 2
+	let _ =
+		try 
+			if not (Sys.is_directory execDir) then (
+				print_string "The specified path is not a folder.\n";
+				exit 2
+				)
+			else 
+				(try 
+					setup execDir;
+				with 
+					| Not_found ->
+						print_string "☢ There is no file 'game.xml' in the directory of the game.\n";
+						exit 2
+					| _ -> 
+						print_string "☢ The file 'game.xml' is invalid.\n";
+						exit 2
+				);
+		with _ -> (
+			if execDir = "" then 
+				print_string usage_msg
+			else
+				print_string "The specified path is not valid.\n"
+			); exit 2
+	in main ()
 ;;
 
 (* Run !!! *)
