@@ -32,6 +32,11 @@ type ('a) binaryTree =
 	| VoidTree
 ;;
 
+type 'a graph = 
+	| Point of 'a * 'a graph list
+	| Void
+;;
+
 (* Objects ********************************************************************)
 class ['a] dictionary = 
 	object (self)
@@ -63,6 +68,7 @@ class ['a] dictionary =
 			remove data key
 	end
 ;;
+
 
 (* Functions ******************************************************************)
 let load_file file =
