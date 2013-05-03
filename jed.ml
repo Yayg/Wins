@@ -56,7 +56,7 @@ type tirade = {
 	}
 ;;
 (* Object *********************************************************************)
-class dialog (xmlDialog:Wally.treeXml) =
+class dialog (xmlDialog:Wally.treeXml) id =
 	object (self)
 	val buffer = Queue.create ()
 	val image = Queue.create ()
@@ -65,19 +65,17 @@ class dialog (xmlDialog:Wally.treeXml) =
 	initializer
 		let rec browser = function
 			| e when e#is_empty () -> ()
-			| e when (e#getXmlElement ())#getType = "Text" ->
-                        	browser (e#getNextBrother ())
 			| e -> 
-				let transmitter = (e#getXmlElement ())#getName () in
-				let t = int_of_string(e#getAttr "time")
+				let transmitter = (e#getXmlElement ())#getName ()
+				and t = int_of_string((e#getAttr "time"))
 				and x = int_of_string(e#getAttr "x")
 				and y = int_of_string(e#getAttr "y")
 				and str = ((e#getChildren ())#getXmlElement ())#getString ()
 				in
 				add {emitter=transmitter; time=t; offs=(x,y); text=str} buffer;
 				browser (e#getNextBrother ())
-		in let _ = browser ((xmlDialog#getFirstByName "dialog")#getChildren ())
-		in Queue.iter (self#makeSurface) buffer
+		in let _ = browser (xmlDialog#getElementById id)
+		in computing <- Some (Thread.create (Queue.iter (self#makeSurface)) buffer)
 
 	method is_empty () =
 		Queue.is_empty buffer
@@ -95,15 +93,15 @@ class dialog (xmlDialog:Wally.treeXml) =
 		and text = frame.text
 		in
 		let (fontN, colorN) = (getCharacter nameChar)#getFont in
-		let font = print_string fontN; fonts#get fontN
+		let font =  fonts#get fontN
 		and color = colors#get colorN
 		in 
 		let size = (Sdlttf.font_height font) / 10
-		and txtS = Sdlttf.render_utf8_blended font text ~fg:color 
+		and txtS = Sdlttf.render_utf8_solid font text ~fg:color 
 		in let (w, h, _) = surface_dims txtS
 		in let (nw, nh) = (2*size+w, 2*size+h)
 		and offset = rect size size 0 0
-		in let outline = create_RGB_surface_format txtS [`HWSURFACE] ~w:nw ~h:nh
+		in let outline = create_RGB_surface_format txtS [`SWSURFACE] ~w:nw ~h:nh
 		in let setPoint (x,y) =
 			let x = x+size
 			and y = y+size
@@ -143,7 +141,7 @@ class dialog (xmlDialog:Wally.treeXml) =
 		in
 		endingWork ();
 		blit_surface ~src:txtS ~dst:outline ~dst_rect:offset ();
-		add txtS image
+		add outline image
 		
 	end
 ;;
@@ -375,7 +373,7 @@ class sdlWindow width height =
 			displayData#set name element
 		method addCharacterToDisplay name (x,y) =
 			let character = (getCharacter name :> displayable) in
-			let animation = character#getDataAnim#getFirstByName "animation" in
+			let animation = character#getDataAnim#getElementById "idle" in
 			let w = int_of_string(animation#getAttr "w")
 			and h = int_of_string(animation#getAttr "h")
 			in
@@ -394,8 +392,8 @@ class sdlWindow width height =
 			displayData#clear ()
 		
 		(** Update Data **)
-		method setDialog xmlDialog =
-			currentDialog <- Some (new dialog xmlDialog)
+		method setDialog xmlDialog id =
+			currentDialog <- Some (new dialog xmlDialog id)
 		method setAnimation objectName animationName =
 			(displayData#get objectName).updating#setAnimation animationName
 		method placeTo objectName newPosition =
