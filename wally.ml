@@ -21,18 +21,26 @@
 ################################################################################
 *)
 
+open Char
+open String
 open Lua_api
 open Tool
 open Expat
 open Stack
+open List
+open Array
 
 (* Exceptions *****************************************************************)
 exception BadStyleXmlTree of string
 exception IsNotXmlText
 exception IsNotXmlElement
 exception AttrNotFound
+exception Not_found
 
 (* Types **********************************************************************)
+
+type len = Finite of float | Infinite
+
 type xmlElementType = 
 	| Element of string * string dictionary
 	| Text of string
@@ -262,11 +270,212 @@ class treeXml xmlFile =
 	end
 ;;
 
+class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begin/graph.xml";; *)
+	object (self)
+		
+		val mutable tree = new treeXml (xmlFile)
+		val mutable nodes = []
+		val mutable distance = new dictionary (* (name,(p,((link,distance) list)))) dictionary *)
+		val mutable links = new dictionary (* (((x,y),links list)) dictionary *)
+		val mutable keys = []
+		val mutable n = ref (-1)
+		
+			initializer
+			self#getNodes;
+			tree <- tree#getChildren ();
+			self#init;
+			self#dicoFusion
+		
+(* Initialisation des graphs **************************************************)
+		
+		method init =
+			let rec browser = function
+				| t when t#getElementsByName "node" = [] -> ()
+				| t ->
+				begin
+					let attrs = (t#getXmlElement ())#getAttrs () in
+					 match (attrs) with
+						| key :: l :: x :: y :: [] ->
+							let element =
+							(
+							(int_of_string(t#getAttr(x)),int_of_string(t#getAttr(y))),
+							self#strParse (t#getAttr(l))
+							)
+							in
+							links#set (t#getAttr(key)) element;
+							browser (t#getNextBrother ())
+						| _ ->  raise Not_found
+				end
+			in
+			browser tree
+			
+		method dicoFusion =
+			let keys = links#keys in
+			let rec browser = function
+				| [] -> ()
+				| h :: t ->
+					begin
+						let (d,link) = (links#get h) in
+						self#addE h link d;
+						browser t
+					end
+			in 
+			browser (keys ())
+			
+		method addE name l (x,y) = (* (name,((x,y),links list)) dictionary *)
+			let rec browser point = function
+				| [] -> []
+				| h :: t ->
+					begin
+						let (p,_) = (links#get h) in
+						((h,(self#getDistance point p)) :: (browser point t))
+					end
+			in 
+			n := !n + 1;
+			distance#set name (!n,(browser (x,y) l))
+			
+		method getDistance (x,y) (a,b) =
+			let d1 = (y-b) and d2 = (x-a) in
+			let d = float_of_int((d1 * d1) + (d2 * d2)) in 
+			sqrt(d)
+			
+		method initDistance =
+			let rec coor = function
+				| [] -> []
+				| (c,_) :: t -> c :: coor t
+			in
+			let rec browser = function
+				| ([],[]) -> []
+				| (a::b,c::d) -> (a,c) :: browser (b,d)
+				| (_,_) -> 
+					print_string("Error : Xml file not correctly written. You should have coordinates for each point.");
+					raise AttrNotFound
+			in 
+			browser (links#keys (),coor (links#elements ()))
+			
+		method strParse str =
+			begin
+				let i = ref (String.length str - 1) and acc = ref "" and final = ref [] in
+				while (0 <= !i) do
+					(if (str.[!i] = ',') then
+						(final := !acc :: !final;
+						acc := "")
+					else
+						acc := Char.escaped(str.[!i]) ^ !acc);
+					i := !i - 1
+				done;
+				final := !acc :: !final;
+				!final
+			end
+		method getNodes =
+			print_string(((tree#getFirstByName "graph")#getXmlElement ())#getName ()^"\n"); (* test de conformité du fichier graph *)
+			nodes <- tree#getElementsByName "node"
+		method getFirst =
+			let n = nodes in
+			match n with
+				| [] -> tree
+				| h::t -> h
+		method getName =
+			tree#getAttr ((tree#getXmlElement ())#getName ())
+		method displayNodes = 
+			nodes
+		
+		method getD =
+			(distance : (int * (string * float) list) dictionary)
+		method getLinks =
+			links
+		method getCoor name =
+			let (x,_) = links#get name in x
+			
+		method getId name = 
+			let rec browser (n:string) = function
+				| [] -> raise Not_found
+				| ((i:int),h) :: t when h = n -> i
+				| _ :: t -> browser n t
+			in browser name keys
+			
+		method initKeys =
+			keys <- (let rec browser i = function 
+						| [] -> []
+						| h::t -> let (p,_) = distance#get h in
+							(p,h) :: (browser (i+1) t)
+					in browser 0 (distance#keys ()));
+		method getKey =
+			keys
+		
+		method initMatrix = 
+			Array.make ((Tool.length keys)) (Array.make ((Tool.length keys)) Infinite)
+			
+		method displayArray a =
+			let rec browser a = function
+				| i when i = (Array.length a) -> ()
+				| i -> 
+					begin
+					match a.(i) with
+						| Finite(n) ->
+							print_string(string_of_float(n)^"\n")
+						| Infinite ->
+							print_string("Infinite\n")
+					end;
+					browser a (i+1)
+			in
+			browser a 0
+			
+		method insert mat l = 
+			let rec ins m = function
+				| [] -> Array.copy m
+				| (name,d) :: t-> 
+					m.(self#getId name) <- Finite(d);
+					ins (Array.copy m) t
+			in
+			ins (Array.copy mat) l
+			
+		method graphToMatrix =
+			self#initKeys;
+			let mat = self#initMatrix in
+			let rec browser m l =
+				print_string("\n");
+				match l with
+				| [] -> m
+				| (i,h) :: t ->
+					let (_,link) = (distance#get h) in
+					m.(i) <- (Array.copy (self#insert (m.(i)) link));
+					print_string(string_of_int(i)^"\n");
+					self#displayArray m.(i);
+					browser m t
+			in self#endMatrix(browser mat keys)
+			
+		method endMatrix ma = 
+			let rec endM m = function
+				| n when n = Array.length m -> m
+				| n -> (m.(n).(n) <- Finite(0.));
+					endM (Array.copy m) (n+1)
+			in endM ma 0
+(* Dijkstra *******************************************************************)
+
+		method minArray a =
+			let rec browser v min a = function
+				| i when i = Array.length a -> v
+				| i ->
+					(
+					match a.(i) with
+						| Finite(n) when ((match min with Finite(m) -> n < m | _ -> true)&&(n <> (0.))) -> browser v (Finite(n)) a (i+1)
+						| _ -> browser v min a (i+1)
+					)
+			in browser 0 Infinite a 0
+				
+		
+
+	end
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
 let luaEnv = LuaL.newstate ();;
 
 (* Functions ******************************************************************)
+let test h =
+	let w = new graphMove "./game/rooms/begin/graph.xml" in
+	w#graphToMatrix
+;;
 LuaL.openlibs luaEnv;;
 
 let registerFunction name func = 
