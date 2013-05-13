@@ -41,7 +41,7 @@
 
 ### Info #######################################################################
 RESULT     = wins
-SOURCES    = tool.ml wally.ml zak.ml jed.ml bobbin.ml main.ml
+SOURCES    = tool.ml wally.ml zak.ml jed.ml bobbin.ml main.ml woop.ml
 
 INCDIRS    = -I +sdl -I +lua -I +expat
 
