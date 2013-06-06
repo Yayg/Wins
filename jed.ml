@@ -297,61 +297,29 @@ class sdlWindow width height =
 		val mutable run = true
 		val mutable ticks = 0
 		
-		val mutable currentDialog = None
-		val mutable background = get_video_surface ()
+		val mutable background = get_video_surface ()		
+		val mutable currentItem = ""
+		val mutable currentMode = "game"
+				
+		val modes = new dictionary
 		
+		(* Game Mode *)
+		val mutable currentDialog = None
 		val displayData = new dictionary
+		
+		(* Inventory Mode *)
+		val mutable inventoryDisplay = None
+		
 		
 		initializer
 			set_caption (envString#get "name") (envString#get "icon");
-			exLoop <- Some (Thread.create self#loop ())
+			exLoop <- Some (Thread.create self#loop ());
+			modes#set "game" (create_RGB_surface_format !window [`HWSURFACE] width height);
+			modes#set "inventory" (create_RGB_surface_format !window [`HWSURFACE] width height)
 		
-		
-		(** Update Display **)
-		method private updataDisplayData =
-			let rec browser = function
-				| [] -> ()
-				| element::q ->
-					let (actionAnimation,actionPosition) = 
-						element.updating#getActions in
-					begin
-						match actionAnimation with
-							| Animation r -> element.img <- r
-							| _ -> ()
-					end;
-					begin
-						match actionPosition with
-							| Position p -> element.pos <- p
-							| _ -> ()
-					end;
-					browser q
-			in browser (displayData#elements ())
-		method private display = 
-			let rec browser = function
-				| [] -> ()
-				| element::q -> 
-					let surface = element.updating#getSurface
-					and clip = element.img
-					and position = element.pos
-					in
-					self#displayImage clip surface position;
-					browser q
-			in 
-			blit_surface ~src:background ~dst:(!window) ();
-			browser (displayData#elements ())
-		method private displayDialog = match currentDialog with
-			| None -> ()
-			| Some d when d#is_empty () -> currentDialog <- None
-			| Some d -> 
-				let (data, image) = d#update () in
-				let character = data.emitter
-				and offset = (data:tirade).offs
-				in
-				let (ox, oy) = offset
-				and (cx, cy) = (displayData#get character).pos
-				in let position = rect (cx+ox) (cy+oy) 0 0
-				in blit_surface ~src:image ~dst:(!window) ~dst_rect:position ()
-			
+		(** Manager Mode **)
+		method private getVideo =
+		  modes#get currentMode
 		
 		(** Storing Data **)
 		method setBackground surface =
@@ -417,28 +385,117 @@ class sdlWindow width height =
 			
 		(** Low Level Displaying **)
 		method private displayImage clip src (x,y) = 
-			let dst = !window
+			let dst = self#getVideo
 			and dst_rect = rect x y 0 0 in
 			blit_surface ~src ~src_rect:clip ~dst ~dst_rect ()
+			
+		(** Update Game Display **)
+		method private updateGame =
+			self#gameUpdataDisplayData;
+			self#gameDisplay;
+			self#gameDisplayDialog
+		 
+		method private gameUpdataDisplayData =
+			let rec browser = function
+				| [] -> ()
+				| element::q ->
+					let (actionAnimation,actionPosition) = 
+						element.updating#getActions in
+					begin
+						match actionAnimation with
+							| Animation r -> element.img <- r
+							| _ -> ()
+					end;
+					begin
+						match actionPosition with
+							| Position p -> element.pos <- p
+							| _ -> ()
+					end;
+					browser q
+			in browser (displayData#elements ())
+		method private gameDisplay = 
+			let rec browser = function
+				| [] -> ()
+				| element::q -> 
+					let surface = element.updating#getSurface
+					and clip = element.img
+					and position = element.pos
+					in
+					self#displayImage clip surface position;
+					browser q
+			in 
+			blit_surface ~src:background ~dst:(self#getVideo) ();
+			browser (displayData#elements ())
+		method private gameDisplayDialog = match currentDialog with
+			| None -> ()
+			| Some d when d#is_empty () -> currentDialog <- None
+			| Some d -> 
+				let (data, image) = d#update () in
+				let character = data.emitter
+				and offset = (data:tirade).offs
+				in
+				let (ox, oy) = offset
+				and (cx, cy) = (displayData#get character).pos
+				in let position = rect (cx+ox) (cy+oy) 0 0
+				in blit_surface ~src:image ~dst:(self#getVideo) ~dst_rect:position ()
+		
+		(** Update Inventory Display **)
+		method private invInitDisplay wL =
+			let ((itemsName, itemsImg), count) =
+				let i = ref 0 in
+				let rec browser = function
+					| [] -> ([],[])
+					| item::q -> 
+						let itemObj = Zak.getItem item
+						in let image = 
+							try load_image (itemObj#getDir//itemObj#getThumnail)
+							with _ -> failwith ("load thumnail"^(itemObj#getDir//itemObj#getThumnail)^" failed.")
+						in let (nN,nI) = browser q
+						in i:=!i+1;
+						(item::nN,image::nI)
+				in (browser (invGetItems ()), !i)
+			in 
+			let _ = Some (Array.of_list itemsName)
+			and w =
+				if count*50 < wL-6 then
+					count*50
+				else wL-6
+			and h = wL/(count*50+6)
+			and i = ref 0
+			and j = ref 0
+			in let itemSurface = create_RGB_surface_format !window [`SWSURFACE] (w+6) (h+6)
+			in 
+			let rec draw = function
+				| [] -> ()
+				| img::q -> blit_surface ~src:img ~dst:itemSurface ~dst_rect:(rect (!i+3) (!j+3) 0 0) (); draw q
+			in fill_rect itemSurface (map_RGB itemSurface ?alpha:(Some 50) black); draw itemsImg;
+			itemSurface
 		
 		(** Read Input User and run the function corresponding with event **)
-		method private inputUser = function 
+		method private gameInputUser = function 
 			| _ -> ()
+		method private inventoryInputUser = function
+		  | _ -> ()
 		
 		(** Loop Displaying Event **)
 		method private loop () = 
 			while run do
 				ticks <- 17 + Sdltimer.get_ticks (); (*17 ms -> 60fps*)
 				
-				self#updataDisplayData;
-				self#display;
-				self#displayDialog;
-				flip !window;
+				begin match currentMode with
+					| "game" -> self#updateGame
+					| "inventory" -> ()
+					| _ -> failwith "invalid state of programm"
+				end; 
+				
+				flip (self#getVideo);
 				
 				begin match Sdlevent.poll () with
 					| Some Sdlevent.QUIT -> Sdl.quit (); run <- false
 					| None -> ()
-					| event -> self#inputUser event
+					| event when currentMode = "game" -> self#gameInputUser event
+					| event when currentMode = "inventory" -> self#inventoryInputUser event
+					| _ -> failwith "Error : invalid state of programm"
 				end;
 				
 				while (Sdltimer.get_ticks ()) <= ticks do () done;

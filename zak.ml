@@ -59,11 +59,12 @@ class item dirName =
 			try load_file (itemDir//dirName//"script.lua")
 			with _ -> failwith ("read script.lua of item "^dirName^" failed.")
 		
-		val mutable taken = false
 		val mutable name = ""
+		val mutable thumbnail = None
 		
 		initializer
 			name <- (data#getXmlElement ())#getAttr "name";
+			thumbnail <- Some ((data#getXmlElement ())#getAttr "thumbnail");
 			print_string ("├ Item "^dirName^" loaded.\n")
 		
 		method getDir =
@@ -72,6 +73,12 @@ class item dirName =
 			name
 		method getDataAnim =
 			animation
+		method getThumnail = 
+			let getter = function
+			| Some img -> img
+			| None -> failwith "get thumnail of item "^name^" (but it impossible)."
+		in getter thumbnail
+			
 	end
 ;;
 
@@ -153,12 +160,12 @@ class room dirName =
 ;;
 
 (* Functions ******************************************************************)
-(* Accessor environement variables *)
+(** Accessor environement variables **)
 let getEnvString name =
 	(envString#get name:string)
 ;;
 
-(* Accessor and modifier global game variables *)
+(** Accessor and modifier global game variables **)
 let setGlobalInt name (value:int) =
 	globalInt#set name value
 ;;
@@ -182,7 +189,7 @@ let removeGlobalString name =
 	globalString#remove name
 ;;
 
-(* Setup items and characters objects *)
+(** Setup items and characters objects **)
 let loadItems () =
 	let dirNameItems =
 		let itemDir = envString#get "itemDir" in
@@ -217,7 +224,7 @@ let loadCharacters () =
 	in browser dirNameCharacters
 ;;
 
-(* Accessor items and characters objects *)
+(** Accessor items and characters objects **)
 let getItem name =
 	items#get name
 ;;
@@ -226,7 +233,7 @@ let getCharacter name =
 	characters#get name
 ;;
 
-(* Manage player inventory's *)
+(** Manage player's inventory **)
 let invAddItem (name:string) =
   let rec browser = function
     | [] -> name::[]
@@ -234,6 +241,9 @@ let invAddItem (name:string) =
     | e::q -> e::browser q
   in inventory := browser !inventory
 ;;
+
+let invGetItems () =
+	!inventory
 
 let invCheckItem name =
   List.mem name !inventory
