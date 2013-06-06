@@ -33,6 +33,8 @@ let globalString = new dictionary;;
 let items = new dictionary;;
 let characters = new dictionary;;
 
+let inventory = ref [];;
+
 (* Interface ******************************************************************)
 class type displayable =
 	object
@@ -222,4 +224,26 @@ let getItem name =
 
 let getCharacter name =
 	characters#get name
+;;
+
+(* Manage player inventory's *)
+let invAddItem (name:string) =
+  let rec browser = function
+    | [] -> name::[]
+    | e::q when name > e -> name::e::q
+    | e::q -> e::browser q
+  in inventory := browser !inventory
+;;
+
+let invCheckItem name =
+  List.mem name !inventory
+;;
+
+let invDropItem name =
+  let rec browser = function
+    | [] -> []
+    | e::q when name > e -> e::q
+    | e::q when name = e -> q
+    | e::q -> e::browser q
+  in inventory := browser !inventory
 ;;
