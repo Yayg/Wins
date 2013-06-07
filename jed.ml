@@ -384,6 +384,12 @@ class sdlWindow width height =
 		method private getVideo =
 		  modes#get currentMode
 		
+		method private setGameMode =
+			currentMode <- "game"
+		
+		method private setInventoryMode =
+			currentMode <- "inventory";
+			self#invInitDisplay
 		
 		(** Update Game Display **)
 		method private updateGame =
@@ -484,7 +490,7 @@ class sdlWindow width height =
 		method private gameInputUser = function 
 			| Sdlevent.KEYDOWN key ->
 				begin match key.Sdlevent.keysym with
-					| KEY_i -> currentMode <- "inventory"
+					| KEY_i -> self#setInventoryMode
 					| _ -> ()
 				end
 			| _ -> ()
