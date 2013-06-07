@@ -318,9 +318,17 @@ class sdlWindow width height =
 			modes#set "game" (create_RGB_surface_format !window [`HWSURFACE] width height);
 			modes#set "inventory" (create_RGB_surface_format !window [`HWSURFACE] width height)
 		
-		(** Manager Mode **)
-		method private getVideo =
-		  modes#get currentMode
+		(** Window Manager **)
+		method getSurface =
+			!window
+		method toggleFullscreen =
+			fullscreen <- toggle_fullscreen ()
+		method setTitle title =
+			let (_,icon) = get_caption () 
+			in set_caption title icon
+		method setIcon icon =
+			let (title,_) = get_caption ()
+			in set_caption title icon
 		
 		(** Storing Data **)
 		method setBackground surface =
@@ -361,7 +369,7 @@ class sdlWindow width height =
 		method fushDisplayData () =
 			displayData#clear ()
 		
-		(** Update Data **)
+		(** Update Game Data **)
 		method setDialog xmlDialog id =
 			currentDialog <- Some (new dialog xmlDialog id)
 		method setAnimation objectName animationName =
@@ -372,24 +380,11 @@ class sdlWindow width height =
 			let actualPosition = (displayData#get objectName).pos in
 			(displayData#get objectName).updating#getLine actualPosition newPosition
 		
-		(** Window Manager **)
-		method getSurface =
-			!window
-		method toggleFullscreen =
-			fullscreen <- toggle_fullscreen ()
-		method setTitle title =
-			let (_,icon) = get_caption () 
-			in set_caption title icon
-		method setIcon icon =
-			let (title,_) = get_caption ()
-			in set_caption title icon
-			
-		(** Low Level Displaying **)
-		method private displayImage clip src (x,y) = 
-			let dst = self#getVideo
-			and dst_rect = rect x y 0 0 in
-			blit_surface ~src ~src_rect:clip ~dst ~dst_rect ()
-			
+		(** Manager Mode **)
+		method private getVideo =
+		  modes#get currentMode
+		
+		
 		(** Update Game Display **)
 		method private updateGame =
 			self#gameUpdataDisplayData;
@@ -496,7 +491,7 @@ class sdlWindow width height =
 		method private inventoryInputUser = function
 		  | _ -> ()
 		
-		(** Loop Displaying Event **)
+		(** Loop Displaying and Event **)
 		method private loop () = 
 			while run do
 				ticks <- 17 + Sdltimer.get_ticks (); (*17 ms -> 60fps*)
@@ -519,6 +514,12 @@ class sdlWindow width height =
 				
 				while (Sdltimer.get_ticks ()) <= ticks do () done;
 			done
+			
+		(** Low Level Displaying **)
+		method private displayImage clip src (x,y) = 
+			let dst = self#getVideo
+			and dst_rect = rect x y 0 0 in
+			blit_surface ~src ~src_rect:clip ~dst ~dst_rect ()
 	end
 ;;
 
