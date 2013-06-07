@@ -28,6 +28,7 @@ open Sdl
 open Sdlwm
 open Sdlvideo
 open Sdlloader
+open Sdlkey
 
 open Zak
 open Tool
@@ -486,6 +487,11 @@ class sdlWindow width height =
 			
 		(** Read Input User and run the function corresponding with event **)
 		method private gameInputUser = function 
+			| Sdlevent.KEYDOWN key ->
+				begin match key.Sdlevent.keysym with
+					| KEY_i -> currentMode <- "inventory"
+					| _ -> ()
+				end
 			| _ -> ()
 		method private inventoryInputUser = function
 		  | _ -> ()
@@ -506,8 +512,8 @@ class sdlWindow width height =
 				begin match Sdlevent.poll () with
 					| Some Sdlevent.QUIT -> Sdl.quit (); run <- false
 					| None -> ()
-					| event when currentMode = "game" -> self#gameInputUser event
-					| event when currentMode = "inventory" -> self#inventoryInputUser event
+					| Some event when currentMode = "game" -> self#gameInputUser event
+					| Some event when currentMode = "inventory" -> self#inventoryInputUser event
 					| _ -> failwith "Error : invalid state of programm"
 				end;
 				
