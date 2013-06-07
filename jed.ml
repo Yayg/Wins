@@ -440,8 +440,9 @@ class sdlWindow width height =
 				in blit_surface ~src:image ~dst:(self#getVideo) ~dst_rect:position ()
 		
 		(** Update Inventory Display **)
-		method private invInitDisplay wL =
-			let ((itemsName, itemsImg), count) =
+		method private invInitDisplay =
+			let (wW,hW,_) = surface_dims !window
+			and ((itemsName, itemsImg), count) =
 				let i = ref 0 in
 				let rec browser = function
 					| [] -> ([],[])
@@ -455,22 +456,34 @@ class sdlWindow width height =
 						(item::nN,image::nI)
 				in (browser (invGetItems ()), !i)
 			in 
-			let _ = Some (Array.of_list itemsName)
-			and w =
+			let _ = inventoryDisplay <- Some(Array.of_list itemsName)
+			and wL = (wW-100)/2 in
+			let w =
 				if count*50 < wL-6 then
 					count*50
 				else wL-6
 			and h = wL/(count*50+6)
-			and i = ref 0
-			and j = ref 0
-			in let itemSurface = create_RGB_surface_format !window [`SWSURFACE] (w+6) (h+6)
 			in 
-			let rec draw = function
-				| [] -> ()
-				| img::q -> blit_surface ~src:img ~dst:itemSurface ~dst_rect:(rect (!i+3) (!j+3) 0 0) (); draw q
-			in fill_rect itemSurface (map_RGB itemSurface ?alpha:(Some 50) black); draw itemsImg;
-			itemSurface
-		
+			let itemSurface = create_RGB_surface_format !window [`SWSURFACE] (w+6) (h+6)
+			in let _ =
+				let i = ref 0
+				and j = ref 0
+				in let rec draw = function
+					| [] -> ()
+					| img::q -> 
+						let x = !i+3 and y = !j+3 in
+						i := !i+50; j := !j+50;
+						blit_surface ~src:img ~dst:itemSurface ~dst_rect:(rect x y 0 0) (); 
+						draw q
+				in fill_rect itemSurface (map_RGB itemSurface ?alpha:(Some 50) black); 
+				draw itemsImg;
+				blit_surface ~src:(modes#get "game") ~dst:(modes#get "inventory")
+			in 
+			let (x,y) = ((wW-w-6)/2,(hW-h-6)/2)
+			in blit_surface ~src:itemSurface ~dst:(modes#get "inventory") 
+				~dst_rect:(rect x y 0 0) ()
+			
+			
 		(** Read Input User and run the function corresponding with event **)
 		method private gameInputUser = function 
 			| _ -> ()
