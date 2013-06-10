@@ -463,10 +463,8 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 						| _ -> browser v min a (i+1)
 					)
 			in browser 0 Infinite a 0
-				
-		
-
 	end
+	
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
 let luaEnv = LuaL.newstate ();;
@@ -489,12 +487,12 @@ let doGlobalString str =
 ;;
 
 let print_debug state =
-        let str = (Lua.tostring state 1)
-        and printStr = function
-                | Some s -> print_string s
-                | _ -> ()
-        in printStr str;
-        0
+	let str = (Lua.tostring state 1)
+	and printStr = function
+		| Some s -> print_string s
+		| _ -> ()
+	in printStr str;
+	0
 in registerGlobalFunction "printDebug" print_debug;;
 
 let test h =
