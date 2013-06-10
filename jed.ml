@@ -288,6 +288,11 @@ type displayElement = {
 	}
 ;;
 
+type stateMode =
+	| Game
+	| Inventory
+;;
+
 (* Object *********************************************************************)
 class sdlWindow width height =
 	object (self) 
