@@ -86,6 +86,7 @@ let setup execDir =
 		| e -> 
 			let str = Printexc.to_string e in
 			print_string ("☢ Error during loading data game of kind "^str^"\n");
+			Printexc.print_backtrace stdout;
 			exit 2
 	); print_string "┝┅ game data loaded.\n";
 	
@@ -124,4 +125,5 @@ let initialization execDir =
 ;;
 
 (* Run !!! *)
+Printexc.record_backtrace true;
 initialization (get_arguments ())
