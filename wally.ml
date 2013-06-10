@@ -465,6 +465,11 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 			in browser 0 Infinite a 0
 	end
 	
+let test h =
+	let w = new graphMove "./game/rooms/begin/graph.xml" in
+	w#graphToMatrix
+;;
+
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
 let luaEnv = LuaL.newstate ();;
@@ -495,11 +500,6 @@ let print_debug state =
 	0
 in registerGlobalFunction "printDebug" print_debug;;
 
-let test h =
-	let w = new graphMove "./game/rooms/begin/graph.xml" in
-	w#graphToMatrix
-;;
-
 (* Class **********************************************************************)
 class luaRuntime =
 	object (self)
@@ -507,7 +507,7 @@ class luaRuntime =
 		
 		method registreFunction name func =
 			Lua.register env name func
-		method doString str =
+		method doLine str =
 			LuaL.dostring env str 
 		method addScript path =
 			LuaL.dofile env path
