@@ -21,6 +21,8 @@
 ################################################################################
 *)
 
+open Hashtbl
+
 (* Exceptions *****************************************************************)
 exception Not_found
 
@@ -30,53 +32,43 @@ type ('a) binaryTree =
 	| VoidTree
 ;;
 
+type 'a graph = 
+	| Point of 'a * 'a graph list
+	| Void
+;;
+
 (* Objects ********************************************************************)
 class ['a] dictionary = 
 	object (self)
-		val data = ref ([]:((string * 'a) list))
+		val data = Hashtbl.create 10
 		
 		method get key =
-			let rec browser = function
-				| []                    -> raise Not_found
-				| (k,_)::_ when k > key -> raise Not_found
-				| (k,e)::q when k = key -> e
-				| _::q                  -> browser q
-			in browser !data
-		method keys () =
-			let rec browser = function
-				| []       -> []
-				| (k,_)::q -> k::browser q
-			in browser !data
+			find data key
 		method elements () =
-			let rec browser = function
-				| []       -> []
-				| (_,e)::q -> e::browser q
-			in browser !data
-		method is_empty () = 
-			(function [] -> true | _::_ -> false) !data 
+			let values = ref ([]) in
+			let browser _ v =
+				values := v::!values
+			in iter browser data;
+			!values
+		method keys () =
+			let values = ref ([]) in
+			let browser k _ =
+				values := k::!values
+			in iter browser data;
+			!values
+		method is_empty () =
+			length data = 0 
 		method clear () = 
-			data := []
+			clear data
 		method length () =
-			let rec browser i = function
-				| []   -> i
-				| _::q -> browser (i+1) q
-			in browser 0 !data
-		method set key element =
-			let rec browser = function
-				| []                    -> (key,element)::[]
-				| (k,e)::q when k > key -> (key,element)::(k,e)::q
-				| (k,_)::q when k = key -> (key,element)::q
-				| c::q                  -> c::browser q
-			in data := browser !data
+			length data
+		method set (key:string) (element:'a) =
+			replace data key element
 		method remove key =
-			let rec browser = function
-				| []                    -> raise Not_found
-				| (k,_)::_ when k > key -> raise Not_found
-				| (k,e)::q when k = key -> q
-				| c::q                  -> c::browser q
-			in data := browser !data
+			remove data key
 	end
 ;;
+
 
 (* Functions ******************************************************************)
 let load_file file =

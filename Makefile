@@ -40,10 +40,11 @@
 # OCaml-Expat..(http://mmzeeman.home.xs4all.nl/ocaml/)
 
 ### Info #######################################################################
-RESULT     = wins
-SOURCES    = tool.ml wally.ml zak.ml jed.ml bobbin.ml main.ml
+RESULT         = wins
+SOURCES        = tool.ml wally.ml zak.ml jed.ml bobbin.ml main.ml woop.ml
 
-INCDIRS    = -I +sdl -I +lua -I +expat
+INCDIRS_OTHER  = -I +sdl -I +lua -I +expat
+INCDIRS_UBUNTU = -I +sdl -I /usr/local/lib/ocaml/3.12.1/lua/ -I +expat
 
 LIBSOPT    = unix.cmxa threads.cmxa bigarray.cmxa sdl.cmxa sdlloader.cmxa\
              sdlttf.cmxa sdlmixer.cmxa lua.cmxa expat.cmxa str.cmxa
@@ -57,8 +58,16 @@ OCAMLC     = ocamlc
 OCAMLDOC   = ocamldoc.opt
 OCAMLTOP   = ocamlmktop
 
+D = ubuntu
+
 ### Making #####################################################################
 .PHONY: doc clean
+
+ifeq ($(D),ubuntu)
+        INCDIRS = $(INCDIRS_UBUNTU)
+else
+        INCDIRS = $(INCDIRS_OTHER)
+endif
 
 ${RESULT}: ${SOURCES}
 	${OCAMLOPT} -thread $(INCDIRS) $(LIBSOPT) ${SOURCES} -o $@  

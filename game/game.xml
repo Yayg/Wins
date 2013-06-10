@@ -5,6 +5,7 @@
 	<characterDir href="characters/"/>
 	<roomDir href="rooms/"/>
 	<scriptDir href="srcipts/"/>
+	<fontDir href="fonts/"/>
 	
 	<firstRoom name="begin"/>
 </game>

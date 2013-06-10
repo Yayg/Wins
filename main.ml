@@ -47,7 +47,7 @@ let main () = ();;
 let setup execDir = 
 	(* motd *)
 	print_string "╒═════════════════════════════╕\n";
-	print_string "╎ Wins        Version alpha 2 ╎\n";
+	print_string "╎ Wins     Version alpha 3.14 ╎\n";
 	print_string "╎  The Point and Click Motor  ╎\n";
 	print_string "╞═════════════════════════════╛\n";
 	
@@ -72,17 +72,24 @@ let setup execDir =
 	envString#set "characterDir" (execDir//((xmlGame#getFirstByName "characterDir")#getXmlElement ())#getAttr "href");
 	envString#set "roomDir" (execDir//((xmlGame#getFirstByName "roomDir")#getXmlElement ())#getAttr "href");
 	envString#set "scriptDir" (execDir//(xmlGame#getFirstByName "scriptDir")#getAttr "href");
+	envString#set "fontDir" (execDir//(xmlGame#getFirstByName "fontDir")#getAttr "href");
+	
 	print_string "┝┅ Runtime variables loaded.\n";
 	
 	(* Setup Item and Character object *)
-	ignore((try 
+	ignore(try 
 		loadItems ();
 		loadCharacters ();
+		loadRooms ();
 		loadGlobalScripts (envString#get "scriptDir");
+		Jed.loadFonts (envString#get "fontDir");
 	with 
 		| Failure e -> print_string ("☢ Error during loading data game : "^e^" \n"); exit 2
-		| _ -> print_string "☢ Error during loading data game...\n"; exit 2
-	)); print_string "┝┅ game data loaded.\n";
+		| e -> 
+			let str = Printexc.to_string e in
+			print_string ("☢ Error during loading data game of kind "^str^"\n");
+			exit 2
+	); print_string "┝┅ game data loaded.\n";
 	
 	(* End Setup ! *)
 	print_string ("╘══ "^(envString#get "name")^" is loaded in "^envString#get "dir"^"\n")
@@ -118,4 +125,5 @@ let initialization execDir =
 		); exit 2
 ;;
 
+(* Run !!! *)
 initialization (get_arguments ())

@@ -32,6 +32,9 @@ let globalString = new dictionary;;
 
 let items = new dictionary;;
 let characters = new dictionary;;
+let rooms = new dictionary;;
+
+let inventory = ref [];;
 
 (* Interface ******************************************************************)
 class type displayable =
@@ -57,11 +60,12 @@ class item dirName =
 			try load_file (itemDir//dirName//"script.lua")
 			with _ -> failwith ("read script.lua of item "^dirName^" failed.")
 		
-		val mutable taken = false
 		val mutable name = ""
+		val mutable thumbnail = None
 		
 		initializer
 			name <- (data#getXmlElement ())#getAttr "name";
+			thumbnail <- Some ((data#getXmlElement ())#getAttr "thumbnail");
 			print_string ("├ Item "^dirName^" loaded.\n")
 		
 		method getDir =
@@ -70,6 +74,12 @@ class item dirName =
 			name
 		method getDataAnim =
 			animation
+		method getThumnail = 
+			let getter = function
+			| Some img -> img
+			| None -> failwith "get thumnail of item "^name^" (but it impossible)."
+		in getter thumbnail
+			
 	end
 ;;
 
@@ -88,9 +98,15 @@ class character dirName =
 			with _ -> failwith ("read script.lua of character "^dirName^" failed.")
 		
 		val mutable name = ""
+		val mutable font = ""
+		val mutable color = ""
 		
 		initializer
+			let fontData = data#getFirstByName "font"
+			in
 			name <- data#getAttr "name";
+			font <- fontData#getAttr "name";
+			color <-fontData#getAttr "color"; 
 			print_string ("├ Character "^dirName^" loaded.\n")
 		
 		method getDir =
@@ -99,6 +115,8 @@ class character dirName =
 			name
 		method getDataAnim =
 			animation
+		method getFont =
+			(font,color)
 		method sayHello =
 			"hello"
 	end
@@ -110,26 +128,17 @@ class room dirName =
 		val dir = roomDir//dirName
 		val data = 
 			(new treeXml (roomDir//dirName//"info.xml"))#getFirstByName "Room"
-		val script = newLua(roomDir//dirName//"script.lua")
+		val dialog = 
+			(new treeXml (roomDir//dirName//"dialog.xml"))#getFirstByName "Dialogs"
+		val script = load_file (roomDir//dirName//"script.lua")
 		
 		val mutable name = ""
 		val mutable background = ""
-		val mutable itemsUsed = ([]:item list)
 		
 		initializer
-			let itemsRead = 
-				let listName = 
-					cut ((((data#getFirstByName "Position")#getChildren ())#
-					getXmlElement ())#getString ())
-				in
-				let rec getItems = function
-					| [] -> []
-					| e::q -> items#get e::getItems q
-				in getItems listName
-			in
 			name <- (data#getXmlElement ())#getAttr "name";
 			background <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src";
-			itemsUsed <- itemsRead
+			print_string ("├ Room "^dirName^" loaded.\n")
 		
 		method getDir =
 			dir
@@ -137,16 +146,18 @@ class room dirName =
 			name
 		method getBackground =
 			background
+		method getDialog =
+			dialog
 	end
 ;;
 
 (* Functions ******************************************************************)
-(* Accessor environement variables *)
+(** Accessor environement variables **)
 let getEnvString name =
 	(envString#get name:string)
 ;;
 
-(* Accessor and modifier global game variables *)
+(** Accessor and modifier global game variables **)
 let setGlobalInt name (value:int) =
 	globalInt#set name value
 ;;
@@ -170,7 +181,7 @@ let removeGlobalString name =
 	globalString#remove name
 ;;
 
-(* Setup items and characters objects *)
+(** Setup items, characters and rooms objects **)
 let loadItems () =
 	let dirNameItems =
 		let itemDir = envString#get "itemDir" in
@@ -205,11 +216,56 @@ let loadCharacters () =
 	in browser dirNameCharacters
 ;;
 
-(* Accessor items and characters objects *)
+let loadRooms () =
+	let dirNameRooms =
+		let roomDir = envString#get "characterDir" in
+		let elements = Array.to_list (Sys.readdir roomDir) in
+		let rec sort = function
+			| [] -> []
+			| e::q when Sys.is_directory ((Filename.concat roomDir) e) -> 
+				e::sort q
+			| _::q -> sort q
+		in sort elements
+	in 
+	let rec browser = function 
+		| [] -> ()
+		| e::q -> rooms#set e (new room e); browser q
+	in browser dirNameRooms
+;;
+
+(** Accessor items and characters objects **)
 let getItem name =
 	items#get name
 ;;
 
 let getCharacter name =
 	characters#get name
+;;
+
+let getRoom name =
+	rooms#get name
+
+(** Manage player's inventory **)
+let invAddItem (name:string) =
+  let rec browser = function
+    | [] -> name::[]
+    | e::q when name > e -> name::e::q
+    | e::q -> e::browser q
+  in inventory := browser !inventory
+;;
+
+let invGetItems () =
+	!inventory
+
+let invCheckItem name =
+  List.mem name !inventory
+;;
+
+let invDropItem name =
+  let rec browser = function
+    | [] -> []
+    | e::q when name > e -> e::q
+    | e::q when name = e -> q
+    | e::q -> e::browser q
+  in inventory := browser !inventory
 ;;
