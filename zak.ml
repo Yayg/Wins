@@ -32,6 +32,7 @@ let globalString = new dictionary;;
 
 let items = new dictionary;;
 let characters = new dictionary;;
+let rooms = new dictionary;;
 
 let inventory = ref [];;
 
@@ -133,22 +134,11 @@ class room dirName =
 		
 		val mutable name = ""
 		val mutable background = ""
-		val mutable itemsUsed = ([]:item list)
 		
 		initializer
-			let itemsRead = 
-				let listName = 
-					cut ((((data#getFirstByName "Position")#getChildren ())#
-					getXmlElement ())#getString ())
-				in
-				let rec getItems = function
-					| [] -> []
-					| e::q -> items#get e::getItems q
-				in getItems listName
-			in
 			name <- (data#getXmlElement ())#getAttr "name";
-			background <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src";
-			itemsUsed <- itemsRead
+			background <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src"
+			print_string ("├ Room "^dirName^" loaded.\n")
 		
 		method getDir =
 			dir
@@ -156,6 +146,8 @@ class room dirName =
 			name
 		method getBackground =
 			background
+		method getDialog =
+			dialog
 	end
 ;;
 
@@ -189,7 +181,7 @@ let removeGlobalString name =
 	globalString#remove name
 ;;
 
-(** Setup items and characters objects **)
+(** Setup items, characters and rooms objects **)
 let loadItems () =
 	let dirNameItems =
 		let itemDir = envString#get "itemDir" in
@@ -224,6 +216,23 @@ let loadCharacters () =
 	in browser dirNameCharacters
 ;;
 
+let loadRooms () =
+	let dirNameRooms =
+		let roomDir = envString#get "characterDir" in
+		let elements = Array.to_list (Sys.readdir roomDir) in
+		let rec sort = function
+			| [] -> []
+			| e::q when Sys.is_directory ((Filename.concat roomDir) e) -> 
+				e::sort q
+			| _::q -> sort q
+		in sort elements
+	in 
+	let rec browser = function 
+		| [] -> ()
+		| e::q -> rooms#set e (new room e); browser q
+	in browser dirNameRooms
+;;
+
 (** Accessor items and characters objects **)
 let getItem name =
 	items#get name
@@ -232,6 +241,9 @@ let getItem name =
 let getCharacter name =
 	characters#get name
 ;;
+
+let getRoom name =
+	rooms#get name
 
 (** Manage player's inventory **)
 let invAddItem (name:string) =
