@@ -137,7 +137,7 @@ class room dirName =
 		
 		initializer
 			name <- (data#getXmlElement ())#getAttr "name";
-			background <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src";
+			background <- dir^((data#getFirstByName "Background")#getXmlElement ())#getAttr "src";
 			print_string ("├ Room "^dirName^" loaded.\n")
 		
 		method getDir =
@@ -218,7 +218,7 @@ let loadCharacters () =
 
 let loadRooms () =
 	let dirNameRooms =
-		let roomDir = envString#get "characterDir" in
+		let roomDir = envString#get "roomDir" in
 		let elements = Array.to_list (Sys.readdir roomDir) in
 		let rec sort = function
 			| [] -> []
