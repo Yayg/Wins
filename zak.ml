@@ -137,7 +137,7 @@ class room dirName =
 		
 		initializer
 			name <- (data#getXmlElement ())#getAttr "name";
-			background <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src"
+			background <- dir^((data#getFirstByName "Image")#getXmlElement ())#getAttr "src";
 			print_string ("├ Room "^dirName^" loaded.\n")
 		
 		method getDir =

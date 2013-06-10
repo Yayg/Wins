@@ -36,6 +36,7 @@ open Tool
 
 (* Exceptions *****************************************************************)
 exception Sdl_not_initialized
+exception No_room
 
 (* Globals Variables **********************************************************)
 let window = ref None
@@ -288,11 +289,6 @@ type displayElement = {
 	}
 ;;
 
-type stateMode =
-	| Game
-	| Inventory
-;;
-
 (* Object *********************************************************************)
 class sdlWindow width height =
 	object (self) 
@@ -303,7 +299,8 @@ class sdlWindow width height =
 		val mutable run = true
 		val mutable ticks = 0
 		
-		val mutable background = get_video_surface ()		
+		val mutable background = get_video_surface ()
+		val mutable currentRoom = None
 		val mutable currentItem = ""
 		val mutable currentMode = "game"
 				
@@ -321,7 +318,8 @@ class sdlWindow width height =
 			set_caption (envString#get "name") (envString#get "icon");
 			exLoop <- Some (Thread.create self#loop ());
 			modes#set "game" (create_RGB_surface_format !window [`HWSURFACE] width height);
-			modes#set "inventory" (create_RGB_surface_format !window [`HWSURFACE] width height)
+			modes#set "inventory" (create_RGB_surface_format !window [`HWSURFACE] width height);
+			modes#set "loading" (load_image ((getEnvString "dir")//"loading.png"))
 		
 		(** Window Manager **)
 		method getSurface =
@@ -371,8 +369,14 @@ class sdlWindow width height =
 		
 		method removeDisplayElement name =
 			displayData#remove name
-		method fushDisplayData () =
+		method fushDisplayData =
 			displayData#clear ()
+		
+		method getRoom =
+			match currentRoom with
+				| Some room -> room
+				| None -> raise No_room
+			
 		
 		(** Update Game Data **)
 		method setDialog xmlDialog id =
@@ -384,6 +388,12 @@ class sdlWindow width height =
 		method moveTo objectName newPosition =
 			let actualPosition = (displayData#get objectName).pos in
 			(displayData#get objectName).updating#getLine actualPosition newPosition
+		method changeRoom name = 
+			self#setLoadingMode;
+			self#fushDisplayData;
+			currentRoom <- Some (getRoom name);
+			background <- load_image self#getRoom#getBackground;
+			self#setGameMode
 		
 		(** Manager Mode **)
 		method private getVideo =
@@ -395,6 +405,9 @@ class sdlWindow width height =
 		method private setInventoryMode =
 			currentMode <- "inventory";
 			self#invInitDisplay
+			
+		method private setLoadingMode = 
+			currentMode <- "loading"
 		
 		(** Update Game Display **)
 		method private updateGame =
@@ -509,7 +522,7 @@ class sdlWindow width height =
 				
 				begin match currentMode with
 					| "game" -> self#updateGame
-					| "inventory" -> ()
+					| "inventory" | "loading" -> ()
 					| _ -> failwith "invalid state of programm"
 				end; 
 				
@@ -520,6 +533,7 @@ class sdlWindow width height =
 					| None -> ()
 					| Some event when currentMode = "game" -> self#gameInputUser event
 					| Some event when currentMode = "inventory" -> self#inventoryInputUser event
+					| Some event when currentMode = "loading" -> while Sdlevent.poll () <> None do () done
 					| _ -> failwith "Error : invalid state of programm"
 				end;
 				

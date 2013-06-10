@@ -79,6 +79,7 @@ let setup execDir =
 	(try 
 		loadItems ();
 		loadCharacters ();
+		loadRooms ();
 		Jed.loadFonts (envString#get "fontDir");
 	with 
 		| Failure e -> print_string ("☢ Error during loading data game : "^e^" \n"); exit 2
