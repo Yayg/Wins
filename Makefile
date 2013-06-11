@@ -41,7 +41,7 @@
 
 ### Info #######################################################################
 RESULT         = wins
-SOURCES        = tool.ml wally.ml zak.ml jed.ml bobbin.ml main.ml woop.ml
+SOURCES        = tool.ml wally.ml zak.ml jed.ml bobbin.ml woop.ml main.ml
 
 INCDIRS_OTHER  = -I +sdl -I +lua -I +expat
 INCDIRS_UBUNTU = -I +sdl -I /usr/local/lib/ocaml/3.12.1/lua/ -I +expat

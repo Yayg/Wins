@@ -11,15 +11,11 @@
 #                                                              Programmed by   #
 #    Philémon "Phil Gekni" Gardet [philemon.gardet@epita.fr]                   #
 #    Rafael "Yayg" Gozlan [rafael.gozlan@epita.fr]                             #
-#    Lorry "Bardaf" Guedj [lorry.guedj@epita.fr]                               #
-#    Alexandre "Stawayld" Starck [alexandre.starck@epita.fr]                   #
 #                                                                              #
 ################################################################################
 #    Wins is a "Point and Click" Game Motor written with OCaml                 #
 #    Copyright (C) 2013    Philémon Gardet [philemon.gardet@epita.fr]          #
 #                          Rafael Gozlan [rafael.gozlan@epita.fr]              #
-#                          Lorry Guedj [lorry.guedj@epita.fr]                  #
-#                          Alexandre Starck [alexandre.starck@epita.fr]        #
 #                                                                              #
 #    This program is free software: you can redistribute it and/or modify      #
 #    it under the terms of the GNU General Public License as published by      #
@@ -42,12 +38,30 @@ open Tool
 
 let usage_msg = "Usage : wins [gameFolder]\n";;
 
+(* Main function **************************************************************)
 let main () = ();;
 
+(* Registration function Lua **************************************************)
+let registerStaticFuncLua () =
+	()
+;;
+
+let registerDynamicFuncLua () =
+	()
+;;
+
+let initLua () =
+	let _ = registerStaticFuncLua () in
+	let _ = loadGlobalScripts (envString#get "scriptDir") in
+	registerDynamicFuncLua ();
+	print_string "┝┅ Scripts loaded.\n";
+;;
+
+(* Setup **********************************************************************)
 let setup execDir = 
 	(* motd *)
 	print_string "╒═════════════════════════════╕\n";
-	print_string "╎ Wins     Version alpha 3.14 ╎\n";
+	print_string "╎ Wins          Version 233rd ╎\n";
 	print_string "╎  The Point and Click Motor  ╎\n";
 	print_string "╞═════════════════════════════╛\n";
 	
@@ -68,23 +82,31 @@ let setup execDir =
 	envString#set "xScreen" (dimension#getAttr "x");
 	envString#set "yScreen" (dimension#getAttr "y");
 	envString#set "dir" execDir;
-	envString#set "itemDir" (execDir//((xmlGame#getFirstByName "itemDir")#getXmlElement ())#getAttr "href");
-	envString#set "characterDir" (execDir//((xmlGame#getFirstByName "characterDir")#getXmlElement ())#getAttr "href");
-	envString#set "roomDir" (execDir//((xmlGame#getFirstByName "roomDir")#getXmlElement ())#getAttr "href");
-	envString#set "scriptDir" (execDir//(xmlGame#getFirstByName "scriptDir")#getAttr "href");
-	envString#set "fontDir" (execDir//(xmlGame#getFirstByName "fontDir")#getAttr "href");
+	envString#set "itemDir" (execDir//((xmlGame#getFirstByName "itemDir")
+		#getXmlElement ())#getAttr "href");
+	envString#set "characterDir" (execDir//((xmlGame#getFirstByName "characterDir")
+		#getXmlElement ())#getAttr "href");
+	envString#set "roomDir" (execDir//((xmlGame#getFirstByName "roomDir")
+		#getXmlElement ())#getAttr "href");
+	envString#set "scriptDir" (execDir//(xmlGame#getFirstByName "scriptDir")
+		#getAttr "href");
+	envString#set "fontDir" (execDir//(xmlGame#getFirstByName "fontDir")
+		#getAttr "href");
 	
 	print_string "┝┅ Runtime variables loaded.\n";
 	
-	(* Setup Item and Character object *)
+	(* Setup game's objects *)
 	ignore(try 
+		print_string "┝┅ Load game's objects.\n";
 		loadItems ();
 		loadCharacters ();
 		loadRooms ();
-		loadGlobalScripts (envString#get "scriptDir");
+		print_string "┝┅ Game's objects loaded.\n";
 		Jed.loadFonts (envString#get "fontDir");
+		initLua ();
 	with 
-		| Failure e -> print_string ("☢ Error during loading data game : "^e^" \n"); exit 2
+		| Failure e -> 
+			print_string ("☢ Error during loading data game : "^e^" \n"); exit 2
 		| e -> 
 			let str = Printexc.to_string e in
 			print_string ("☢ Error during loading data game of kind "^str^"\n");
@@ -93,13 +115,11 @@ let setup execDir =
 	); print_string "┝┅ game data loaded.\n";
 	
 	(* End Setup ! *)
-	print_string ("╘══ "^(envString#get "name")^" is loaded in "^envString#get "dir"^"\n")
+	print_string ("╘══ "^(envString#get "name")
+		^" is loaded in "^envString#get "dir"^"\n")
 ;;
-let get_arguments () = 
-	let arg = ref "" in
-	Arg.parse ([]:((Arg.key * Arg.spec * Arg.doc) list)) (function str -> arg := str) usage_msg;
-	!arg
-;;
+
+(* Initialization *************************************************************)
 let initialization execDir = 
 	try 
 		if not (Sys.is_directory execDir) then (
@@ -111,13 +131,13 @@ let initialization execDir =
 				setup execDir;
 			with 
 				| Not_found ->
-					print_string "☢ There is no file 'game.xml' in the directory of the game.\n";
+					print_string 
+						"☢ There is no file 'game.xml' in the directory of the game.\n";
 					exit 2
 				| _ -> 
 					print_string "☢ The file 'game.xml' is invalid.\n";
 					exit 2
-			);
-			main ()
+			); main ()
 	with _ -> (
 		if execDir = "" then 
 			print_string usage_msg
@@ -126,6 +146,13 @@ let initialization execDir =
 		); exit 2
 ;;
 
-(* Run !!! *)
-Printexc.record_backtrace true;
+let get_arguments () = 
+	let arg = ref "" in
+	Arg.parse ([]:((Arg.key * Arg.spec * Arg.doc) list))
+		(function str -> arg := str) usage_msg;
+	!arg
+;;
+
+(* Run !!! ********************************************************************)
+Printexc.record_backtrace true; (*Debug trace*)
 initialization (get_arguments ())
