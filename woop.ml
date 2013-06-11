@@ -22,24 +22,16 @@
 *)
 
 (* Globals variables *********************************************************)
-let elements = ref []
-let run = ref true
+let ticks = ref 0
 
 (* Functions *****************************************************************)
-let stopExecution () =
-	run := false
-;;
-
-let addLoopFunction (f: (unit -> unit)) =
-	elements := f::!elements
-;;
-
 let bigLoop () =
-	let rec browser = function
-		| [] -> ()
-		| f::q -> f (); browser q
-	in	
-	while !run do
-		browser !elements
+	let window = Jed.getWindow () in
+	while window#isRuning do
+		ticks := 17 + Sdltimer.get_ticks (); (*17 ms -> 60fps*)
+		
+		window#updateWindow;
+		
+		while (Sdltimer.get_ticks ()) <= !ticks do () done;
 	done
 ;;

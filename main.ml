@@ -35,12 +35,14 @@
 open Wally
 open Zak
 open Tool
+open Woop
 
 let usage_msg = "Usage : wins [gameFolder]\n";;
 
 (* Main function **************************************************************)
-let main () = ();;
-
+let main () = 
+	bigLoop();
+;;
 (* Registration function Lua **************************************************)
 let registerStaticFuncLua () =
 	()

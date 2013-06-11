@@ -21,7 +21,6 @@
 ################################################################################
 *)
 
-open Thread
 open Queue
 
 open Sdl
@@ -293,11 +292,9 @@ type displayElement = {
 class sdlWindow width height =
 	object (self) 
 		val window = ref (set_video_mode ~w:width ~h:height [`DOUBLEBUF])
-		val mutable exLoop = None
 		
 		val mutable fullscreen = false
 		val mutable run = true
-		val mutable ticks = 0
 		
 		val mutable background = get_video_surface ()
 		val mutable currentRoom = None
@@ -316,7 +313,6 @@ class sdlWindow width height =
 		
 		initializer
 			set_caption (envString#get "name") (envString#get "icon");
-			exLoop <- Some (Thread.create self#loop ());
 			modes#set "game" (create_RGB_surface_format !window [`HWSURFACE] width height);
 			modes#set "inventory" (create_RGB_surface_format !window [`HWSURFACE] width height);
 			modes#set "loading" (load_image ((getEnvString "dir")//"loading.png"))
@@ -516,30 +512,28 @@ class sdlWindow width height =
 		method private inventoryInputUser = function
 		  | _ -> ()
 		
-		(** Loop Displaying and Event **)
-		method private loop () = 
-			while run do
-				ticks <- 17 + Sdltimer.get_ticks (); (*17 ms -> 60fps*)
-				
-				begin match currentMode with
-					| "game" -> self#updateGame
-					| "inventory" | "loading" -> ()
-					| _ -> failwith "invalid state of programm"
-				end; 
-				
-				flip (self#getVideo);
-				
-				begin match Sdlevent.poll () with
-					| Some Sdlevent.QUIT -> Sdl.quit (); run <- false
-					| None -> ()
-					| Some event when currentMode = "game" -> self#gameInputUser event
-					| Some event when currentMode = "inventory" -> self#inventoryInputUser event
-					| Some event when currentMode = "loading" -> while Sdlevent.poll () <> None do () done
-					| _ -> failwith "Error : invalid state of programm"
-				end;
-				
-				while (Sdltimer.get_ticks ()) <= ticks do () done;
-			done
+		(** Update Data, Display and Event **)
+		method isRuning =
+			run
+		
+		method updateWindow = 
+			(* Update Data *)
+			begin match currentMode with
+				| "game" -> self#updateGame
+				| "inventory" | "loading" -> ()
+				| _ -> failwith "invalid state of programm"
+			end; 
+			(* Update Display *)
+			flip (self#getVideo);
+			(* Update Event *)
+			begin match Sdlevent.poll () with
+				| Some Sdlevent.QUIT -> Sdl.quit (); run <- false
+				| None -> ()
+				| Some event when currentMode = "game" -> self#gameInputUser event
+				| Some event when currentMode = "inventory" -> self#inventoryInputUser event
+				| Some event when currentMode = "loading" -> while Sdlevent.poll () <> None do () done
+				| _ -> failwith "Error : invalid state of programm"
+			end
 			
 		(** Low Level Displaying **)
 		method private displayImage clip src (x,y) = 
