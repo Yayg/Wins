@@ -3,8 +3,6 @@
 #    Wins is a "Point and Click" Game Motor written with OCaml                 #
 #    Copyright (C) 2013    Philémon Gardet [philemon.gardet@epita.fr]          #
 #                          Rafael Gozlan [rafael.gozlan@epita.fr]              #
-#                          Lorry Guedj [lorry.guedj@epita.fr]                  #
-#                          Alexandre Starck [alexandre.starck@epita.fr]        #
 #                                                                              #
 #    This program is free software: you can redistribute it and/or modify      #
 #    it under the terms of the GNU General Public License as published by      #
@@ -31,6 +29,9 @@ let bigLoop () =
 		ticks := 17 + Sdltimer.get_ticks (); (*17 ms -> 60fps*)
 		
 		window#updateWindow;
+		print_int !ticks;
+		print_string " ";
+		flush stdout;
 		
 		while (Sdltimer.get_ticks ()) <= !ticks do () done;
 	done

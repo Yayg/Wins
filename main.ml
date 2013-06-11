@@ -35,14 +35,22 @@
 open Wally
 open Zak
 open Tool
-open Woop
 
 let usage_msg = "Usage : wins [gameFolder]\n";;
 
 (* Main function **************************************************************)
 let main () = 
-	bigLoop();
+	let _ =
+		let w =
+			Jed.initW ();
+			Jed.getWindow ()
+		in
+		w#changeRoom (envString#get "firstRoom")
+	in
+	Woop.bigLoop();
+	exit 0
 ;;
+
 (* Registration function Lua **************************************************)
 let registerStaticFuncLua () =
 	()
@@ -77,23 +85,25 @@ let setup execDir =
 	in 
 	
 	(* Setup Environement variables *)
-	let dimension = ((xmlGame#getFirstByName "dimension")#getXmlElement ())
+	let dimension = (xmlGame#getFirstByName "dimension")
 	in
-	envString#set "name" ((xmlGame#getXmlElement ())#getAttr "name");
-	envString#set "icon" ((xmlGame#getXmlElement ())#getAttr "icon");
+	envString#set "name" (xmlGame#getAttr "name");
+	envString#set "icon" (xmlGame#getAttr "icon");
 	envString#set "xScreen" (dimension#getAttr "x");
 	envString#set "yScreen" (dimension#getAttr "y");
 	envString#set "dir" execDir;
-	envString#set "itemDir" (execDir//((xmlGame#getFirstByName "itemDir")
-		#getXmlElement ())#getAttr "href");
-	envString#set "characterDir" (execDir//((xmlGame#getFirstByName "characterDir")
-		#getXmlElement ())#getAttr "href");
-	envString#set "roomDir" (execDir//((xmlGame#getFirstByName "roomDir")
-		#getXmlElement ())#getAttr "href");
+	envString#set "itemDir" (execDir//(xmlGame#getFirstByName "itemDir")
+		#getAttr "href");
+	envString#set "characterDir" (execDir//(xmlGame#getFirstByName "characterDir")
+		#getAttr "href");
+	envString#set "roomDir" (execDir//(xmlGame#getFirstByName "roomDir")
+		#getAttr "href");
 	envString#set "scriptDir" (execDir//(xmlGame#getFirstByName "scriptDir")
 		#getAttr "href");
 	envString#set "fontDir" (execDir//(xmlGame#getFirstByName "fontDir")
 		#getAttr "href");
+	envString#set "firstRoom" ((xmlGame#getFirstByName "firstRoom")
+		#getAttr "name");
 	
 	print_string "┝┅ Runtime variables loaded.\n";
 	
@@ -126,25 +136,31 @@ let initialization execDir =
 	try 
 		if not (Sys.is_directory execDir) then (
 			print_string "The specified path is not a folder.\n";
+			Printexc.print_backtrace stdout;
 			exit 2
 			)
 		else 
-			(try 
-				setup execDir;
-			with 
-				| Not_found ->
-					print_string 
-						"☢ There is no file 'game.xml' in the directory of the game.\n";
-					exit 2
-				| _ -> 
-					print_string "☢ The file 'game.xml' is invalid.\n";
-					exit 2
-			); main ()
+			let _ =
+				try 
+					setup execDir
+				with 
+					| Not_found ->
+						print_string 
+							"☢ There is no file 'game.xml' in the directory of the game.\n";
+						Printexc.print_backtrace stdout;
+						exit 2
+					| _ -> 
+						print_string "☢ The file 'game.xml' is invalid.\n";
+						Printexc.print_backtrace stdout;
+						exit 2
+			in flush stdout;
+			main ()
 	with _ -> (
 		if execDir = "" then 
 			print_string usage_msg
 		else
-			print_string "The specified path is not valid.\n"
+			print_string "The specified path is not valid.\n";
+			Printexc.print_backtrace stdout;
 		); exit 2
 ;;
 
