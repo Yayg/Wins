@@ -29,9 +29,6 @@ let bigLoop () =
 		ticks := 17 + Sdltimer.get_ticks (); (*17 ms -> 60fps*)
 		
 		window#updateWindow;
-		print_int !ticks;
-		print_string " ";
-		flush stdout;
 		
 		while (Sdltimer.get_ticks ()) <= !ticks do () done;
 	done

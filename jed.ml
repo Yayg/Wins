@@ -55,6 +55,7 @@ type tirade = {
 	}
 ;;
 (* Object *********************************************************************)
+(* ************************************************************************** *)
 class dialog (xmlDialog:Wally.treeXml) id =
 	object (self)
 	val buffer = Queue.create ()
@@ -145,6 +146,7 @@ class dialog (xmlDialog:Wally.treeXml) id =
 	end
 ;;
 
+(* ************************************************************************** *)
 class displayUpdating window element =
 	object (self)
 		
@@ -287,6 +289,7 @@ type displayElement = {
 ;;
 
 (* Object *********************************************************************)
+(* ************************************************************************** *)
 class sdlWindow width height =
 	object (self) 
 		val window = ref (set_video_mode ~w:width ~h:height [`DOUBLEBUF])
@@ -392,7 +395,10 @@ class sdlWindow width height =
 		
 		(** Manager Mode **)
 		method private getVideo =
-		  modes#get currentMode
+		  let src = modes#get currentMode
+		  and dst = !window
+		  in blit_surface ~src ~dst ();
+		  dst
 		
 		method private setGameMode =
 			currentMode <- "game"
@@ -439,7 +445,7 @@ class sdlWindow width height =
 					self#displayImage clip surface position;
 					browser q
 			in 
-			blit_surface ~src:background ~dst:(self#getVideo) ();
+			blit_surface ~src:background ~dst:(modes#get "game") ();
 			browser (displayData#elements ())
 		method private gameDisplayDialog = match currentDialog with
 			| None -> ()
@@ -452,7 +458,7 @@ class sdlWindow width height =
 				let (ox, oy) = offset
 				and (cx, cy) = (displayData#get character).pos
 				in let position = rect (cx+ox) (cy+oy) 0 0
-				in blit_surface ~src:image ~dst:(self#getVideo) ~dst_rect:position ()
+				in blit_surface ~src:image ~dst:(modes#get "game") ~dst_rect:position ()
 		
 		(** Update Inventory Display **)
 		method private invInitDisplay =
@@ -490,7 +496,7 @@ class sdlWindow width height =
 						i := !i+50; j := !j+50;
 						blit_surface ~src:img ~dst:itemSurface ~dst_rect:(rect x y 0 0) (); 
 						draw q
-				in fill_rect itemSurface (map_RGB itemSurface ?alpha:(Some 50) black); 
+				in fill_rect itemSurface (map_RGB itemSurface ?alpha:(Some 50) white); 
 				draw itemsImg;
 				blit_surface ~src:(modes#get "game") ~dst:(modes#get "inventory")
 			in 
@@ -507,8 +513,14 @@ class sdlWindow width height =
 					| _ -> ()
 				end
 			| _ -> ()
+			
 		method private inventoryInputUser = function
-		  | _ -> ()
+		  | Sdlevent.KEYDOWN key -> 
+		  	begin match key.Sdlevent.keysym with
+					| KEY_i | KEY_ESCAPE -> self#setGameMode
+					| _ -> ()
+				end
+			| _ -> ()
 		
 		(** Update Data, Display and Event **)
 		method isRuning =
