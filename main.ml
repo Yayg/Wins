@@ -45,6 +45,8 @@ let main () =
 			Jed.initW ();
 			Jed.getWindow ()
 		in
+		invAddItem "duck";
+		invAddItem "hammer";
 		w#changeRoom (envString#get "firstRoom")
 	in
 	Woop.bigLoop();

@@ -293,7 +293,7 @@ type displayElement = {
 class sdlWindow width height =
 	object (self) 
 		val window = ref (set_video_mode ~w:width ~h:height [`DOUBLEBUF])
-		
+			
 		val mutable fullscreen = false
 		val mutable run = true
 		
@@ -369,7 +369,7 @@ class sdlWindow width height =
 		method fushDisplayData =
 			displayData#clear ()
 		
-		method getRoom =
+		method private getRoom =
 			match currentRoom with
 				| Some room -> room
 				| None -> raise No_room
@@ -471,7 +471,8 @@ class sdlWindow width height =
 						let itemObj = Zak.getItem item
 						in let image = 
 							try load_image (itemObj#getDir//itemObj#getThumnail)
-							with _ -> failwith ("load thumnail"^(itemObj#getDir//itemObj#getThumnail)^" failed.")
+							with _ -> failwith 
+								("load thumnail"^(itemObj#getDir//itemObj#getThumnail)^" failed.")
 						in let (nN,nI) = browser q
 						in i:=!i+1;
 						(item::nN,image::nI)
@@ -480,30 +481,35 @@ class sdlWindow width height =
 			let _ = inventoryDisplay <- Some(Array.of_list itemsName)
 			and wL = (wW-100)/2 in
 			let w =
-				if count*50 < wL-6 then
+				if count*50 < wL-10 then
 					count*50
-				else wL-6
-			and h = wL/(count*50+6)
+				else wL-10
+			in let h = count*2500/w
 			in 
-			let itemSurface = create_RGB_surface_format !window [`SWSURFACE] (w+6) (h+6)
+			let itemSurface = self#createAlphaSurface (w+10) (h+10)
 			in let _ =
 				let i = ref 0
 				and j = ref 0
 				in let rec draw = function
 					| [] -> ()
 					| img::q -> 
-						let x = !i+3 and y = !j+3 in
-						i := !i+50; j := !j+50;
-						blit_surface ~src:img ~dst:itemSurface ~dst_rect:(rect x y 0 0) (); 
+						let x = !i+5 and y = !j+5
+						and _ =
+							let pi = !i in
+							i := (!i+50)mod w;
+							if !i <= pi then
+								j:= !j+50
+						in
+						set_alpha img 10;
+						self#blit_alpha img itemSurface x y; 
 						draw q
-				in fill_rect itemSurface (map_RGB itemSurface ?alpha:(Some 50) white); 
+				in fill_rect itemSurface (map_RGB itemSurface ~alpha:200 black);
 				draw itemsImg;
-				blit_surface ~src:(modes#get "game") ~dst:(modes#get "inventory")
+				blit_surface ~src:(modes#get "game") ~dst:(modes#get "inventory") ()
 			in 
 			let (x,y) = ((wW-w-6)/2,(hW-h-6)/2)
 			in blit_surface ~src:itemSurface ~dst:(modes#get "inventory") 
 				~dst_rect:(rect x y 0 0) ()
-			
 			
 		(** Read Input User and run the function corresponding with event **)
 		method private gameInputUser = function 
@@ -539,17 +545,53 @@ class sdlWindow width height =
 			begin match Sdlevent.poll () with
 				| Some Sdlevent.QUIT -> Sdl.quit (); run <- false
 				| None -> ()
-				| Some event when currentMode = "game" -> self#gameInputUser event
-				| Some event when currentMode = "inventory" -> self#inventoryInputUser event
-				| Some event when currentMode = "loading" -> while Sdlevent.poll () <> None do () done
+				| Some event when currentMode = "game" -> 
+					self#gameInputUser event
+				| Some event when currentMode = "inventory" -> 
+					self#inventoryInputUser event
+				| Some event when currentMode = "loading" -> 
+					while Sdlevent.poll () <> None do () done
 				| _ -> failwith "Error : invalid state of programm"
 			end
 			
-		(** Low Level Displaying **)
+		(** Low Level Functions **)
 		method private displayImage clip src (x,y) = 
 			let dst = self#getVideo
 			and dst_rect = rect x y 0 0 in
 			blit_surface ~src ~src_rect:clip ~dst ~dst_rect ()
+			
+		method private createAlphaSurface w h =
+			let pi = surface_format !window in
+			let r = pi.rmask
+			and g = pi.gmask
+			and b = pi.bmask
+			in let a = Int32.lognot (Int32.logor r (Int32.logor g b)) 
+			in create_RGB_surface [`HWSURFACE] w h pi.bits_pp r g b a
+			
+		method private createSurface h w =
+			create_RGB_surface_format !window [`HWSURFACE] w h
+			
+		method blit_alpha src dst x y =
+			let _ =
+				lock src;
+				lock dst
+			and left () =
+				unlock src;
+				unlock dst
+			and (w,h,_) = surface_dims src
+			in
+			for i = 0 to w-1 do
+				for j = 0 to h-1 do
+					let c,salpha = 
+						let spix = get_pixel src i j in
+						let color,alpha = get_RGBA src spix in
+						(map_RGB dst ~alpha:alpha color),alpha
+					in if salpha > 10 then
+						put_pixel dst (x+i) (y+j) c
+				done
+			done;
+			left ()
+		
 	end
 ;;
 
