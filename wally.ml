@@ -44,8 +44,9 @@ type len = Finite of float | Infinite
 type xmlElementType = 
 	| Element of string * string dictionary
 	| Text of string
-;;
 
+type matrix = Matrix of len array array | VoidM
+;;
 (* Objects ********************************************************************)
 class xmlElement dataXml =
 	object (self)
@@ -252,7 +253,7 @@ class treeXml xmlFile =
 	end
 ;;
 
-class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begin/graph.xml";; *)
+class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.xml";; *)
 	object (self)
 		
 		val mutable tree = new treeXml (xmlFile)
@@ -261,13 +262,15 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 		val mutable links = new dictionary (* (((x,y),links list)) dictionary *)
 		val mutable keys = []
 		val mutable n = ref (-1)
+		val mutable aux = VoidM
 		
 			initializer
 			self#getNodes;
 			tree <- tree#getChildren ();
 			self#init;
-			self#dicoFusion
-		
+			self#dicoFusion;
+			aux <- Matrix(self#graphToMatrix)
+			
 (* Initialisation des graphs **************************************************)
 		
 		method init =
@@ -386,7 +389,7 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 			keys
 		
 		method initMatrix = 
-			Array.make ((Tool.length keys)) (Array.make ((Tool.length keys)) Infinite)
+			Array.make ((List.length keys)) (Array.make ((List.length keys)) Infinite)
 			
 		method displayArray a =
 			let rec browser a = function
@@ -416,14 +419,11 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 			self#initKeys;
 			let mat = self#initMatrix in
 			let rec browser m l =
-				print_string("\n");
 				match l with
 				| [] -> m
 				| (i,h) :: t ->
 					let (_,link) = (distance#get h) in
 					m.(i) <- (Array.copy (self#insert (m.(i)) link));
-					print_string(string_of_int(i)^"\n");
-					self#displayArray m.(i);
 					browser m t
 			in self#endMatrix(browser mat keys)
 			
@@ -434,20 +434,56 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 					endM (Array.copy m) (n+1)
 			in endM ma 0
 (* Dijkstra *******************************************************************)
-
-		method minArray a =
-			let rec browser v min a = function
-				| i when i = Array.length a -> v
-				| i ->
-					(
-					match a.(i) with
-						| Finite(n) when ((match min with Finite(m) -> n < m | _ -> true)&&(n <> (0.))) -> browser v (Finite(n)) a (i+1)
-						| _ -> browser v min a (i+1)
-					)
-			in browser 0 Infinite a 0
-				
+		method dijkstra x y = 
+		let dejavu = ref [] and avoir = ref [x] and pcc = ref [] and result = ref [] in
+		while !avoir <> [] do
+			let cur::t = !avoir in
+			avoir := t;
+			(* on a trouvé un chemin *)
+			if (cur = y) then
+				(result := (y :: !pcc) :: !result;
+				(* si ce n'est pas encrore fini :/ on come back*)
+				begin
+				if (t <> []) then
+					let suiv :: _ = t in
+					(* tant que le prochain à voir n'est pas dans les fils d'un noeud on remonte *)
+					while (let prec :: _ = !pcc in 
+							let (_,l) = (links#get prec) in
+							List.mem suiv l) do
+						let _ :: p = !pcc in
+						pcc := suiv :: p
+					done
+				end;
+				)
+			else (* on est pas encore à y *)
+				begin 
+				let (_,sons) = links#get cur in
+				let k = self#check sons !dejavu in
+				if (k = []) then
+					let suiv :: _ = t in
+						(* on remonte *)
+						while (let prec :: _ = !pcc in 
+								let (_,l) = (links#get prec) in
+								List.mem suiv l) do
+							let _ :: p = !pcc in
+							pcc := suiv :: p
+						done
+				else (* on descend *)
+				avoir := List.rev_append k !avoir;
+				dejavu := cur :: !dejavu;
+				pcc := cur :: !pcc;
+				end
+		done;
+		!pcc
 		
-
+		method check l1 l2 = 
+			let rec browser = function
+				| [] -> []
+				| h :: t when List.mem h l2 -> browser t
+				| h :: t -> h :: browser t
+			in
+			browser l1
+		
 	end
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
@@ -455,7 +491,7 @@ let luaEnv = LuaL.newstate ();;
 
 (* Functions ******************************************************************)
 let test h =
-	let w = new graphMove "./game/rooms/begin/graph.xml" in
+	let w = new graph "./game/rooms/begin/graph.xml" in
 	w#graphToMatrix
 ;;
 LuaL.openlibs luaEnv;;
