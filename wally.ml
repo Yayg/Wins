@@ -439,20 +439,39 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 		while !avoir <> [] do
 			let cur::t = !avoir in
 			avoir := t;
+			
+			print_string(cur^"\n");
+			print_string(" déjàvu :");
+			self#printList !dejavu;
+			print_string(" a voir :");
+			self#printList t;
+			print_string(" pcc :");
+			self#printList !pcc;
+			
 			(* on a trouvé un chemin *)
 			if (cur = y) then
-				(result := (y :: !pcc) :: !result;
+				(self#printList (y :: !pcc);
+				result := (y :: !pcc) :: !result;
 				(* si ce n'est pas encrore fini :/ on come back*)
 				begin
 				if (t <> []) then
+					begin
 					let suiv :: _ = t in
 					(* tant que le prochain à voir n'est pas dans les fils d'un noeud on remonte *)
-					while (let prec :: _ = !pcc in 
+					begin
+					if (cur = suiv) then
+					let x :: y :: z = !pcc in
+					pcc := y :: z;
+					end;
+					while ((let prec :: _ = !pcc in 
 							let (_,l) = (links#get prec) in
-							List.mem suiv l) do
-						let _ :: p = !pcc in
-						pcc := suiv :: p
+							List.mem suiv l) = false) do
+					begin
+							let x :: y :: z = !pcc in
+							pcc := y :: z;
+					end;
 					done
+					end;
 				end;
 				)
 			else (* on est pas encore à y *)
@@ -460,21 +479,24 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 				let (_,sons) = links#get cur in
 				let k = self#check sons !dejavu in
 				if (k = []) then
-					let suiv :: _ = t in
-						(* on remonte *)
-						while (let prec :: _ = !pcc in 
-								let (_,l) = (links#get prec) in
-								List.mem suiv l) do
-							let _ :: p = !pcc in
-							pcc := suiv :: p
-						done
+					begin
+					if (t <> []) then
+						let suiv :: _ = t in
+							(* on remonte *)
+							while (let prec :: _ = !pcc in 
+									let (_,l) = (links#get prec) in
+										List.mem suiv l) do
+								let _ :: p = !pcc in
+								pcc := suiv :: p
+							done
+					end
 				else (* on descend *)
-				avoir := List.rev_append k !avoir;
-				dejavu := cur :: !dejavu;
-				pcc := cur :: !pcc;
+						avoir := List.append k !avoir;
+						dejavu := cur :: !dejavu;
+						pcc := cur :: !pcc;
 				end
 		done;
-		!pcc
+		!result
 		
 		method check l1 l2 = 
 			let rec browser = function
@@ -483,6 +505,15 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 				| h :: t -> h :: browser t
 			in
 			browser l1
+		
+		method printList l =
+			print_string("[");
+			let rec browser = function
+			| [] -> print_string("] \n")
+			| a :: t -> print_string(a);
+						browser t
+			in 
+			browser l
 		
 	end
 (* Global Variables ***********************************************************)
