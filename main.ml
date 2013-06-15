@@ -111,7 +111,7 @@ let setup execDir =
 	
 	(* Setup game's objects *)
 	ignore(try 
-		print_string "┝┅ Load game's objects.\n";
+		print_string "┝┅ Load game's objects...\n";
 		loadItems ();
 		loadCharacters ();
 		loadRooms ();

@@ -293,30 +293,32 @@ type displayElement = {
 class sdlWindow width height =
 	object (self) 
 		val window = ref (set_video_mode ~w:width ~h:height [`DOUBLEBUF])
-			
 		val mutable fullscreen = false
 		val mutable run = true
 		
-		val mutable background = get_video_surface ()
-		val mutable currentRoom = None
-		val mutable currentItem = ""
-		val mutable currentMode = "game"
-				
 		val modes = new dictionary
+		val mutable currentMode = "game"
+		val mutable currentItem = None
 		
 		(* Game Mode *)
-		val mutable currentDialog = None
 		val displayData = new dictionary
+		val mutable currentRoom = None
+		val mutable background = get_video_surface ()
+		val mutable currentDialog = None
 		
 		(* Inventory Mode *)
-		val mutable inventoryDisplay = None
+		val mutable invBackground = 
+			create_RGB_surface_format (get_video_surface ()) [`HWSURFACE] width height
+		val mutable inventoryDisplayed = []
 		
 		
 		initializer
 			set_caption (envString#get "name") (envString#get "icon");
-			modes#set "game" (create_RGB_surface_format !window [`HWSURFACE] width height);
-			modes#set "inventory" (create_RGB_surface_format !window [`HWSURFACE] width height);
-			modes#set "loading" (load_image ((getEnvString "dir")//"loading.png"))
+			modes#set "game" (self#createSurface width height);
+			modes#set "inventory" (self#createSurface width height);
+			modes#set "loading" (load_image ((getEnvString "dir")//"loading.png"));
+			Sdlevent.disable_events Sdlevent.all_events_mask;
+			Sdlevent.enable_events (Sdlevent.make_mask [Sdlevent.KEYDOWN_EVENT;Sdlevent.MOUSEBUTTONDOWN_EVENT;Sdlevent.QUIT_EVENT])
 		
 		(** Window Manager **)
 		method getSurface =
@@ -401,9 +403,12 @@ class sdlWindow width height =
 		  dst
 		
 		method private setGameMode =
+			Sdlevent.disable_events Sdlevent.mousemotion_mask;
 			currentMode <- "game"
 		
 		method private setInventoryMode =
+			Sdlevent.enable_events Sdlevent.mousemotion_mask;
+			currentItem <- None;
 			currentMode <- "inventory";
 			self#invInitDisplay
 			
@@ -478,8 +483,7 @@ class sdlWindow width height =
 						(item::nN,image::nI)
 				in (browser (invGetItems ()), !i)
 			in 
-			let _ = inventoryDisplay <- Some(Array.of_list itemsName)
-			and wL = (wW-100)/2 in
+			let wL = (wW-100)/2 in
 			let w =
 				if count*50 < wL-10 then
 					count*50
@@ -487,10 +491,12 @@ class sdlWindow width height =
 			in let h = count*2500/w
 			in 
 			let itemSurface = self#createAlphaSurface (w+10) (h+10)
+			and (xo,yo) = ((wW-w-10)/2,(hW-h-10)/2)
 			in let _ =
-				let i = ref 0
+				let nameL = Array.of_list itemsName
+				and i = ref 0
 				and j = ref 0
-				in let rec draw = function
+				in let rec draw iN = function
 					| [] -> ()
 					| img::q -> 
 						let x = !i+5 and y = !j+5
@@ -501,32 +507,62 @@ class sdlWindow width height =
 								j:= !j+50
 						in
 						set_alpha img 10;
+						inventoryDisplayed <- (nameL.(iN),(x+xo,y+yo))::inventoryDisplayed;
 						self#blit_alpha img itemSurface x y; 
-						draw q
-				in fill_rect itemSurface (map_RGB itemSurface ~alpha:200 black);
-				draw itemsImg;
-				blit_surface ~src:(modes#get "game") ~dst:(modes#get "inventory") ()
-			in 
-			let (x,y) = ((wW-w-6)/2,(hW-h-6)/2)
-			in blit_surface ~src:itemSurface ~dst:(modes#get "inventory") 
-				~dst_rect:(rect x y 0 0) ()
+						draw (iN+1) q
+				in inventoryDisplayed <- [];
+				fill_rect itemSurface (map_RGB itemSurface ~alpha:200 black);
+				draw 0 itemsImg;
+				blit_surface ~src:(modes#get "game") ~dst:invBackground ()
+			in blit_surface ~src:itemSurface ~dst:invBackground
+				~dst_rect:(rect xo yo 0 0) ()
+				
+		method private updateInventoryDisplay = 
+			blit_surface ~src:invBackground ~dst:(modes#get "inventory") ();
+			match currentItem with
+				| None -> ()
+				| Some name ->
+					let x,y,_ = Sdlmouse.get_state ()
+					and imgTxt = 
+						let font = fonts#get "Inventory"
+						and color = colors#get "inventory"
+						in Sdlttf.render_utf8_solid font name ~fg:color 
+					in blit_surface ~src:imgTxt ~dst:(modes#get "inventory") 
+						~dst_rect:(rect (x+15) (y-5) 0 0) ();
+					
+			
 			
 		(** Read Input User and run the function corresponding with event **)
+		(* Game Mode *)
 		method private gameInputUser = function 
 			| Sdlevent.KEYDOWN key ->
 				begin match key.Sdlevent.keysym with
 					| KEY_i -> self#setInventoryMode
-					| _ -> ()
+					| _ -> self#updateEvents
 				end
-			| _ -> ()
-			
+			| _ -> self#updateEvents
+		
+		(* Inventory Mode *)
 		method private inventoryInputUser = function
 		  | Sdlevent.KEYDOWN key -> 
 		  	begin match key.Sdlevent.keysym with
 					| KEY_i | KEY_ESCAPE -> self#setGameMode
-					| _ -> ()
+					| _ -> self#updateEvents
 				end
-			| _ -> ()
+			| Sdlevent.MOUSEMOTION info -> 
+				self#updateInvText info.Sdlevent.mme_x info.Sdlevent.mme_y
+			| _ -> self#updateEvents
+		
+		method private updateInvText x y =
+			let rec browser = function
+				| [] -> 
+					currentItem <- None; 
+					self#updateEvents
+				| (name,(i,j))::q when x>=i & x<=i+50 & y>=j & y<=j+50 ->
+					currentItem <- Some name
+				| _::q -> browser q
+			in browser inventoryDisplayed
+			
 		
 		(** Update Data, Display and Event **)
 		method isRuning =
@@ -536,12 +572,17 @@ class sdlWindow width height =
 			(* Update Data *)
 			begin match currentMode with
 				| "game" -> self#updateGame
-				| "inventory" | "loading" -> ()
+				| "inventory" -> self#updateInventoryDisplay
+				| "loading" -> ()
 				| _ -> failwith "invalid state of programm"
 			end; 
 			(* Update Display *)
 			flip (self#getVideo);
 			(* Update Event *)
+			self#updateEvents
+		
+		method updateEvents =
+			Sdlevent.pump ();
 			begin match Sdlevent.poll () with
 				| Some Sdlevent.QUIT -> Sdl.quit (); run <- false
 				| None -> ()
@@ -568,7 +609,7 @@ class sdlWindow width height =
 			in let a = Int32.lognot (Int32.logor r (Int32.logor g b)) 
 			in create_RGB_surface [`HWSURFACE] w h pi.bits_pp r g b a
 			
-		method private createSurface h w =
+		method private createSurface w h =
 			create_RGB_surface_format !window [`HWSURFACE] w h
 			
 		method blit_alpha src dst x y =

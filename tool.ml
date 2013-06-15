@@ -113,3 +113,8 @@ let (//) dir path =
 	else
 		dir^path
 ;;
+
+let print_debug msg =
+	print_string ("Debug > "^msg^"\n");
+	flush stdout
+;;
