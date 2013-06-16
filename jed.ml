@@ -391,7 +391,7 @@ class sdlWindow width height =
 			self#setLoadingMode;
 			self#fushDisplayData;
 			currentRoom <- Some (getRoom name);
-			ignore(self#getRoom#run "main");
+			ignore(self#getRoom#run "main ()");
 			background <- load_image self#getRoom#getBackground;
 			self#setGameMode
 		

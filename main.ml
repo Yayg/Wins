@@ -54,14 +54,6 @@ let main () =
 ;;
 
 (* Registration function Lua **************************************************)
-let registerStaticFuncLua () =
-	()
-;;
-
-let registerDynamicFuncLua () =
-	()
-;;
-
 let initLua () =
 	let _ = registerStaticFuncLua () in
 	let _ = loadGlobalScripts (envString#get "scriptDir") in
