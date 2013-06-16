@@ -11,6 +11,9 @@
 #                                                              Programmed by   #
 #    Philémon "Phil Gekni" Gardet [philemon.gardet@epita.fr]                   #
 #    Rafael "Yayg" Gozlan [rafael.gozlan@epita.fr]                             #
+#                                                              with help       #
+#    Lorry "Bardaf" Guedj [lorry.guedj@epita.fr]                               #
+#    Alexandre "Stawayld" Starck [alexandre.starck@epita.fr]                   #
 #                                                                              #
 ################################################################################
 #    Wins is a "Point and Click" Game Motor written with OCaml                 #

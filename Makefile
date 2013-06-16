@@ -10,6 +10,7 @@
 #                                                              Programmed by   #
 #    Philémon "Phil Gekni" Gardet [philemon.gardet@epita.fr]                   #
 #    Rafael "Yayg" Gozlan [rafael.gozlan@epita.fr]                             #
+#                                                              with help       #
 #    Lorry "Bardaf" Guedj [lorry.guedj@epita.fr]                               #
 #    Alexandre "Stawayld" Starck [alexandre.starck@epita.fr]                   #
 #                                                                              #
@@ -17,8 +18,6 @@
 #    Wins is a "Point and Click" Game Motor written with OCaml                 #
 #    Copyright (C) 2013    Philémon Gardet [philemon.gardet@epita.fr]          #
 #                          Rafael Gozlan [rafael.gozlan@epita.fr]              #
-#                          Lorry Guedj [lorry.guedj@epita.fr]                  #
-#                          Alexandre Starck [alexandre.starck@epita.fr]        #
 #                                                                              #
 #    This program is free software: you can redistribute it and/or modify      #
 #    it under the terms of the GNU General Public License as published by      #
