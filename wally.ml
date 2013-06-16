@@ -523,19 +523,3 @@ let loadGlobalScripts scriptDir =
 		| _::q -> browser q
 	in browser elements
 ;;
-
-let registerStaticFuncLua () =
-	(** print_debug (string) : print a debug message in the console **)
-	let printdebug state =
-		let str = (Lua.tostring state 1)
-		and printStr = function
-			| Some s -> print_debug ("Script : "^s)
-			| _ -> ()
-		in printStr str;
-		0
-	in registerGlobalFunction "print_debug" printdebug
-;;
-
-let registerDynamicFuncLua () =
-	()
-;;

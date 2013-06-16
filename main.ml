@@ -35,6 +35,7 @@
 open Wally
 open Zak
 open Tool
+open Lua_api
 
 let usage_msg = "Usage : wins [gameFolder]\n";;
 
@@ -54,6 +55,27 @@ let main () =
 ;;
 
 (* Registration function Lua **************************************************)
+let registerStaticFuncLua () =
+	(** print_debug (string) : print a debug message in the console **)
+	let printdebug state =
+		match (Lua.tostring state 1) with
+			| Some s -> print_debug ("Script : "^s); 0
+			| _ -> 2
+	in 
+	registerGlobalFunction "print_debug" printdebug;
+;;
+
+let registerDynamicFuncLua () =
+	let changeroom state =
+		match (Lua.tostring state 1) with
+			| Some name -> 
+				let w = Jed.getWindow () in 
+				w#changeRoom name; 0
+			| _ -> 2
+	in 	
+	registerGlobalFunction "change_room" changeroom;
+;;
+
 let initLua () =
 	let _ = registerStaticFuncLua () in
 	let _ = loadGlobalScripts (envString#get "scriptDir") in
