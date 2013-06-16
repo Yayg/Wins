@@ -435,68 +435,64 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in endM ma 0
 (* Dijkstra *******************************************************************)
 		method dijkstra x y = 
-		let dejavu = ref [] and avoir = ref [x] and pcc = ref [] and result = ref [] in
-		while !avoir <> [] do
-			let cur::t = !avoir in
-			avoir := t;
-			
-			print_string(cur^"\n");
-			print_string(" déjàvu :");
-			self#printList !dejavu;
-			print_string(" a voir :");
-			self#printList t;
-			print_string(" pcc :");
-			self#printList !pcc;
-			
-			(* on a trouvé un chemin *)
-			if (cur = y) then
-				(self#printList (y :: !pcc);
-				result := (y :: !pcc) :: !result;
-				(* si ce n'est pas encrore fini :/ on come back*)
-				begin
-				if (t <> []) then
+			let rec browser y pcc avoir result =
+				if (avoir <> []) then
 					begin
-					let suiv :: _ = t in
-					(* tant que le prochain à voir n'est pas dans les fils d'un noeud on remonte *)
-					begin
-					if (cur = suiv) then
-					let x :: y :: z = !pcc in
-					pcc := y :: z;
-					end;
-					while ((let prec :: _ = !pcc in 
-							let (_,l) = (links#get prec) in
-							List.mem suiv l) = false) do
-					begin
-							let x :: y :: z = !pcc in
-							pcc := y :: z;
-					end;
-					done
-					end;
-				end;
-				)
-			else (* on est pas encore à y *)
-				begin 
-				let (_,sons) = links#get cur in
-				let k = self#check sons !dejavu in
-				if (k = []) then
-					begin
-					if (t <> []) then
-						let suiv :: _ = t in
-							(* on remonte *)
-							while (let prec :: _ = !pcc in 
-									let (_,l) = (links#get prec) in
-										List.mem suiv l) do
-								let _ :: p = !pcc in
-								pcc := suiv :: p
-							done
+					let (_,cur) :: t = avoir in
+					if (cur = y) then
+						begin
+						let result = (cur :: pcc) :: result in
+						if (t <> []) then
+							begin
+							let (father,_) :: _ = t in
+							let prev :: _ = pcc in
+							let p = ref prev in
+							let au = ref pcc in
+							while (!p <> father) do
+								let _ :: h :: t = !au in
+								au := h :: t;
+								p := h
+							done;
+							browser y (!au) t result
+							end
+						else
+						browser y [] t result
+						end
+					else
+						let (_,sons) = links#get cur in
+						let k = self#sub cur (self#check sons pcc) in
+						if (k <> []) then
+							let t = List.append k t in
+							let pcc = cur :: pcc in
+							browser y pcc t result
+						else
+							if (t <> []) then
+							begin
+							let (father,_) :: _ = t in
+							let prev :: _ = pcc in
+							let p = ref prev in
+							let au = ref pcc in
+							while (!p <> father) do
+								let _ :: h :: t = !au in
+								au := h :: t;
+								p := h
+							done;
+								browser y (!au) t result
+							end
+							else
+								browser y [] t result
 					end
-				else (* on descend *)
-						avoir := List.append k !avoir;
-						dejavu := cur :: !dejavu;
-						pcc := cur :: !pcc;
-				end
-		done;
-		!result
+				else
+				result
+			in
+			browser y [x] (self#sub x (let (_,l) = links#get x in l)) []
+			
+		method sub x l =
+			let rec browser = function
+				| [] -> []
+				| h :: t -> (x,h) :: browser t
+			in
+			browser l
 		
 		method check l1 l2 = 
 			let rec browser = function
@@ -510,10 +506,36 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			print_string("[");
 			let rec browser = function
 			| [] -> print_string("] \n")
-			| a :: t -> print_string(a);
+			| a :: t -> print_string(a^";");
 						browser t
 			in 
 			browser l
+
+		method printAvoir l =
+			print_string("[");
+			let rec browser = function
+			| [] -> print_string("] \n")
+			| (a,b) :: t -> print_string("("^a^","^b^")"^";");
+						browser t
+			in 
+			browser l
+
+		method shorthestPath x y =
+			let ways = self#dijkstra x y in
+			let rec browser w dmin = function
+				| [] -> w
+				| h :: t when dmin = (-1.) -> browser h (self#wDistance h) t 
+				| h :: t when (self#wDistance h) < dmin -> browser h (self#wDistance h) t
+				| _ :: t -> browser w dmin t 
+			in List.rev (browser [] (-1.) ways)
+
+		method wDistance l =
+			match aux with Matrix(m) ->
+			let rec browser d = function
+				| a :: [] -> d
+				| a :: b :: t -> browser (d +. (match (m.(self#getId a).(self#getId b)) with Finite(x) -> x)) (b :: t)
+			in 
+			browser 0. l
 		
 	end
 (* Global Variables ***********************************************************)
