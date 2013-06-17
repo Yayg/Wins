@@ -454,22 +454,26 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			let rec browser y pcc avoir result =
 				if (avoir <> []) then
 					begin
-					let (_,cur) :: t = avoir in
+					match avoir with
+					| (_,cur) :: t ->
 					if (cur = y) then
 						begin
 						let result = (cur :: pcc) :: result in
 						if (t <> []) then
 							begin
-							let (father,_) :: _ = t in
-							let prev :: _ = pcc in
+							match (t,pcc) with 
+							| ((father,_) :: _ ,(prev :: _)) ->
 							let p = ref prev in
 							let au = ref pcc in
 							while (!p <> father) do
-								let _ :: h :: t = !au in
+								match !au with
+								| _ :: h :: t ->
 								au := h :: t;
 								p := h
+								| _ -> failwith "Invalid position."
 							done;
 							browser y (!au) t result
+							| _ -> failwith	"No way to go."
 							end
 						else
 						browser y [] t result
@@ -484,19 +488,24 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 						else
 							if (t <> []) then
 							begin
-							let (father,_) :: _ = t in
-							let prev :: _ = pcc in
+							match (t,pcc) with 
+							| ((father,_) :: _ ,(prev :: _)) ->
 							let p = ref prev in
 							let au = ref pcc in
 							while (!p <> father) do
-								let _ :: h :: t = !au in
+								match !au with
+								| _ :: h :: t ->
 								au := h :: t;
 								p := h
+								| _ -> failwith "Invalid position."
 							done;
 								browser y (!au) t result
+							| _ -> failwith	"42"
 							end
 							else
 								browser y [] t result
+
+					| _ -> failwith	"42"
 					end
 				else
 				result
@@ -548,17 +557,14 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 		method wDistance l =
 			match aux with Matrix(m) ->
 			let rec browser d = function
+				| [] -> failwith "Impossible case."
 				| a :: [] -> d
-				| a :: b :: t -> browser (d +. (match (m.(self#getId a).(self#getId b)) with Finite(x) -> x)) (b :: t)
+				| a :: b :: t -> browser (d +. (match (m.(self#getId a).(self#getId b)) with Finite(x) -> x | Infinite -> failwith "Vers l'infini et au delà !")) (b :: t)
 			in 
 			browser 0. l
+			| VoidM -> failwith "Error in matrix initializer !"
 
 	end
-	
-let test h =
-	let w = new graphMove "./game/rooms/begin/graph.xml" in
-	w#graphToMatrix
-;;
 
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
