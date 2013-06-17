@@ -158,6 +158,7 @@ class displayUpdating window element =
 		val mutable loopAnimation = false
 		val mutable w = 0
 		val mutable h = 0
+		val mutable o = 0
 		
 		(* Draw Moving *)
 		
@@ -166,33 +167,40 @@ class displayUpdating window element =
 			let rec line (a,b) (x,y) = 
 					match (a,b,x,y) with
 						(* diagonales *)
-						|(a,b,x,y) when (x > a)&&(y > b) -> 
+						| (a,b,x,y) when (x > a)&&(y > b) -> 
 							push (a,b) (positionUpdate);
+							o <- 1;
 							line (a + 1,b + 1) (x,y)
-						|(a,b,x,y) when (x > a)&&(y < b) -> 
+						| (a,b,x,y) when (x > a)&&(y < b) -> 
 							push (a,b) (positionUpdate);
+							o <- 3;
 							line (a + 1,b - 1) (x,y)
-						|(a,b,x,y) when (x < a)&&(y < b) -> 
+						| (a,b,x,y) when (x < a)&&(y < b) -> 
 							push (a,b) (positionUpdate);
+							o <- 5;
 							line (a - 1,b - 1) (x,y)
-						|(a,b,x,y) when (x < a)&&(y > b) -> 
+						| (a,b,x,y) when (x < a)&&(y > b) -> 
 							push (a,b) (positionUpdate);
+							o <- 7;
 							line (a - 1,b + 1) (x,y)
 						(* hauteurs *)
-						|(a,b,x,y) when (x = a)&&(y > b) -> 
+						| (a,b,x,y) when (x = a)&&(y > b) -> 
 							push (a,b) (positionUpdate);
+							o <- 0;
 							line (a,b + 1) (x,y)
-						|(a,b,x,y) when (x = a)&&(y < b) -> 
+						| (a,b,x,y) when (x = a)&&(y < b) -> 
 							push (a,b) (positionUpdate);
+							o <- 4;
 							line (a,b - 1) (x,y)
-						|(a,b,x,y) when (x > a)&&(y = b) -> 
+						| (a,b,x,y) when (x > a)&&(y = b) -> 
 							push (a,b) (positionUpdate);
+							o <- 2;
 							line (a + 1,b) (x,y)
-						|(a,b,x,y) when (x < a)&&(y = b) -> 
+						| (a,b,x,y) when (x < a)&&(y = b) -> 
 							push (a,b) (positionUpdate);
+							o <- 6;
 							line (a - 1,b) (x,y)
-						|_ -> 
-							push (a,b) (positionUpdate);
+						| _ -> ()
 			
 			and func (a,b) (x,y) =
 				let a = float_of_int (a)
@@ -252,6 +260,7 @@ class displayUpdating window element =
 			loopAnimation <- bool_of_string(animation#getAttr "loop");
 			w <- int_of_string(animation#getAttr "w");
 			h <- int_of_string(animation#getAttr "h");
+			h <- o * h;
 			browser 0 1 frames;
 			nameAnimation <- name
 		
@@ -352,8 +361,8 @@ class sdlWindow width height =
 			in
 			displayData#set name element
 		method addCharacterToDisplay name (x,y) =
-			let character = (getCharacter name :> displayable) in
-			let animation = character#getDataAnim#getElementById "idle" in
+			let character = print_string("trololo"); (getCharacter name :> displayable) in
+			let animation = print_string("bite"); character#getDataAnim#getElementById "idle" in
 			let w = int_of_string(animation#getAttr "w")
 			and h = int_of_string(animation#getAttr "h")
 			in
