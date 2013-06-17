@@ -407,10 +407,12 @@ class sdlWindow width height =
 			currentMode <- "game"
 		
 		method private setInventoryMode =
-			Sdlevent.enable_events Sdlevent.mousemotion_mask;
-			currentItem <- None;
-			currentMode <- "inventory";
-			self#invInitDisplay
+			if invIsNotVoid () then begin
+				Sdlevent.enable_events Sdlevent.mousemotion_mask;
+				currentItem <- None;
+				currentMode <- "inventory";
+				self#invInitDisplay
+			end
 			
 		method private setLoadingMode = 
 			currentMode <- "loading"
