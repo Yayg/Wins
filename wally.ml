@@ -42,8 +42,9 @@ type len = Finite of float | Infinite
 type xmlElementType = 
 	| Element of string * string dictionary
 	| Text of string
-;;
 
+type matrix = Matrix of len array array | VoidM
+;;
 (* Objects ********************************************************************)
 class xmlElement dataXml =
 	object (self)
@@ -268,7 +269,7 @@ class treeXml xmlFile =
 	end
 ;;
 
-class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begin/graph.xml";; *)
+class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.xml";; *)
 	object (self)
 		
 		val mutable tree = new treeXml (xmlFile)
@@ -277,13 +278,15 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 		val mutable links = new dictionary (* (((x,y),links list)) dictionary *)
 		val mutable keys = []
 		val mutable n = ref (-1)
+		val mutable aux = VoidM
 		
 			initializer
 			self#getNodes;
 			tree <- tree#getChildren ();
 			self#init;
-			self#dicoFusion
-		
+			self#dicoFusion;
+			aux <- Matrix(self#graphToMatrix)
+			
 (* Initialisation des graphs **************************************************)
 		
 		method init =
@@ -432,14 +435,11 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 			self#initKeys;
 			let mat = self#initMatrix in
 			let rec browser m l =
-				print_string("\n");
 				match l with
 				| [] -> m
 				| (i,h) :: t ->
 					let (_,link) = (distance#get h) in
 					m.(i) <- (Array.copy (self#insert (m.(i)) link));
-					print_string(string_of_int(i)^"\n");
-					self#displayArray m.(i);
 					browser m t
 			in self#endMatrix(browser mat keys)
 			
@@ -450,17 +450,109 @@ class ['a] graphMove xmlFile = (* test: let w = new graphMove "./game/rooms/begi
 					endM (Array.copy m) (n+1)
 			in endM ma 0
 (* Dijkstra *******************************************************************)
+		method dijkstra x y = 
+			let rec browser y pcc avoir result =
+				if (avoir <> []) then
+					begin
+					let (_,cur) :: t = avoir in
+					if (cur = y) then
+						begin
+						let result = (cur :: pcc) :: result in
+						if (t <> []) then
+							begin
+							let (father,_) :: _ = t in
+							let prev :: _ = pcc in
+							let p = ref prev in
+							let au = ref pcc in
+							while (!p <> father) do
+								let _ :: h :: t = !au in
+								au := h :: t;
+								p := h
+							done;
+							browser y (!au) t result
+							end
+						else
+						browser y [] t result
+						end
+					else
+						let (_,sons) = links#get cur in
+						let k = self#sub cur (self#check sons pcc) in
+						if (k <> []) then
+							let t = List.append k t in
+							let pcc = cur :: pcc in
+							browser y pcc t result
+						else
+							if (t <> []) then
+							begin
+							let (father,_) :: _ = t in
+							let prev :: _ = pcc in
+							let p = ref prev in
+							let au = ref pcc in
+							while (!p <> father) do
+								let _ :: h :: t = !au in
+								au := h :: t;
+								p := h
+							done;
+								browser y (!au) t result
+							end
+							else
+								browser y [] t result
+					end
+				else
+				result
+			in
+			browser y [x] (self#sub x (let (_,l) = links#get x in l)) []
+			
+		method sub x l =
+			let rec browser = function
+				| [] -> []
+				| h :: t -> (x,h) :: browser t
+			in
+			browser l
+		
+		method check l1 l2 = 
+			let rec browser = function
+				| [] -> []
+				| h :: t when List.mem h l2 -> browser t
+				| h :: t -> h :: browser t
+			in
+			browser l1
+		
+		method printList l =
+			print_string("[");
+			let rec browser = function
+			| [] -> print_string("] \n")
+			| a :: t -> print_string(a^";");
+						browser t
+			in 
+			browser l
 
-		method minArray a =
-			let rec browser v min a = function
-				| i when i = Array.length a -> v
-				| i ->
-					(
-					match a.(i) with
-						| Finite(n) when ((match min with Finite(m) -> n < m | _ -> true)&&(n <> (0.))) -> browser v (Finite(n)) a (i+1)
-						| _ -> browser v min a (i+1)
-					)
-			in browser 0 Infinite a 0
+		method printAvoir l =
+			print_string("[");
+			let rec browser = function
+			| [] -> print_string("] \n")
+			| (a,b) :: t -> print_string("("^a^","^b^")"^";");
+						browser t
+			in 
+			browser l
+
+		method shorthestPath x y =
+			let ways = self#dijkstra x y in
+			let rec browser w dmin = function
+				| [] -> w
+				| h :: t when dmin = (-1.) -> browser h (self#wDistance h) t 
+				| h :: t when (self#wDistance h) < dmin -> browser h (self#wDistance h) t
+				| _ :: t -> browser w dmin t 
+			in List.rev (browser [] (-1.) ways)
+
+		method wDistance l =
+			match aux with Matrix(m) ->
+			let rec browser d = function
+				| a :: [] -> d
+				| a :: b :: t -> browser (d +. (match (m.(self#getId a).(self#getId b)) with Finite(x) -> x)) (b :: t)
+			in 
+			browser 0. l
+
 	end
 	
 let test h =
