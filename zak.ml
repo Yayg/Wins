@@ -261,6 +261,9 @@ let invCheckItem name =
   List.mem name !inventory
 ;;
 
+let invIsNotVoid () =
+	!inventory <> []
+
 let invDropItem name =
   let rec browser = function
     | [] -> []

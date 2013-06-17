@@ -49,8 +49,6 @@ let main () =
 			Jed.initW ();
 			Jed.getWindow ()
 		in
-		invAddItem "duck";
-		invAddItem "hammer";
 		w#changeRoom (envString#get "firstRoom")
 	in
 	Woop.bigLoop();
@@ -73,10 +71,28 @@ let registerDynamicFuncLua () =
 		match (Lua.tostring state 1) with
 			| Some name -> 
 				let w = Jed.getWindow () in 
-				w#changeRoom name; 0
-			| _ -> 2
+				w#changeRoom name; 1
+			| _ -> failwith "Invalid call in lua at change_room"
+	and giveitem state =
+		match (Lua.tostring state 1) with
+			| Some name -> 
+				if invCheckItem name then
+					0
+				else
+					(invAddItem name; 1)
+			| _ -> failwith "Invalid call in lua at give_item"
+	and dropitem state =
+		match (Lua.tostring state 1) with
+			| Some name -> 
+				if not (invCheckItem name) then
+					0
+				else
+					(invDropItem name; 1)
+			| _ -> failwith "Invalid call in lua at drop_item"
 	in 	
 	registerGlobalFunction "change_room" changeroom;
+	registerGlobalFunction "give_item" giveitem;
+	registerGlobalFunction "drop_item" dropitem
 ;;
 
 let initLua () =
