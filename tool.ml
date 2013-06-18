@@ -43,17 +43,15 @@ class ['a] dictionary =
 		method get key =
 			find data key
 		method elements () =
-			let values = ref ([]) in
-			let browser _ v =
-				values := v::!values
-			in iter browser data;
-			!values
+			let rec browser = function
+				| [] -> []
+				| (_,e)::q -> e::browser q
+			in browser (self#sort data)
 		method keys () =
-			let values = ref ([]) in
-			let browser k _ =
-				values := k::!values
-			in iter browser data;
-			!values
+			let rec browser = function
+				| [] -> []
+				| (k,_)::q -> k::browser q
+			in browser (self#sort data)
 		method is_empty () =
 			length data = 0 
 		method clear () = 
@@ -64,6 +62,15 @@ class ['a] dictionary =
 			replace data key element
 		method remove key =
 			remove data key
+			
+		method private sort d =
+			let output = ref ([]) in
+			let test (ka,_) (kb,_) =
+				ka <= kb
+			and browser k v =
+				output := (k,v)::!output
+			in iter browser d;
+			Sort.list test !output
 	end
 ;;
 
