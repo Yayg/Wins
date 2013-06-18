@@ -402,12 +402,12 @@ class sdlWindow width height =
 				self#fushDisplayData
 			in 
 			currentRoom <- Some (getRoom name);
-			ignore(self#getRoom#run "main ()");
+			ignore(self#getRoom#run "main");
 			background <- load_image self#getRoom#getBackground;
 			nodes <- Some self#getRoom#getNodes;
 			(match nodes with
 				| Some n -> n#setCurrentNode beginNode
-				| None -> failwith "Initialization node during room Changing is drunk !"
+				| None -> failwith "Initialization node during room changing is drunk !"
 			); self#setGameMode
 		
 		(** Manager Mode **)

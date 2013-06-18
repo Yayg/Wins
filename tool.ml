@@ -62,6 +62,8 @@ class ['a] dictionary =
 			replace data key element
 		method remove key =
 			remove data key
+		method check key =
+			mem data key
 			
 		method private sort d =
 			let output = ref ([]) in

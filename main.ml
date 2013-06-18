@@ -49,7 +49,7 @@ let main () =
 			Jed.initW ();
 			Jed.getWindow ()
 		in
-		w#changeRoom (envString#get "firstRoom")
+		w#changeRoom (envString#get "firstRoom") (envString#get "firstNode")
 	in
 	Woop.bigLoop();
 	exit 0
@@ -147,6 +147,8 @@ let setup execDir =
 		#getAttr "href");
 	envString#set "firstRoom" ((xmlGame#getFirstByName "firstRoom")
 		#getAttr "name");
+	envString#set "firstNode" ((xmlGame#getFirstByName "firstRoom")
+		#getAttr "node");
 	
 	print_string "┝┅ Runtime variables loaded.\n";
 	
