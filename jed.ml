@@ -361,8 +361,8 @@ class sdlWindow width height =
 			in
 			displayData#set name element
 		method addCharacterToDisplay name (x,y) =
-			let character = print_string("trololo"); (getCharacter name :> displayable) in
-			let animation = print_string("bite"); character#getDataAnim#getElementById "idle" in
+			let character = (getCharacter name :> displayable) in
+			let animation = character#getDataAnim#getElementById "idle" in
 			let w = int_of_string(animation#getAttr "w")
 			and h = int_of_string(animation#getAttr "h")
 			in
@@ -396,9 +396,11 @@ class sdlWindow width height =
 		method moveTo objectName newPosition =
 			let actualPosition = (displayData#get objectName).pos in
 			(displayData#get objectName).updating#getLine actualPosition newPosition
-		method changeRoom name = 
-			self#setLoadingMode;
-			self#fushDisplayData;
+		method changeRoom name =
+			let _ =
+				self#setLoadingMode;
+				self#fushDisplayData
+			in 
 			currentRoom <- Some (getRoom name);
 			ignore(self#getRoom#run "main ()");
 			background <- load_image self#getRoom#getBackground;
@@ -644,6 +646,12 @@ class sdlWindow width height =
 			done;
 			left ()
 		
+		(** Debug Method **)
+		method printDisplayedElement =
+			let rec mkstr = function 
+				| [] -> ""
+				| e::q -> e^" "^(mkstr q)
+			in print_debug (mkstr (displayData#keys ()))
 	end
 ;;
 

@@ -33,7 +33,6 @@ exception BadStyleXmlTree of string
 exception IsNotXmlText
 exception IsNotXmlElement
 exception AttrNotFound
-exception Not_found
 
 (* Types **********************************************************************)
 
@@ -220,9 +219,10 @@ class treeXml xmlFile =
 			let rec browser = function
 				| VoidTree -> VoidTree
 				| Node(Element(str, dict), brother, children) when 
-                                        try String.lowercase (dict#get "id") = 
-						String.lowercase idName with Not_found -> false
-                                        -> Node(Element(str, dict), brother, children)
+					(try 
+						String.lowercase (dict#get "id") = String.lowercase idName 
+					with _ -> false)
+					-> Node(Element(str, dict), brother, children)
 				| Node(_, brother, children) ->
 					let resultChildren = browser children in
 					if resultChildren = VoidTree then
@@ -231,7 +231,7 @@ class treeXml xmlFile =
 						resultChildren
 			in
 			let result = browser data in
-			if result = VoidTree then
+			if result = VoidTree then 
 				raise Not_found
 			else
 				self#newXmlTree result

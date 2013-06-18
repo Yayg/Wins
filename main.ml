@@ -89,10 +89,18 @@ let registerDynamicFuncLua () =
 				else
 					(invDropItem name; 1)
 			| _ -> failwith "Invalid call in lua at drop_item"
+	and addcharacter state =
+		match (Lua.tostring state 1),(Lua.tointeger state 2),(Lua.tointeger state 3) 
+		with
+			| (Some name,x,y) -> 
+				let w = Jed.getWindow () in 
+				w#addCharacterToDisplay name (x,y); 1
+			| _ -> failwith "Invalid call in lua at add_character"
 	in 	
 	registerGlobalFunction "change_room" changeroom;
 	registerGlobalFunction "give_item" giveitem;
-	registerGlobalFunction "drop_item" dropitem
+	registerGlobalFunction "drop_item" dropitem;
+	registerGlobalFunction "add_character" addcharacter
 ;;
 
 let initLua () =
