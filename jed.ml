@@ -251,7 +251,7 @@ class displayUpdating window element =
 				| [] -> ()
 				| f::q -> 
 					let time = int_of_string(f#getAttr "time") in
-					push (Animation (rect (i*w) 0 w h)) animationUpdate;
+					push (Animation (rect (i*w) (o*h) w h)) animationUpdate;
 					noper (time-t);
 					browser (i+1) time q
 			in
@@ -260,7 +260,6 @@ class displayUpdating window element =
 			loopAnimation <- bool_of_string(animation#getAttr "loop");
 			w <- int_of_string(animation#getAttr "w");
 			h <- int_of_string(animation#getAttr "h");
-			h <- o * h;
 			browser 0 1 frames;
 			nameAnimation <- name
 		
