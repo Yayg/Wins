@@ -289,7 +289,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			
 (* Initialisation des graphs **************************************************)
 		
-		method init =
+		method private init =
 			let rec browser = function
 				| t when t#getElementsByName "node" = [] -> ()
 				| t ->
@@ -310,7 +310,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in
 			browser tree
 			
-		method dicoFusion =
+		method private dicoFusion =
 			let keys = links#keys in
 			let rec browser = function
 				| [] -> ()
@@ -323,7 +323,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in 
 			browser (keys ())
 			
-		method addE name l (x,y) = (* (name,((x,y),links list)) dictionary *)
+		method private addE name l (x,y) = (* (name,((x,y),links list)) dictionary *)
 			let rec browser point = function
 				| [] -> []
 				| h :: t ->
@@ -335,12 +335,12 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			n := !n + 1;
 			distance#set name (!n,(browser (x,y) l))
 			
-		method getDistance (x,y) (a,b) =
+		method private getDistance (x,y) (a,b) =
 			let d1 = (y-b) and d2 = (x-a) in
 			let d = float_of_int((d1 * d1) + (d2 * d2)) in 
 			sqrt(d)
 			
-		method initDistance =
+		method private initDistance =
 			let rec coor = function
 				| [] -> []
 				| (c,_) :: t -> c :: coor t
@@ -354,7 +354,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in 
 			browser (links#keys (),coor (links#elements ()))
 			
-		method strParse str =
+		method private strParse str =
 			begin
 				let i = ref (String.length str - 1) and acc = ref "" and final = ref [] in
 				while (0 <= !i) do
@@ -368,7 +368,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 				final := !acc :: !final;
 				!final
 			end
-		method getNodes =
+		method private getNodes =
 			print_string(((tree#getFirstByName "graph")#getXmlElement ())#getName ()^"\n"); (* test de conformité du fichier graph *)
 			nodes <- tree#getElementsByName "node"
 		method getFirst =
@@ -376,38 +376,38 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			match n with
 				| [] -> tree
 				| h::t -> h
-		method getName =
+		method private getName =
 			tree#getAttr ((tree#getXmlElement ())#getName ())
-		method displayNodes = 
+		method private displayNodes = 
 			nodes
 		
-		method getD =
+		method private getD =
 			(distance : (int * (string * float) list) dictionary)
-		method getLinks =
+		method private getLinks =
 			links
-		method getCoor name =
+		method private getCoor name =
 			let (x,_) = links#get name in x
 			
-		method getId name = 
+		method private getId name = 
 			let rec browser (n:string) = function
 				| [] -> raise Not_found
 				| ((i:int),h) :: t when h = n -> i
 				| _ :: t -> browser n t
 			in browser name keys
 			
-		method initKeys =
+		method private initKeys =
 			keys <- (let rec browser i = function 
 						| [] -> []
 						| h::t -> let (p,_) = distance#get h in
 							(p,h) :: (browser (i+1) t)
 					in browser 0 (distance#keys ()));
-		method getKey =
+		method private getKey =
 			keys
 		
-		method initMatrix = 
+		method private initMatrix = 
 			Array.make ((List.length keys)) (Array.make ((List.length keys)) Infinite)
 			
-		method displayArray a =
+		method private displayArray a =
 			let rec browser a = function
 				| i when i = (Array.length a) -> ()
 				| i -> 
@@ -422,7 +422,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in
 			browser a 0
 			
-		method insert mat l = 
+		method private insert mat l = 
 			let rec ins m = function
 				| [] -> Array.copy m
 				| (name,d) :: t-> 
@@ -431,7 +431,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in
 			ins (Array.copy mat) l
 			
-		method graphToMatrix =
+		method private graphToMatrix =
 			self#initKeys;
 			let mat = self#initMatrix in
 			let rec browser m l =
@@ -443,14 +443,14 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 					browser m t
 			in self#endMatrix(browser mat keys)
 			
-		method endMatrix ma = 
+		method private endMatrix ma = 
 			let rec endM m = function
 				| n when n = Array.length m -> m
 				| n -> (m.(n).(n) <- Finite(0.));
 					endM (Array.copy m) (n+1)
 			in endM ma 0
 (* Dijkstra *******************************************************************)
-		method dijkstra x y = 
+		method private dijkstra x y = 
 			let rec browser y pcc avoir result =
 				if (avoir <> []) then
 					begin
@@ -512,39 +512,21 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in
 			browser y [x] (self#sub x (let (_,l) = links#get x in l)) []
 			
-		method sub x l =
+		method private sub x l =
 			let rec browser = function
 				| [] -> []
 				| h :: t -> (x,h) :: browser t
 			in
 			browser l
 		
-		method check l1 l2 = 
+		method private check l1 l2 = 
 			let rec browser = function
 				| [] -> []
 				| h :: t when List.mem h l2 -> browser t
 				| h :: t -> h :: browser t
 			in
 			browser l1
-		
-		method printList l =
-			print_string("[");
-			let rec browser = function
-			| [] -> print_string("] \n")
-			| a :: t -> print_string(a^";");
-						browser t
-			in 
-			browser l
-
-		method printAvoir l =
-			print_string("[");
-			let rec browser = function
-			| [] -> print_string("] \n")
-			| (a,b) :: t -> print_string("("^a^","^b^")"^";");
-						browser t
-			in 
-			browser l
-
+			
 		method shorthestPath x y =
 			let ways = self#dijkstra x y in
 			let rec browser w dmin = function
@@ -554,7 +536,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 				| _ :: t -> browser w dmin t 
 			in List.rev (browser [] (-1.) ways)
 
-		method wDistance l =
+		method private wDistance l =
 			match aux with Matrix(m) ->
 			let rec browser d = function
 				| [] -> failwith "Impossible case."
