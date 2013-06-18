@@ -68,10 +68,10 @@ let registerStaticFuncLua () =
 
 let registerDynamicFuncLua () =
 	let changeroom state =
-		match (Lua.tostring state 1) with
-			| Some name -> 
+		match (Lua.tostring state 1),(Lua.tostring state 2) with
+			| Some name,Some node -> 
 				let w = Jed.getWindow () in 
-				w#changeRoom name; 1
+				w#changeRoom name node; 1
 			| _ -> failwith "Invalid call in lua at change_room"
 	and giveitem state =
 		match (Lua.tostring state 1) with

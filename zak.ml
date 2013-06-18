@@ -129,7 +129,9 @@ class room dirName =
 		val dialog = 
 			(new treeXml (roomDir//dirName//"dialog.xml"))#getFirstByName "Dialogs"
 		val nodes = 
-			(new treeXml (roomDir//dirName//"nodes.xml"))#getFirstByName "graph"
+			let graphXml = 
+				(new treeXml (roomDir//dirName//"nodes.xml"))#getFirstByName "graph"
+			in new graph graphXml
 		val script = newLua (roomDir//dirName//"script.lua")
 		
 		val mutable name = ""

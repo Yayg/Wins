@@ -269,16 +269,18 @@ class treeXml xmlFile =
 	end
 ;;
 
-class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.xml";; *)
+class graph (graphXml:treeXml) = 
 	object (self)
 		
-		val mutable tree = new treeXml (xmlFile)
+		val mutable tree = graphXml
 		val mutable nodes = []
 		val mutable distance = new dictionary (* (name,(p,((link,distance) list)))) dictionary *)
 		val mutable links = new dictionary (* (((x,y),links list)) dictionary *)
 		val mutable keys = []
 		val mutable n = ref (-1)
 		val mutable aux = VoidM
+		
+		val mutable currentNode = ""
 		
 		initializer
 			self#getNodes;
@@ -384,8 +386,6 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			(distance : (int * (string * float) list) dictionary)
 		method private getLinks =
 			links
-		method private getCoor name =
-			let (x,_) = links#get name in x
 			
 		method private getId name = 
 			let rec browser (n:string) = function
@@ -543,14 +543,34 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			| VoidM -> failwith "Error in matrix initializer !"
 			
 		(** Get Way **)
-		method shorthestPath x y =
-			let ways = self#dijkstra x y in
+		method shorthestPath dst =
+			let ways = self#dijkstra currentNode dst in
 			let rec browser w dmin = function
 				| [] -> w
 				| h :: t when dmin = (-1.) -> browser h (self#wDistance h) t 
 				| h :: t when (self#wDistance h) < dmin -> browser h (self#wDistance h) t
 				| _ :: t -> browser w dmin t 
-			in List.rev (browser [] (-1.) ways)
+			in 
+			let track = browser [] (-1.) ways
+			in if track <> [] then
+				(currentNode <- dst;
+				List.rev track)
+			else
+				[]
+			
+		(** Get Nodes Info **)
+		method nodes =
+			links#keys ()
+		
+		method getCoor name =
+			let (pos,_) = links#get name in pos
+		
+		method getCurrentNode =
+			currentNode
+			
+		method setCurrentNode name =
+			currentNode <- name
+		
 	end
 
 (* Global Variables ***********************************************************)
