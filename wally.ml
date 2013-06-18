@@ -280,15 +280,14 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 		val mutable n = ref (-1)
 		val mutable aux = VoidM
 		
-			initializer
+		initializer
 			self#getNodes;
 			tree <- tree#getChildren ();
 			self#init;
 			self#dicoFusion;
 			aux <- Matrix(self#graphToMatrix)
 			
-(* Initialisation des graphs **************************************************)
-		
+		(** Initialisation des graphs **)
 		method private init =
 			let rec browser = function
 				| t when t#getElementsByName "node" = [] -> ()
@@ -449,7 +448,8 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 				| n -> (m.(n).(n) <- Finite(0.));
 					endM (Array.copy m) (n+1)
 			in endM ma 0
-(* Dijkstra *******************************************************************)
+			
+		(** Dijkstra **)
 		method private dijkstra x y = 
 			let rec browser y pcc avoir result =
 				if (avoir <> []) then
@@ -526,7 +526,23 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 				| h :: t -> h :: browser t
 			in
 			browser l1
+
+		method private wDistance l =
+			match aux with Matrix(m) ->
+			let rec browser d = function
+				| [] -> failwith "Impossible case."
+				| a :: [] -> d
+				| a :: b :: t -> 
+					browser (
+					d +. (match (m.(self#getId a).(self#getId b)) with 
+						| Finite(x) -> x 
+						| Infinite -> failwith "Vers l'infini et au delà !"
+					)) (b :: t)
+			in 
+			browser 0. l
+			| VoidM -> failwith "Error in matrix initializer !"
 			
+		(** Get Way **)
 		method shorthestPath x y =
 			let ways = self#dijkstra x y in
 			let rec browser w dmin = function
@@ -535,17 +551,6 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 				| h :: t when (self#wDistance h) < dmin -> browser h (self#wDistance h) t
 				| _ :: t -> browser w dmin t 
 			in List.rev (browser [] (-1.) ways)
-
-		method private wDistance l =
-			match aux with Matrix(m) ->
-			let rec browser d = function
-				| [] -> failwith "Impossible case."
-				| a :: [] -> d
-				| a :: b :: t -> browser (d +. (match (m.(self#getId a).(self#getId b)) with Finite(x) -> x | Infinite -> failwith "Vers l'infini et au delà !")) (b :: t)
-			in 
-			browser 0. l
-			| VoidM -> failwith "Error in matrix initializer !"
-
 	end
 
 (* Global Variables ***********************************************************)

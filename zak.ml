@@ -128,6 +128,8 @@ class room dirName =
 			(new treeXml (roomDir//dirName//"info.xml"))#getFirstByName "Room"
 		val dialog = 
 			(new treeXml (roomDir//dirName//"dialog.xml"))#getFirstByName "Dialogs"
+		val nodes = 
+			(new treeXml (roomDir//dirName//"nodes.xml"))#getFirstByName "graph"
 		val script = newLua (roomDir//dirName//"script.lua")
 		
 		val mutable name = ""
@@ -146,6 +148,8 @@ class room dirName =
 			background
 		method getDialog =
 			dialog
+		method getNodes = 
+			nodes
 		method run ?args:(str = "") name =
 			script#doLine (name^"("^str^")")
 	end

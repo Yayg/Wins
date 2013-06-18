@@ -313,6 +313,8 @@ class sdlWindow width height =
 		val mutable currentRoom = None
 		val mutable background = get_video_surface ()
 		val mutable currentDialog = None
+		val mutable nodes = None
+		val mutable currentNode = ""
 		
 		(* Inventory Mode *)
 		val mutable invBackground = 
@@ -395,7 +397,7 @@ class sdlWindow width height =
 		method moveTo objectName newPosition =
 			let actualPosition = (displayData#get objectName).pos in
 			(displayData#get objectName).updating#getLine actualPosition newPosition
-		method changeRoom name =
+		method changeRoom ?node:(n="") name =
 			let _ =
 				self#setLoadingMode;
 				self#fushDisplayData
@@ -403,6 +405,8 @@ class sdlWindow width height =
 			currentRoom <- Some (getRoom name);
 			ignore(self#getRoom#run "main ()");
 			background <- load_image self#getRoom#getBackground;
+			nodes <- Some self#getRoom#getNodes;
+			currentNode <- n;
 			self#setGameMode
 		
 		(** Manager Mode **)
