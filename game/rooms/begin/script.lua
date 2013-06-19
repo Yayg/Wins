@@ -1,5 +1,4 @@
 function main ()
-	give_item "hammer"
 	give_item "duck"
 	place_item ("duck",600,300)
 	add_character ("loly",500,400)
@@ -7,4 +6,7 @@ function main ()
 	return 
 end
 
-
+function sayShit ()
+	print_debug "o Shit"
+	return
+end
