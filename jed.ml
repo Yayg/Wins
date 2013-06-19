@@ -463,7 +463,6 @@ class sdlWindow width height =
 						let x,y = element.pos in
 						rect x y 0 0
 					in
-					print_debug "fap";
 					blit_surface ~src ~src_rect ~dst:(modes#get "game") ~dst_rect ();
 					browser q
 			in 
