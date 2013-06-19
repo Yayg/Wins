@@ -237,8 +237,7 @@ class displayUpdating window element =
 			let noper n =
 				for i = 0 to (n-1) do
 					push Nop animationUpdate;
-					try ignore (pop direction)
-					with _ -> ()
+					try ignore (pop direction) with _ -> ()
 				done
 			and animation = element#getDataAnim#getElementById name in
 			let frames = (animation#getChildren ())#getElementsByName "frame" in
@@ -247,8 +246,7 @@ class displayUpdating window element =
 				| f::q -> 
 					let time = int_of_string(f#getAttr "time") 
 					and o = 
-						try pop direction
-						with _ -> 0
+						try pop direction with _ -> 0
 					in
 					push (Animation (rect (i*w) (o*h) w h)) animationUpdate;
 					noper (time-t);
@@ -435,7 +433,7 @@ class sdlWindow width height =
 		method private updateGame =
 			self#gameUpdataDisplayData;
 			self#gameDisplay;
-			self#gameDisplayDialog
+			self#gameDisplayDialog;
 		 
 		method private gameUpdataDisplayData =
 			let rec browser = function
@@ -459,11 +457,14 @@ class sdlWindow width height =
 			let rec browser = function
 				| [] -> ()
 				| element::q -> 
-					let surface = element.updating#getSurface
-					and clip = element.img
-					and position = element.pos
+					let src = element.updating#getSurface
+					and src_rect = element.img
+					and dst_rect =
+						let x,y = element.pos in
+						rect x y 0 0
 					in
-					self#displayImage clip surface position;
+					print_debug "fap";
+					blit_surface ~src ~src_rect ~dst:(modes#get "game") ~dst_rect ();
 					browser q
 			in 
 			blit_surface ~src:background ~dst:(modes#get "game") ();
@@ -612,11 +613,6 @@ class sdlWindow width height =
 			end
 			
 		(** Low Level Functions **)
-		method private displayImage clip src (x,y) = 
-			let dst = self#getVideo
-			and dst_rect = rect x y 0 0 in
-			blit_surface ~src ~src_rect:clip ~dst ~dst_rect ()
-			
 		method private createAlphaSurface w h =
 			let pi = surface_format !window in
 			let r = pi.rmask
