@@ -513,16 +513,6 @@ class graph (graphXml:treeXml) =
 			in
 			browser y [x] (self#sub x (let (_,l) = links#get x in l)) []
 			
-		method getNearestNode (x,y) = (* (((x,y),links list)) dictionary *)
-			match (links#keys ()) with
-				| [] -> failwith "Graph Error: Not  initialised."
-				| a :: t -> let d = self#getDistance (self#getCoor a) (x,y) in 
-					let rec browser node min = function
-						| [] -> node 
-						| h :: z when min < (self#getDistance (self#getCoor h) (x,y)) -> browser node min z
-						| h :: z -> browser h (self#getDistance (self#getCoor h) (x,y)) z 
-					in browser a d t
-
 		method private sub x l =
 			let rec browser = function
 				| [] -> []
@@ -568,7 +558,17 @@ class graph (graphXml:treeXml) =
 				List.rev track)
 			else
 				[]
-			
+		
+		method getNearestNode (x,y) = (* (((x,y),links list)) dictionary *)
+			match (links#keys ()) with
+				| [] -> failwith "Graph Error: Not  initialised."
+				| a :: t -> let d = self#getDistance (self#getCoor a) (x,y) in 
+					let rec browser node min = function
+						| [] -> node 
+						| h :: z when min < (self#getDistance (self#getCoor h) (x,y)) -> browser node min z
+						| h :: z -> browser h (self#getDistance (self#getCoor h) (x,y)) z 
+					in browser a d t
+		
 		(** Get Nodes Info **)
 		method nodes =
 			links#keys ()

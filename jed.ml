@@ -152,53 +152,52 @@ class displayUpdating window element =
 		
 		val animationUpdate = Queue.create ()
 		val positionUpdate = Queue.create ()
+		val direction = Queue.create ()
 		
 		val mutable nameAnimation = "idle"
 		val mutable actualSurface = load_image (element#getDir//"animation/idle.png")
 		val mutable loopAnimation = false
 		val mutable w = 0
 		val mutable h = 0
-		val mutable o = 0
 		
 		(* Draw Moving *)
 		
 		method getLine (g,h) (i,j) = 
-		
 			let rec line (a,b) (x,y) = 
 					match (a,b,x,y) with
 						(* diagonales *)
 						| (a,b,x,y) when (x > a)&&(y > b) -> 
 							push (a,b) (positionUpdate);
-							o <- 1;
+							push 1 direction;
 							line (a + 1,b + 1) (x,y)
 						| (a,b,x,y) when (x > a)&&(y < b) -> 
 							push (a,b) (positionUpdate);
-							o <- 3;
+							push 3 direction;
 							line (a + 1,b - 1) (x,y)
 						| (a,b,x,y) when (x < a)&&(y < b) -> 
 							push (a,b) (positionUpdate);
-							o <- 5;
+							push 5 direction;
 							line (a - 1,b - 1) (x,y)
 						| (a,b,x,y) when (x < a)&&(y > b) -> 
 							push (a,b) (positionUpdate);
-							o <- 7;
+							push 7 direction;
 							line (a - 1,b + 1) (x,y)
 						(* hauteurs *)
 						| (a,b,x,y) when (x = a)&&(y > b) -> 
 							push (a,b) (positionUpdate);
-							o <- 0;
+							push 0 direction;
 							line (a,b + 1) (x,y)
 						| (a,b,x,y) when (x = a)&&(y < b) -> 
 							push (a,b) (positionUpdate);
-							o <- 4;
+							push 4 direction;
 							line (a,b - 1) (x,y)
 						| (a,b,x,y) when (x > a)&&(y = b) -> 
 							push (a,b) (positionUpdate);
-							o <- 2;
+							push 2 direction;
 							line (a + 1,b) (x,y)
 						| (a,b,x,y) when (x < a)&&(y = b) -> 
 							push (a,b) (positionUpdate);
-							o <- 6;
+							push 6 direction;
 							line (a - 1,b) (x,y)
 						| _ -> ()
 			
@@ -208,18 +207,12 @@ class displayUpdating window element =
 				and x = float_of_int (x)
 				and y = float_of_int (y)
 				in
-				let p = (y -. b)/.(x -. a)
-				in 
-				let o = (y -. p *. x)
-				in
-				let f (h:int) = int_of_float(p *. (float_of_int(h)) +. o)
-				in
+				let p = (y -. b)/.(x -. a) in 
+				let o = (y -. p *. x) in
+				let f (h:int) = int_of_float(p *. (float_of_int(h)) +. o) in
 				f
-				in 
-				
-				let f = func (g,h) (i,j)
-				
-				in
+			in 
+			let f = func (g,h) (i,j) in
 			
 			let rec final (a,b) (x,y) =
 				match (a,b) with 
@@ -243,14 +236,20 @@ class displayUpdating window element =
 		method setAnimation name =
 			let noper n =
 				for i = 0 to (n-1) do
-					push Nop animationUpdate
+					push Nop animationUpdate;
+					try ignore (pop direction)
+					with _ -> ()
 				done
 			and animation = element#getDataAnim#getElementById name in
 			let frames = (animation#getChildren ())#getElementsByName "frame" in
-			let rec browser i t = function (*! Ne prend pas en compte l'orientation il faut mutiplier y par le numéro de l'orientation *)
+			let rec browser i t = function
 				| [] -> ()
 				| f::q -> 
-					let time = int_of_string(f#getAttr "time") in
+					let time = int_of_string(f#getAttr "time") 
+					and o = 
+						try pop direction
+						with _ -> 0
+					in
 					push (Animation (rect (i*w) (o*h) w h)) animationUpdate;
 					noper (time-t);
 					browser (i+1) time q

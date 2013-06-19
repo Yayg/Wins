@@ -96,11 +96,19 @@ let registerDynamicFuncLua () =
 				let w = Jed.getWindow () in 
 				w#addCharacterToDisplay name (x,y); 1
 			| _ -> failwith "Invalid call in lua at add_character"
+	and placeitem state =
+		match (Lua.tostring state 1),(Lua.tointeger state 2),(Lua.tointeger state 3) 
+		with
+			| (Some name,x,y) -> 
+				let w = Jed.getWindow () in 
+				w#addItemToDisplay name (x,y); 1
+			| _ -> failwith "Invalid call in lua at place_item"
 	in 	
 	registerGlobalFunction "change_room" changeroom;
 	registerGlobalFunction "give_item" giveitem;
 	registerGlobalFunction "drop_item" dropitem;
-	registerGlobalFunction "add_character" addcharacter
+	registerGlobalFunction "add_character" addcharacter;
+	registerGlobalFunction "place_item" placeitem
 ;;
 
 let initLua () =
