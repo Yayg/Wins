@@ -162,42 +162,66 @@ class displayUpdating window element =
 		
 		(* Draw Moving *)
 		
-		method getLine (g,h) (i,j) = 
-			let rec line (a,b) (x,y) = 
+		method getLine (g,h) (i,j) r = 
+			let rec line (a,b) (x,y) i = 
 					match (a,b,x,y) with
 						(* diagonales *)
-						| (a,b,x,y) when (x > a)&&(y > b) -> 
+						| (a,b,x,y) when (x > a)&&(y > b) ->
+							begin
+							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 1 direction;
-							line (a + 1,b + 1) (x,y)
+							end;
+							line (a + r,b + r) (x,y)
 						| (a,b,x,y) when (x > a)&&(y < b) -> 
+							begin
+							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 3 direction;
-							line (a + 1,b - 1) (x,y)
+							end;
+							line (a + r,b - r) (x,y)
 						| (a,b,x,y) when (x < a)&&(y < b) -> 
+							begin
+							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 5 direction;
-							line (a - 1,b - 1) (x,y)
+							end;
+							line (a - r,b - r) (x,y)
 						| (a,b,x,y) when (x < a)&&(y > b) -> 
+							begin
+							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 7 direction;
-							line (a - 1,b + 1) (x,y)
+							end;
+							line (a - r,b + r) (x,y)
 						(* hauteurs *)
 						| (a,b,x,y) when (x = a)&&(y > b) -> 
+							begin
+							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 0 direction;
+							end;
 							line (a,b + 1) (x,y)
 						| (a,b,x,y) when (x = a)&&(y < b) -> 
+							begin
+							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 4 direction;
+							end;
 							line (a,b - 1) (x,y)
 						| (a,b,x,y) when (x > a)&&(y = b) -> 
+							begin
+							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 2 direction;
+							end;
 							line (a + 1,b) (x,y)
 						| (a,b,x,y) when (x < a)&&(y = b) -> 
+							begin
+							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 6 direction;
+							end;
 							line (a - 1,b) (x,y)
 						| _ -> ()
 			
