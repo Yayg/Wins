@@ -33,7 +33,6 @@ exception BadStyleXmlTree of string
 exception IsNotXmlText
 exception IsNotXmlElement
 exception AttrNotFound
-exception Not_found
 
 (* Types **********************************************************************)
 
@@ -220,9 +219,10 @@ class treeXml xmlFile =
 			let rec browser = function
 				| VoidTree -> VoidTree
 				| Node(Element(str, dict), brother, children) when 
-                                        try String.lowercase (dict#get "id") = 
-						String.lowercase idName with Not_found -> false
-                                        -> Node(Element(str, dict), brother, children)
+					(try 
+						String.lowercase (dict#get "id") = String.lowercase idName 
+					with _ -> false)
+					-> Node(Element(str, dict), brother, children)
 				| Node(_, brother, children) ->
 					let resultChildren = browser children in
 					if resultChildren = VoidTree then
@@ -231,7 +231,7 @@ class treeXml xmlFile =
 						resultChildren
 			in
 			let result = browser data in
-			if result = VoidTree then
+			if result = VoidTree then 
 				raise Not_found
 			else
 				self#newXmlTree result
@@ -269,27 +269,29 @@ class treeXml xmlFile =
 	end
 ;;
 
-class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.xml";; *)
+class graph (graphXml:treeXml) = 
 	object (self)
 		
-		val mutable tree = new treeXml (xmlFile)
+		val mutable tree = graphXml
 		val mutable nodes = []
 		val mutable distance = new dictionary (* (name,(p,((link,distance) list)))) dictionary *)
 		val mutable links = new dictionary (* (((x,y),links list)) dictionary *)
 		val mutable keys = []
 		val mutable n = ref (-1)
 		val mutable aux = VoidM
+
 		
-			initializer
+		val mutable currentNode = ""
+		
+		initializer
 			self#getNodes;
 			tree <- tree#getChildren ();
 			self#init;
 			self#dicoFusion;
 			aux <- Matrix(self#graphToMatrix)
 			
-(* Initialisation des graphs **************************************************)
-		
-		method init =
+		(** Initialisation des graphs **)
+		method private init =
 			let rec browser = function
 				| t when t#getElementsByName "node" = [] -> ()
 				| t ->
@@ -310,7 +312,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in
 			browser tree
 			
-		method dicoFusion =
+		method private dicoFusion =
 			let keys = links#keys in
 			let rec browser = function
 				| [] -> ()
@@ -323,7 +325,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in 
 			browser (keys ())
 			
-		method addE name l (x,y) = (* (name,((x,y),links list)) dictionary *)
+		method private addE name l (x,y) = (* (name,((x,y),links list)) dictionary *)
 			let rec browser point = function
 				| [] -> []
 				| h :: t ->
@@ -335,12 +337,12 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			n := !n + 1;
 			distance#set name (!n,(browser (x,y) l))
 			
-		method getDistance (x,y) (a,b) =
+		method private getDistance (x,y) (a,b) =
 			let d1 = (y-b) and d2 = (x-a) in
 			let d = float_of_int((d1 * d1) + (d2 * d2)) in 
 			sqrt(d)
 			
-		method initDistance =
+		method private initDistance =
 			let rec coor = function
 				| [] -> []
 				| (c,_) :: t -> c :: coor t
@@ -354,7 +356,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in 
 			browser (links#keys (),coor (links#elements ()))
 			
-		method strParse str =
+		method private strParse str =
 			begin
 				let i = ref (String.length str - 1) and acc = ref "" and final = ref [] in
 				while (0 <= !i) do
@@ -368,7 +370,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 				final := !acc :: !final;
 				!final
 			end
-		method getNodes =
+		method private getNodes =
 			print_string(((tree#getFirstByName "graph")#getXmlElement ())#getName ()^"\n"); (* test de conformité du fichier graph *)
 			nodes <- tree#getElementsByName "node"
 		method getFirst =
@@ -376,38 +378,36 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			match n with
 				| [] -> tree
 				| h::t -> h
-		method getName =
+		method private getName =
 			tree#getAttr ((tree#getXmlElement ())#getName ())
-		method displayNodes = 
+		method private displayNodes = 
 			nodes
 		
-		method getD =
+		method private getD =
 			(distance : (int * (string * float) list) dictionary)
-		method getLinks =
+		method private getLinks =
 			links
-		method getCoor name =
-			let (x,_) = links#get name in x
 			
-		method getId name = 
+		method private getId name = 
 			let rec browser (n:string) = function
 				| [] -> raise Not_found
 				| ((i:int),h) :: t when h = n -> i
 				| _ :: t -> browser n t
 			in browser name keys
 			
-		method initKeys =
+		method private initKeys =
 			keys <- (let rec browser i = function 
 						| [] -> []
 						| h::t -> let (p,_) = distance#get h in
 							(p,h) :: (browser (i+1) t)
 					in browser 0 (distance#keys ()));
-		method getKey =
+		method private getKey =
 			keys
 		
-		method initMatrix = 
+		method private initMatrix = 
 			Array.make ((List.length keys)) (Array.make ((List.length keys)) Infinite)
 			
-		method displayArray a =
+		method private displayArray a =
 			let rec browser a = function
 				| i when i = (Array.length a) -> ()
 				| i -> 
@@ -422,7 +422,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in
 			browser a 0
 			
-		method insert mat l = 
+		method private insert mat l = 
 			let rec ins m = function
 				| [] -> Array.copy m
 				| (name,d) :: t-> 
@@ -431,7 +431,7 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in
 			ins (Array.copy mat) l
 			
-		method graphToMatrix =
+		method private graphToMatrix =
 			self#initKeys;
 			let mat = self#initMatrix in
 			let rec browser m l =
@@ -443,14 +443,15 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 					browser m t
 			in self#endMatrix(browser mat keys)
 			
-		method endMatrix ma = 
+		method private endMatrix ma = 
 			let rec endM m = function
 				| n when n = Array.length m -> m
 				| n -> (m.(n).(n) <- Finite(0.));
 					endM (Array.copy m) (n+1)
 			in endM ma 0
-(* Dijkstra *******************************************************************)
-		method dijkstra x y = 
+			
+		(** Dijkstra **)
+		method private dijkstra x y = 
 			let rec browser y pcc avoir result =
 				if (avoir <> []) then
 					begin
@@ -512,85 +513,118 @@ class ['a] graph xmlFile = (* test: let w = new graph "./game/rooms/begin/graph.
 			in
 			browser y [x] (self#sub x (let (_,l) = links#get x in l)) []
 			
-		method sub x l =
+		method private sub x l =
 			let rec browser = function
 				| [] -> []
 				| h :: t -> (x,h) :: browser t
 			in
 			browser l
 		
-		method check l1 l2 = 
+		method private check l1 l2 = 
 			let rec browser = function
 				| [] -> []
 				| h :: t when List.mem h l2 -> browser t
 				| h :: t -> h :: browser t
 			in
 			browser l1
-		
-		method printList l =
-			print_string("[");
-			let rec browser = function
-			| [] -> print_string("] \n")
-			| a :: t -> print_string(a^";");
-						browser t
-			in 
-			browser l
 
-		method printAvoir l =
-			print_string("[");
-			let rec browser = function
-			| [] -> print_string("] \n")
-			| (a,b) :: t -> print_string("("^a^","^b^")"^";");
-						browser t
+		method private wDistance l =
+			match aux with Matrix(m) ->
+			let rec browser d = function
+				| [] -> failwith "Impossible case."
+				| a :: [] -> d
+				| a :: b :: t -> 
+					browser (
+					d +. (match (m.(self#getId a).(self#getId b)) with 
+						| Finite(x) -> x 
+						| Infinite -> failwith "Vers l'infini et au delà !"
+					)) (b :: t)
 			in 
-			browser l
-
-		method shorthestPath x y =
-			let ways = self#dijkstra x y in
+			browser 0. l
+			| VoidM -> failwith "Error in matrix initializer !"
+			
+		(** Get Way **)
+		method shorthestPath dst =
+			let ways = self#dijkstra currentNode dst in
 			let rec browser w dmin = function
 				| [] -> w
 				| h :: t when dmin = (-1.) -> browser h (self#wDistance h) t 
 				| h :: t when (self#wDistance h) < dmin -> browser h (self#wDistance h) t
 				| _ :: t -> browser w dmin t 
-			in List.rev (browser [] (-1.) ways)
-
-		method wDistance l =
-			match aux with Matrix(m) ->
-			let rec browser d = function
-				| [] -> failwith "Impossible case."
-				| a :: [] -> d
-				| a :: b :: t -> browser (d +. (match (m.(self#getId a).(self#getId b)) with Finite(x) -> x | Infinite -> failwith "Vers l'infini et au delà !")) (b :: t)
 			in 
-			browser 0. l
-			| VoidM -> failwith "Error in matrix initializer !"
-
+			let track = browser [] (-1.) ways
+			in if track <> [] then
+				(currentNode <- dst;
+				List.rev track)
+			else
+				[]
+		
+		method getNearestNode (x,y) = (* (((x,y),links list)) dictionary *)
+			match (links#keys ()) with
+				| [] -> failwith "Graph Error: Not  initialised."
+				| a :: t -> let d = self#getDistance (self#getCoor a) (x,y) in 
+					let rec browser node min = function
+						| [] -> node 
+						| h :: z when min < (self#getDistance (self#getCoor h) (x,y)) -> browser node min z
+						| h :: z -> browser h (self#getDistance (self#getCoor h) (x,y)) z 
+					in browser a d t
+		
+		(** Get Nodes Info **)
+		method nodes =
+			links#keys ()
+		
+		method getCoor name =
+			let (pos,_) = links#get name in pos
+		
+		method getCurrentNode =
+			currentNode
+			
+		method setCurrentNode name =
+			currentNode <- name
+		
 	end
 
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
-let luaEnv = LuaL.newstate ();;
+let staticFunctions = ref []
+let dynamicFunctions = ref []
+
+let globalScripts = ref []
 
 (* Functions ******************************************************************)
-let getGlobalRuntime () =
-	luaEnv
+let registerStaticFunction name func =
+	staticFunctions := (name,func)::!staticFunctions
 ;;
 
-let registerGlobalFunction name func = 
-	Lua.register luaEnv name func
+let registerDynamicFunction name func =
+	dynamicFunctions := (name,func)::!dynamicFunctions
 ;;
 
 let addGlobalScript path =
-	LuaL.dofile luaEnv path
-;;
-
-let doGlobalString str =
-	LuaL.dostring luaEnv str
+	globalScripts := path::!globalScripts
 ;;
 
 (* Class **********************************************************************)
 class luaRuntime =
 	object (self)
-		val env = getGlobalRuntime ()
+		val env = LuaL.newstate ()
+		
+		initializer
+			let rec registreFunctions = function
+				| [] -> ()
+				| (n,f)::q -> 
+					Lua.register env n f;
+					registreFunctions q
+			in let rec registreScripts = function
+				| [] -> ()
+				| p::q -> (if not (LuaL.dofile env p) 
+					then failwith ("fail to execute "^p))
+			in
+			LuaL.openlibs env;
+			registreFunctions !staticFunctions;
+			registreScripts !globalScripts;
+			registreFunctions !dynamicFunctions
+			
 		
 		method registreFunction name func =
 			Lua.register env name func
@@ -610,7 +644,6 @@ let newLua scriptPath =
 
 (* InitGlobal Lua Runtime ****************************************************)
 let loadGlobalScripts scriptDir =
-	let _ = LuaL.openlibs luaEnv in
 	let elements = Array.to_list (Sys.readdir scriptDir) in
 	let rec browser = function
 		| [] -> ()

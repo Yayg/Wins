@@ -49,7 +49,7 @@ let main () =
 			Jed.initW ();
 			Jed.getWindow ()
 		in
-		w#changeRoom (envString#get "firstRoom")
+		w#changeRoom (envString#get "firstRoom") (envString#get "firstNode")
 	in
 	Woop.bigLoop();
 	exit 0
@@ -63,15 +63,15 @@ let registerStaticFuncLua () =
 			| Some s -> print_debug ("Script : "^s); 0
 			| _ -> 2
 	in 
-	registerGlobalFunction "print_debug" printdebug;
+	registerStaticFunction "print_debug" printdebug;
 ;;
 
 let registerDynamicFuncLua () =
 	let changeroom state =
-		match (Lua.tostring state 1) with
-			| Some name -> 
+		match (Lua.tostring state 1),(Lua.tostring state 2) with
+			| Some name,Some node -> 
 				let w = Jed.getWindow () in 
-				w#changeRoom name; 1
+				w#changeRoom name node; 1
 			| _ -> failwith "Invalid call in lua at change_room"
 	and giveitem state =
 		match (Lua.tostring state 1) with
@@ -89,10 +89,26 @@ let registerDynamicFuncLua () =
 				else
 					(invDropItem name; 1)
 			| _ -> failwith "Invalid call in lua at drop_item"
+	and addcharacter state =
+		match (Lua.tostring state 1),(Lua.tointeger state 2),(Lua.tointeger state 3) 
+		with
+			| (Some name,x,y) -> 
+				let w = Jed.getWindow () in 
+				w#addCharacterToDisplay name (x,y); 1
+			| _ -> failwith "Invalid call in lua at add_character"
+	and placeitem state =
+		match (Lua.tostring state 1),(Lua.tointeger state 2),(Lua.tointeger state 3) 
+		with
+			| (Some name,x,y) -> 
+				let w = Jed.getWindow () in 
+				w#addItemToDisplay name (x,y); 1
+			| _ -> failwith "Invalid call in lua at place_item"
 	in 	
-	registerGlobalFunction "change_room" changeroom;
-	registerGlobalFunction "give_item" giveitem;
-	registerGlobalFunction "drop_item" dropitem
+	registerDynamicFunction "change_room" changeroom;
+	registerDynamicFunction "give_item" giveitem;
+	registerDynamicFunction "drop_item" dropitem;
+	registerDynamicFunction "add_character" addcharacter;
+	registerDynamicFunction "place_item" placeitem
 ;;
 
 let initLua () =
@@ -139,6 +155,8 @@ let setup execDir =
 		#getAttr "href");
 	envString#set "firstRoom" ((xmlGame#getFirstByName "firstRoom")
 		#getAttr "name");
+	envString#set "firstNode" ((xmlGame#getFirstByName "firstRoom")
+		#getAttr "node");
 	
 	print_string "┝┅ Runtime variables loaded.\n";
 	

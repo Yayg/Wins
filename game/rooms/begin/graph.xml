@@ -1,6 +1,0 @@
-<graph>
-	<node id="a" x="0" y="0" l="b,d"/>
-	<node id="b" x="0" y="6" l="a,d"/>
-	<node id="d" x="6" y="3" l="a,b,c"/>
-	<node id="c" x="6" y="0" l="d"/>
-</graph>

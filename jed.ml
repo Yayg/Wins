@@ -152,6 +152,7 @@ class displayUpdating window element =
 		
 		val animationUpdate = Queue.create ()
 		val positionUpdate = Queue.create ()
+		val direction = Queue.create ()
 		
 		val mutable nameAnimation = "idle"
 		val mutable actualSurface = load_image (element#getDir//"animation/idle.png")
@@ -162,37 +163,43 @@ class displayUpdating window element =
 		(* Draw Moving *)
 		
 		method getLine (g,h) (i,j) = 
-		
 			let rec line (a,b) (x,y) = 
 					match (a,b,x,y) with
 						(* diagonales *)
-						|(a,b,x,y) when (x > a)&&(y > b) -> 
+						| (a,b,x,y) when (x > a)&&(y > b) -> 
 							push (a,b) (positionUpdate);
+							push 1 direction;
 							line (a + 1,b + 1) (x,y)
-						|(a,b,x,y) when (x > a)&&(y < b) -> 
+						| (a,b,x,y) when (x > a)&&(y < b) -> 
 							push (a,b) (positionUpdate);
+							push 3 direction;
 							line (a + 1,b - 1) (x,y)
-						|(a,b,x,y) when (x < a)&&(y < b) -> 
+						| (a,b,x,y) when (x < a)&&(y < b) -> 
 							push (a,b) (positionUpdate);
+							push 5 direction;
 							line (a - 1,b - 1) (x,y)
-						|(a,b,x,y) when (x < a)&&(y > b) -> 
+						| (a,b,x,y) when (x < a)&&(y > b) -> 
 							push (a,b) (positionUpdate);
+							push 7 direction;
 							line (a - 1,b + 1) (x,y)
 						(* hauteurs *)
-						|(a,b,x,y) when (x = a)&&(y > b) -> 
+						| (a,b,x,y) when (x = a)&&(y > b) -> 
 							push (a,b) (positionUpdate);
+							push 0 direction;
 							line (a,b + 1) (x,y)
-						|(a,b,x,y) when (x = a)&&(y < b) -> 
+						| (a,b,x,y) when (x = a)&&(y < b) -> 
 							push (a,b) (positionUpdate);
+							push 4 direction;
 							line (a,b - 1) (x,y)
-						|(a,b,x,y) when (x > a)&&(y = b) -> 
+						| (a,b,x,y) when (x > a)&&(y = b) -> 
 							push (a,b) (positionUpdate);
+							push 2 direction;
 							line (a + 1,b) (x,y)
-						|(a,b,x,y) when (x < a)&&(y = b) -> 
+						| (a,b,x,y) when (x < a)&&(y = b) -> 
 							push (a,b) (positionUpdate);
+							push 6 direction;
 							line (a - 1,b) (x,y)
-						|_ -> 
-							push (a,b) (positionUpdate);
+						| _ -> ()
 			
 			and func (a,b) (x,y) =
 				let a = float_of_int (a)
@@ -200,18 +207,12 @@ class displayUpdating window element =
 				and x = float_of_int (x)
 				and y = float_of_int (y)
 				in
-				let p = (y -. b)/.(x -. a)
-				in 
-				let o = (y -. p *. x)
-				in
-				let f (h:int) = int_of_float(p *. (float_of_int(h)) +. o)
-				in
+				let p = (y -. b)/.(x -. a) in 
+				let o = (y -. p *. x) in
+				let f (h:int) = int_of_float(p *. (float_of_int(h)) +. o) in
 				f
-				in 
-				
-				let f = func (g,h) (i,j)
-				
-				in
+			in 
+			let f = func (g,h) (i,j) in
 			
 			let rec final (a,b) (x,y) =
 				match (a,b) with 
@@ -235,15 +236,19 @@ class displayUpdating window element =
 		method setAnimation name =
 			let noper n =
 				for i = 0 to (n-1) do
-					push Nop animationUpdate
+					push Nop animationUpdate;
+					try ignore (pop direction) with _ -> ()
 				done
 			and animation = element#getDataAnim#getElementById name in
 			let frames = (animation#getChildren ())#getElementsByName "frame" in
-			let rec browser i t = function (*! Ne prend pas en compte l'orientation il faut mutiplier y par le numéro de l'orientation *)
+			let rec browser i t = function
 				| [] -> ()
 				| f::q -> 
-					let time = int_of_string(f#getAttr "time") in
-					push (Animation (rect (i*w) 0 w h)) animationUpdate;
+					let time = int_of_string(f#getAttr "time") 
+					and o = 
+						try pop direction with _ -> 0
+					in
+					push (Animation (rect (i*w) (o*h) w h)) animationUpdate;
 					noper (time-t);
 					browser (i+1) time q
 			in
@@ -302,9 +307,11 @@ class sdlWindow width height =
 		
 		(* Game Mode *)
 		val displayData = new dictionary
-		val mutable currentRoom = None
 		val mutable background = get_video_surface ()
+		val mutable currentRoom = None
 		val mutable currentDialog = None
+		val mutable currentRuntime = None
+		val mutable nodes = None
 		
 		(* Inventory Mode *)
 		val mutable invBackground = 
@@ -387,13 +394,20 @@ class sdlWindow width height =
 		method moveTo objectName newPosition =
 			let actualPosition = (displayData#get objectName).pos in
 			(displayData#get objectName).updating#getLine actualPosition newPosition
-		method changeRoom name = 
-			self#setLoadingMode;
-			self#fushDisplayData;
+		method changeRoom name beginNode =
+			let _ =
+				self#setLoadingMode;
+				self#fushDisplayData
+			in 
 			currentRoom <- Some (getRoom name);
-			ignore(self#getRoom#run "main ()");
+			currentRuntime <- Some (Wally.newLua self#getRoom#getScript);
+			ignore (self#runFunction "main");
 			background <- load_image self#getRoom#getBackground;
-			self#setGameMode
+			nodes <- Some self#getRoom#getNodes;
+			(match nodes with
+				| Some n -> n#setCurrentNode beginNode
+				| None -> failwith "Initialization node during room changing is drunk !"
+			); self#setGameMode
 		
 		(** Manager Mode **)
 		method private getVideo =
@@ -421,7 +435,7 @@ class sdlWindow width height =
 		method private updateGame =
 			self#gameUpdataDisplayData;
 			self#gameDisplay;
-			self#gameDisplayDialog
+			self#gameDisplayDialog;
 		 
 		method private gameUpdataDisplayData =
 			let rec browser = function
@@ -445,11 +459,13 @@ class sdlWindow width height =
 			let rec browser = function
 				| [] -> ()
 				| element::q -> 
-					let surface = element.updating#getSurface
-					and clip = element.img
-					and position = element.pos
+					let src = element.updating#getSurface
+					and src_rect = element.img
+					and dst_rect =
+						let x,y = element.pos in
+						rect x y 0 0
 					in
-					self#displayImage clip surface position;
+					blit_surface ~src ~src_rect ~dst:(modes#get "game") ~dst_rect ();
 					browser q
 			in 
 			blit_surface ~src:background ~dst:(modes#get "game") ();
@@ -598,11 +614,6 @@ class sdlWindow width height =
 			end
 			
 		(** Low Level Functions **)
-		method private displayImage clip src (x,y) = 
-			let dst = self#getVideo
-			and dst_rect = rect x y 0 0 in
-			blit_surface ~src ~src_rect:clip ~dst ~dst_rect ()
-			
 		method private createAlphaSurface w h =
 			let pi = surface_format !window in
 			let r = pi.rmask
@@ -634,7 +645,26 @@ class sdlWindow width height =
 				done
 			done;
 			left ()
+			
+		method runFunction ?args:(arg=[]) name =
+			let runtime = match currentRuntime with
+				| Some runtime -> runtime
+				| None -> failwith "Lua runtime is not initialized"
+			in
+			let arguments = 
+				let rec browser = function
+					| [] -> ""
+					| a::[] -> a
+					| a::q -> a^","^(browser q)
+				in browser arg 
+			in runtime#doLine (name^"("^arguments^")")
 		
+		(** Debug Method **)
+		method printDisplayedElement =
+			let rec mkstr = function 
+				| [] -> ""
+				| e::q -> e^" "^(mkstr q)
+			in print_debug (mkstr (displayData#keys ()))
 	end
 ;;
 
