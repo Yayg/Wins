@@ -307,9 +307,10 @@ class sdlWindow width height =
 		
 		(* Game Mode *)
 		val displayData = new dictionary
-		val mutable currentRoom = None
 		val mutable background = get_video_surface ()
+		val mutable currentRoom = None
 		val mutable currentDialog = None
+		val mutable currentRuntime = None
 		val mutable nodes = None
 		
 		(* Inventory Mode *)
@@ -399,7 +400,8 @@ class sdlWindow width height =
 				self#fushDisplayData
 			in 
 			currentRoom <- Some (getRoom name);
-			ignore(self#getRoom#run "main");
+			currentRuntime <- Some (Wally.newLua self#getRoom#getScript);
+			ignore (self#runFunction "main");
 			background <- load_image self#getRoom#getBackground;
 			nodes <- Some self#getRoom#getNodes;
 			(match nodes with
@@ -643,6 +645,19 @@ class sdlWindow width height =
 				done
 			done;
 			left ()
+			
+		method runFunction ?args:(arg=[]) name =
+			let runtime = match currentRuntime with
+				| Some runtime -> runtime
+				| None -> failwith "Lua runtime is not initialized"
+			in
+			let arguments = 
+				let rec browser = function
+					| [] -> ""
+					| a::[] -> a
+					| a::q -> a^","^(browser q)
+				in browser arg 
+			in runtime#doLine (name^"("^arguments^")")
 		
 		(** Debug Method **)
 		method printDisplayedElement =

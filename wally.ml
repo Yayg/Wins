@@ -586,29 +586,45 @@ class graph (graphXml:treeXml) =
 
 (* Global Variables ***********************************************************)
 (** Lua runtime environment. *)
-let luaEnv = LuaL.newstate ();;
+let staticFunctions = ref []
+let dynamicFunctions = ref []
+
+let globalScripts = ref []
 
 (* Functions ******************************************************************)
-let getGlobalRuntime () =
-	luaEnv
+let registerStaticFunction name func =
+	staticFunctions := (name,func)::!staticFunctions
 ;;
 
-let registerGlobalFunction name func = 
-	Lua.register luaEnv name func
+let registerDynamicFunction name func =
+	dynamicFunctions := (name,func)::!dynamicFunctions
 ;;
 
 let addGlobalScript path =
-	LuaL.dofile luaEnv path
-;;
-
-let doGlobalString str =
-	LuaL.dostring luaEnv str
+	globalScripts := path::!globalScripts
 ;;
 
 (* Class **********************************************************************)
 class luaRuntime =
 	object (self)
-		val env = getGlobalRuntime ()
+		val env = LuaL.newstate ()
+		
+		initializer
+			let rec registreFunctions = function
+				| [] -> ()
+				| (n,f)::q -> 
+					Lua.register env n f;
+					registreFunctions q
+			in let rec registreScripts = function
+				| [] -> ()
+				| p::q -> (if not (LuaL.dofile env p) 
+					then failwith ("fail to execute "^p))
+			in
+			LuaL.openlibs env;
+			registreFunctions !staticFunctions;
+			registreScripts !globalScripts;
+			registreFunctions !dynamicFunctions
+			
 		
 		method registreFunction name func =
 			Lua.register env name func
@@ -628,7 +644,6 @@ let newLua scriptPath =
 
 (* InitGlobal Lua Runtime ****************************************************)
 let loadGlobalScripts scriptDir =
-	let _ = LuaL.openlibs luaEnv in
 	let elements = Array.to_list (Sys.readdir scriptDir) in
 	let rec browser = function
 		| [] -> ()

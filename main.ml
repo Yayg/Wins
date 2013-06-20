@@ -63,7 +63,7 @@ let registerStaticFuncLua () =
 			| Some s -> print_debug ("Script : "^s); 0
 			| _ -> 2
 	in 
-	registerGlobalFunction "print_debug" printdebug;
+	registerStaticFunction "print_debug" printdebug;
 ;;
 
 let registerDynamicFuncLua () =
@@ -104,11 +104,11 @@ let registerDynamicFuncLua () =
 				w#addItemToDisplay name (x,y); 1
 			| _ -> failwith "Invalid call in lua at place_item"
 	in 	
-	registerGlobalFunction "change_room" changeroom;
-	registerGlobalFunction "give_item" giveitem;
-	registerGlobalFunction "drop_item" dropitem;
-	registerGlobalFunction "add_character" addcharacter;
-	registerGlobalFunction "place_item" placeitem
+	registerDynamicFunction "change_room" changeroom;
+	registerDynamicFunction "give_item" giveitem;
+	registerDynamicFunction "drop_item" dropitem;
+	registerDynamicFunction "add_character" addcharacter;
+	registerDynamicFunction "place_item" placeitem
 ;;
 
 let initLua () =
