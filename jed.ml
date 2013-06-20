@@ -172,28 +172,28 @@ class displayUpdating window element =
 							push (a,b) (positionUpdate);
 							push 1 direction;
 							end;
-							line (a + r,b + r) (x,y)
+							line (a + r,b + r) (x,y) (i+1)
 						| (a,b,x,y) when (x > a)&&(y < b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 3 direction;
 							end;
-							line (a + r,b - r) (x,y)
+							line (a + r,b - r) (x,y) (i+1)
 						| (a,b,x,y) when (x < a)&&(y < b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 5 direction;
 							end;
-							line (a - r,b - r) (x,y)
+							line (a - r,b - r) (x,y) (i+1)
 						| (a,b,x,y) when (x < a)&&(y > b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 7 direction;
 							end;
-							line (a - r,b + r) (x,y)
+							line (a - r,b + r) (x,y) (i+1)
 						(* hauteurs *)
 						| (a,b,x,y) when (x = a)&&(y > b) -> 
 							begin
@@ -201,28 +201,28 @@ class displayUpdating window element =
 							push (a,b) (positionUpdate);
 							push 0 direction;
 							end;
-							line (a,b + 1) (x,y)
+							line (a,b + 1) (x,y) (i+1)
 						| (a,b,x,y) when (x = a)&&(y < b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 4 direction;
 							end;
-							line (a,b - 1) (x,y)
+							line (a,b - 1) (x,y) (i+1)
 						| (a,b,x,y) when (x > a)&&(y = b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 2 direction;
 							end;
-							line (a + 1,b) (x,y)
+							line (a + 1,b) (x,y) (i+1)
 						| (a,b,x,y) when (x < a)&&(y = b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 6 direction;
 							end;
-							line (a - 1,b) (x,y)
+							line (a - 1,b) (x,y) (i+1)
 						| _ -> ()
 			
 			and func (a,b) (x,y) =
@@ -245,12 +245,12 @@ class displayUpdating window element =
 				|(a,b) when x > a ->
 					let c = a + 1 in
 					let d = f a in
-					line (a,b) (c,d);
+					line (a,b) (c,d) 0;
 					final (c,d) (x,y)
 				|(a,b) ->
 					let c = a - 1 in
 					let d = f a in
-					line (a,b) (c,d);
+					line (a,b) (c,d) 0;
 					final (c,d) (x,y)
 			in
 			final (g,h) (i,j)
