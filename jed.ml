@@ -437,7 +437,7 @@ class sdlWindow width height =
 			in browser beginNode path
 		method walkToPos characterName pos =
 			let node = self#getNodes#getNearestNode pos
-			in self#walkToNode characterName node
+			in if node <> "" then self#walkToNode characterName node
 			
 			
 		method changeRoom name beginNode =

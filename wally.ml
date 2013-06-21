@@ -560,14 +560,17 @@ class graph (graphXml:treeXml) =
 				[]
 		
 		method getNearestNode (x,y) = (* (((x,y),links list)) dictionary *)
-			match (links#keys ()) with
+			let nearestNode = match (links#keys ()) with
 				| [] -> failwith "Graph Error: Not  initialised."
 				| a :: t -> let d = self#getDistance (self#getCoor a) (x,y) in 
 					let rec browser node min = function
 						| [] -> node 
-						| h :: z when min < (self#getDistance (self#getCoor h) (x,y)) -> browser node min z
+						| h :: z when min < (self#getDistance (self#getCoor h) (x,y)) -> 
+							browser node min z
 						| h :: z -> browser h (self#getDistance (self#getCoor h) (x,y)) z 
 					in browser a d t
+			in if (self#getDistance (self#getCoor nearestNode) (x,y)) > 100. then ""
+			else nearestNode
 		
 		(** Get Nodes Info **)
 		method nodes =
