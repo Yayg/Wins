@@ -240,7 +240,7 @@ class displayUpdating window element =
 			
 			let rec final (a,b) (x,y) =
 				match (a,b) with 
-				|(a,b) when (a = x)||(b = y) -> 
+				|(a,b) when ((a = x)||(b = y)) -> 
 					line (a,b) (x,y)
 				|(a,b) when x > a ->
 					let c = a + 1 in
