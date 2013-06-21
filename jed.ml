@@ -413,19 +413,28 @@ class sdlWindow width height =
 			
 		method placeTo objectName newPosition =
 			(displayData#get objectName).pos <- newPosition
-		method moveTo objectName newPosition =
-			let actualPosition = (displayData#get objectName).pos in
+		method moveTo objectName ?actual newPosition =
+			let actualPosition = match actual with
+				| Some pos -> pos
+				| None -> (displayData#get objectName).pos 
+			in
 			(displayData#get objectName).updating#getLine actualPosition newPosition
 		
-		method walkToNode characterName node =
+		method walkToNode characterName ?previousNode node =
+			let beginNode = match previousNode with
+				| None -> 
+						let currentNode = self#getNodes#getCurrentNode
+						in self#getNodes#getCoor currentNode
+				| Some n -> self#getNodes#getCoor n
+			in 
 			let path = 
 				self#getNodes#shorthestPath node
-			in let rec browser = function
+			in let rec browser prevPos = function
 				| [] -> () 
 				| n::q -> 
 					let pos = self#getNodes#getCoor n
-					in self#moveTo characterName pos; browser q
-			in browser path
+					in self#moveTo characterName ~actual:prevPos pos; browser pos q
+			in browser beginNode path
 		method walkToPos characterName pos =
 			let node = self#getNodes#getNearestNode pos
 			in self#walkToNode characterName node
@@ -594,6 +603,14 @@ class sdlWindow width height =
 			| Sdlevent.KEYDOWN key ->
 				begin match key.Sdlevent.keysym with
 					| KEY_i -> self#setInventoryMode
+					| _ -> self#updateEvents
+				end
+			| Sdlevent.MOUSEBUTTONDOWN b -> 
+				begin match b.Sdlevent.mbe_button with
+					| Sdlmouse.BUTTON_LEFT -> 
+						let x = b.Sdlevent.mbe_x
+						and y = b.Sdlevent.mbe_y
+						in self#walkToPos player (x,y)
 					| _ -> self#updateEvents
 				end
 			| _ -> self#updateEvents
