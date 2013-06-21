@@ -544,8 +544,8 @@ class graph (graphXml:treeXml) =
 			| VoidM -> failwith "Error in matrix initializer !"
 			
 		(** Get Way **)
-		method shorthestPath dst =
-			let ways = self#dijkstra currentNode dst in
+		method shorthestPath ?src:(s=currentNode) dst =
+			let ways = self#dijkstra s dst in
 			let rec browser w dmin = function
 				| [] -> w
 				| h :: t when dmin = (-1.) -> browser h (self#wDistance h) t 

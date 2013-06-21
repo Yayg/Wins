@@ -1,7 +1,7 @@
 <graph>
 	<node id="lit" x="245" y="542" l="centre,bureau"/>
-	<node id="centre" x="281" y="503" l="lit,horloge,bureau"/>
+	<node id="centre" x="500" y="509" l="lit,horloge,bureau"/>
 	<node id="bureau" x="755" y="532" l="centre,out"/>
-	<node id="horloge" x="230" y="453" l="centre"/>
+	<node id="horloge" x="440" y="453" l="centre"/>
 	<node id="out" x="957" y="558" l="bureau"/>
 </graph>

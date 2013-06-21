@@ -90,11 +90,11 @@ let registerDynamicFuncLua () =
 					(invDropItem name; 1)
 			| _ -> failwith "Invalid call in lua at drop_item"
 	and addcharacter state =
-		match (Lua.tostring state 1),(Lua.tointeger state 2),(Lua.tointeger state 3) 
+		match (Lua.tostring state 1),(Lua.tostring state 2)
 		with
-			| (Some name,x,y) -> 
+			| (Some name,Some node) -> 
 				let w = Jed.getWindow () in 
-				w#addCharacterToDisplay name (x,y); 1
+				w#addCharacterToDisplay name node; 1
 			| _ -> failwith "Invalid call in lua at add_character"
 	and placeitem state =
 		match (Lua.tostring state 1),(Lua.tointeger state 2),(Lua.tointeger state 3) 
@@ -157,6 +157,8 @@ let setup execDir =
 		#getAttr "name");
 	envString#set "firstNode" ((xmlGame#getFirstByName "firstRoom")
 		#getAttr "node");
+	envString#set "player" ((xmlGame#getFirstByName "player")
+		#getAttr "name");
 	
 	print_string "┝┅ Runtime variables loaded.\n";
 	
@@ -171,7 +173,9 @@ let setup execDir =
 		initLua ();
 	with 
 		| Failure e -> 
-			print_string ("☢ Error during loading data game : "^e^" \n"); exit 2
+			print_string ("☢ Error during loading data game : "^e^" \n"); 
+			Printexc.print_backtrace stdout;
+			exit 2
 		| e -> 
 			let str = Printexc.to_string e in
 			print_string ("☢ Error during loading data game of kind "^str^"\n");
@@ -207,7 +211,18 @@ let initialization execDir =
 						Printexc.print_backtrace stdout;
 						exit 2
 			in flush stdout;
-			main ()
+			try 
+				main ()
+			with
+				| Failure e -> 
+					print_string ("☢ Error during game : "^e^" \n"); 
+					Printexc.print_backtrace stdout;
+					exit 2
+				| e -> 
+					let str = Printexc.to_string e in
+					print_string ("☢ Error during game of kind "^str^"\n");
+					Printexc.print_backtrace stdout;
+					exit 2
 	with _ -> (
 		if execDir = "" then 
 			print_string usage_msg
