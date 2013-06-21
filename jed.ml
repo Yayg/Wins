@@ -289,12 +289,15 @@ class displayUpdating window element =
 					Position (pop positionUpdate)
 			in 
 			(actionAnimation, actionPosition)
-			
+		
+		method still =
+			is_empty positionUpdate
 		(* Get Data *)
 		method getSurface =
 			actualSurface
 		method getOffset =
 			(ox, oy)
+
 	end
 ;;
 
@@ -343,7 +346,8 @@ class sdlWindow width height =
 			Sdlevent.enable_events (Sdlevent.make_mask [ 
 				Sdlevent.KEYDOWN_EVENT;
 				Sdlevent.MOUSEBUTTONDOWN_EVENT;
-				Sdlevent.QUIT_EVENT])
+				Sdlevent.QUIT_EVENT;
+				Sdlevent.USER_EVENT])
 		
 		(** Window Manager **)
 		method getSurface =
@@ -603,17 +607,18 @@ class sdlWindow width height =
 					| KEY_i -> self#setInventoryMode
 					| _ -> self#updateEvents
 				end
-			| Sdlevent.MOUSEBUTTONDOWN b -> 
-				begin match b.Sdlevent.mbe_button with
+			| Sdlevent.MOUSEBUTTONDOWN b when self#playerStill -> 
+				self#mouseClickUpdating b
+			| _ -> self#updateEvents
+		
+		method private mouseClickUpdating b = 
+			let x = b.Sdlevent.mbe_x
+			and y = b.Sdlevent.mbe_y
+			in match b.Sdlevent.mbe_button with
 					| Sdlmouse.BUTTON_LEFT -> 
-						let x = b.Sdlevent.mbe_x
-						and y = b.Sdlevent.mbe_y
-						in 
 						if self#selectedObject (x,y) = "" then
 							self#walkToPos player (x,y)
 					| _ -> self#updateEvents
-				end
-			| _ -> self#updateEvents
 		
 		(* Inventory Mode *)
 		method private inventoryInputUser = function
@@ -636,7 +641,6 @@ class sdlWindow width height =
 				| _::q -> browser q
 			in browser inventoryDisplayed
 			
-		
 		(** Update Data, Display and Event **)
 		method isRuning =
 			run
@@ -730,9 +734,12 @@ class sdlWindow width height =
 				in hx >= ucx && hx <= dcx && hy >= ucy && hy <= dcy
 			in let rec browser = function 
 				| [] -> "" 
-				| e::q when inHitBox e -> print_debug e; e
+				| e::q when inHitBox e -> e
 				| _::q -> browser q
 			in browser (displayData#keys ())
+		
+		method playerStill =
+			(displayData#get player).updating#still
 		
 		(** Debug Method **)
 		method printDisplayedElement =
