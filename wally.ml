@@ -239,33 +239,35 @@ class treeXml xmlFile =
 			let result = ref [] in
 			let rec browser = function
 				| VoidTree -> ()
-				| Node(Element(str, dict), brother, children) when String.lowercase str = String.lowercase name ->
-					let e = self#newXmlTree (Node(Element(str, dict), brother, children)) in
-					result := e::!result;
-					browser children;
-					browser brother
+				| Node(Element(str, dict), brother, children) 
+					when String.lowercase str = String.lowercase name ->
+						let e = self#newXmlTree (Node(Element(str, dict), brother, children)) 
+						in
+						result := e::!result;
+						browser children;
+						browser brother
 				| Node(_, brother, children) -> 
 					browser children;
 					browser brother
 			in browser data; !result
 		method getFirstByName name =
 			let rec browser = function
-                                | VoidTree -> VoidTree
-                                | Node(Element(str, dict), brother, children) 
+				| VoidTree -> VoidTree
+				| Node(Element(str, dict), brother, children)
 					when String.lowercase str = String.lowercase name ->
-					Node(Element(str, dict), brother, children)
-                                | Node(_, brother, children) ->
-                                        let resultChildren = browser children in
-                                        if resultChildren = VoidTree then
-                                                browser brother
-                                        else
-                                                resultChildren
-                        in
-                        let result = browser data in
-                        if result = VoidTree then
-                                raise Not_found
-                        else
-                                self#newXmlTree result
+						Node(Element(str, dict), brother, children)
+				| Node(_, brother, children) ->
+					let resultChildren = browser children in
+					if resultChildren = VoidTree then
+						browser brother
+					else
+						resultChildren
+			in
+			let result = browser data in
+			if result = VoidTree then
+				raise Not_found
+			else
+				self#newXmlTree result
 	end
 ;;
 
@@ -279,7 +281,8 @@ class graph (graphXml:treeXml) =
 		val mutable keys = []
 		val mutable n = ref (-1)
 		val mutable aux = VoidM
-
+		
+		val changingRoom = new dictionary
 		
 		val mutable currentNode = ""
 		
@@ -371,7 +374,7 @@ class graph (graphXml:treeXml) =
 				!final
 			end
 		method private getNodes =
-			print_string(((tree#getFirstByName "graph")#getXmlElement ())#getName ()^"\n"); (* test de conformité du fichier graph *)
+			(* Debug ** print_string(((tree#getFirstByName "graph")#getXmlElement ())#getName ()^"\n");  test de conformité du fichier graph *)
 			nodes <- tree#getElementsByName "node"
 		method getFirst =
 			let n = nodes in

@@ -325,9 +325,12 @@ class sdlWindow width height =
 		(* Game Mode *)
 		val player = envString#get "player"
 		val displayData = new dictionary
+		val priorityFunc = Queue.create ()
+		
 		val mutable background = get_video_surface ()
 		val mutable currentRoom = None
 		val mutable currentDialog = None
+		
 		val mutable currentRuntime = None
 		val mutable nodes = None
 		
@@ -346,8 +349,8 @@ class sdlWindow width height =
 			Sdlevent.enable_events (Sdlevent.make_mask [ 
 				Sdlevent.KEYDOWN_EVENT;
 				Sdlevent.MOUSEBUTTONDOWN_EVENT;
-				Sdlevent.QUIT_EVENT;
-				Sdlevent.USER_EVENT])
+				Sdlevent.QUIT_EVENT]
+			)
 		
 		(** Window Manager **)
 		method getSurface =
@@ -601,15 +604,17 @@ class sdlWindow width height =
 					
 		(** Read Input User and run the function corresponding with event **)
 		(* Game Mode *)
-		method private gameInputUser = function 
-			| Sdlevent.KEYDOWN key ->
-				begin match key.Sdlevent.keysym with
-					| KEY_i -> self#setInventoryMode
-					| _ -> self#updateEvents
-				end
-			| Sdlevent.MOUSEBUTTONDOWN b when self#playerStill -> 
-				self#mouseClickUpdating b
-			| _ -> self#updateEvents
+		method private gameInputUser event = 
+			self#doPriorityFunc;
+			match event with
+				| Sdlevent.KEYDOWN key ->
+					begin match key.Sdlevent.keysym with
+						| KEY_i -> self#setInventoryMode
+						| _ -> self#updateEvents
+					end
+				| Sdlevent.MOUSEBUTTONDOWN b when self#playerStill -> 
+					self#mouseClickUpdating b
+				| _ -> self#updateEvents
 		
 		method private mouseClickUpdating b = 
 			let x = b.Sdlevent.mbe_x
@@ -619,6 +624,11 @@ class sdlWindow width height =
 						if self#selectedObject (x,y) = "" then
 							self#walkToPos player (x,y)
 					| _ -> self#updateEvents
+		
+		method private doPriorityFunc =
+			if self#playerStill then while not(is_empty priorityFunc) do
+				pop priorityFunc ()
+			done
 		
 		(* Inventory Mode *)
 		method private inventoryInputUser = function
