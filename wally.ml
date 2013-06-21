@@ -420,7 +420,10 @@ class graph (graphXml:treeXml) =
 					end;
 					browser a (i+1)
 			in
-			browser a 0
+			browser a 0;
+			print_string("\n")
+
+		method diplayM = match aux with Matrix(m) -> Array.iter self#displayArray m; print_string("\n\n") | VoidM -> ()
 			
 		method private insert mat l = 
 			let rec ins m = function
@@ -451,7 +454,7 @@ class graph (graphXml:treeXml) =
 			in endM ma 0
 			
 		(** Dijkstra **)
-		method private dijkstra x y = 
+		method dijkstra x y = 
 			let rec browser y pcc avoir result =
 				if (avoir <> []) then
 					begin
@@ -534,14 +537,17 @@ class graph (graphXml:treeXml) =
 				| [] -> failwith "Impossible case."
 				| a :: [] -> d
 				| a :: b :: t -> 
+					print_string(b ^ " -> "^ a ^ "\n");
 					browser (
 					d +. (match (m.(self#getId a).(self#getId b)) with 
 						| Finite(x) -> x 
-						| Infinite -> failwith "Vers l'infini et au delà !"
+						| Infinite -> match (m.(self#getId b).(self#getId a)) with 
+							| Finite(x) -> x
+							| Infinite -> failwith "Vers l'infini et au delakjnaegnbzerbpbnepeo, !"
 					)) (b :: t)
 			in 
 			browser 0. l
-			| VoidM -> failwith "Error in matrix initializer !"
+			| VoidM -> failwith "Error during matrix initialization !"
 			
 		(** Get Way **)
 		method shorthestPath ?src:(s=currentNode) dst =
@@ -555,10 +561,20 @@ class graph (graphXml:treeXml) =
 			let track = browser [] (-1.) ways
 			in if track <> [] then
 				(currentNode <- dst;
+				print_string("Current: "^currentNode^"\n");
 				List.rev track)
 			else
 				[]
 		
+		method debug l = 
+			print_string("[");
+			let rec browser = function
+				| [] -> print_string("]")
+				| h :: [] -> print_string(h^"]\n")
+				| h :: t -> print_string(h^",");
+							browser t
+			in browser l
+
 		method getNearestNode (x,y) = (* (((x,y),links list)) dictionary *)
 			let nearestNode = match (links#keys ()) with
 				| [] -> failwith "Graph Error: Not  initialised."
