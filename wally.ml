@@ -592,12 +592,14 @@ let dynamicFunctions = ref []
 let globalScripts = ref []
 
 (* Functions ******************************************************************)
-let registerStaticFunction name func =
-	staticFunctions := (name,func)::!staticFunctions
+let registerStaticFunction name ?output:(n=0) func =
+	let f state = ignore(func state); n
+	in staticFunctions := (name,f)::!staticFunctions
 ;;
 
-let registerDynamicFunction name func =
-	dynamicFunctions := (name,func)::!dynamicFunctions
+let registerDynamicFunction name ?output:(n=0) func =
+	let f state = ignore(func state); n
+	in dynamicFunctions := (name,f)::!dynamicFunctions
 ;;
 
 let addGlobalScript path =

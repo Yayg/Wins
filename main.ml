@@ -60,10 +60,56 @@ let registerStaticFuncLua () =
 	(** print_debug (string) : print a debug message in the console **)
 	let printdebug state =
 		match (Lua.tostring state 1) with
-			| Some s -> print_debug ("Script : "^s); 0
-			| _ -> 2
+			| Some s -> print_debug ("Script : "^s)
+			| _ -> print_debug "script <"
+	
+	and getenvironementvar state =
+		let value = match (Lua.tostring state 1) with
+			| Some name -> getEnvString name
+			| _ -> "Invalid call in lua at get_environement_var"
+		in Lua.pushstring state value
+	
+	and setglobalint state =
+		match (Lua.tostring state 1),(Lua.tointeger state 2) with
+			| Some name,value -> setGlobalInt name value
+			| _ -> failwith "Invalid call in lua at set_global_int"
+	and getglobalint state =
+		let value = match (Lua.tostring state 1) with
+			| Some name -> getGlobalInt name
+			| _ -> failwith "Invalid call in lua at get_global_int"
+		in Lua.pushinteger state value
+	and removeglobalint state =
+		match (Lua.tostring state 1) with
+			| Some name -> removeGlobalInt name
+			| _ -> failwith "Invalid call in lua at remove_global_int"
+			
+	and setglobalstring state =
+		match (Lua.tostring state 1),(Lua.tostring state 2) with
+			| Some name,Some value -> setGlobalString name value
+			| _ -> failwith "Invalid call in lua at set_global_string"
+	and getglobalstring state =
+		let value = match (Lua.tostring state 1) with
+			| Some name -> getGlobalString name
+			| _ -> failwith "Invalid call in lua at get_global_string"
+		in Lua.pushstring state value
+	and removeglobalstring state =
+		match (Lua.tostring state 1) with
+			| Some name -> removeGlobalString name
+			| _ -> failwith "Invalid call in lua at remove_global_string"
 	in 
 	registerStaticFunction "print_debug" printdebug;
+	
+	registerStaticFunction "get_environement_var" getenvironementvar ~output:1;
+	
+	registerStaticFunction "set_global_int" setglobalint;
+	registerStaticFunction "get_global_int" getglobalint ~output:1;
+	registerStaticFunction "remove_global_int" removeglobalint;
+	
+	registerStaticFunction "set_global_string" setglobalstring;
+	registerStaticFunction "get_global_string" getglobalstring ~output:1;
+	registerStaticFunction "remove_global_string" removeglobalstring;
+	
+	
 ;;
 
 let registerDynamicFuncLua () =
@@ -71,37 +117,33 @@ let registerDynamicFuncLua () =
 		match (Lua.tostring state 1),(Lua.tostring state 2) with
 			| Some name,Some node -> 
 				let w = Jed.getWindow () in 
-				w#changeRoom name node; 1
+				w#changeRoom name node
 			| _ -> failwith "Invalid call in lua at change_room"
 	and giveitem state =
 		match (Lua.tostring state 1) with
 			| Some name -> 
-				if invCheckItem name then
-					0
-				else
-					(invAddItem name; 1)
+				if not(invCheckItem name) then
+					invAddItem name
 			| _ -> failwith "Invalid call in lua at give_item"
 	and dropitem state =
 		match (Lua.tostring state 1) with
 			| Some name -> 
-				if not (invCheckItem name) then
-					0
-				else
-					(invDropItem name; 1)
+				if invCheckItem name then
+					invDropItem name
 			| _ -> failwith "Invalid call in lua at drop_item"
 	and addcharacter state =
 		match (Lua.tostring state 1),(Lua.tostring state 2)
 		with
 			| (Some name,Some node) -> 
 				let w = Jed.getWindow () in 
-				w#addCharacterToDisplay name node; 1
+				w#addCharacterToDisplay name node
 			| _ -> failwith "Invalid call in lua at add_character"
 	and placeitem state =
 		match (Lua.tostring state 1),(Lua.tointeger state 2),(Lua.tointeger state 3) 
 		with
 			| (Some name,x,y) -> 
 				let w = Jed.getWindow () in 
-				w#addItemToDisplay name (x,y); 1
+				w#addItemToDisplay name (x,y)
 			| _ -> failwith "Invalid call in lua at place_item"
 	in 	
 	registerDynamicFunction "change_room" changeroom;
