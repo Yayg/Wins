@@ -366,14 +366,12 @@ class sdlWindow width height =
 			let animation = item#getDataAnim#getElementById "idle" in
 			let w = int_of_string(animation#getAttr "w")
 			and h = int_of_string(animation#getAttr "h")
-			and ox = (try int_of_string(animation#getAttr "ox") with _ -> 0);
-			and oy = (try int_of_string(animation#getAttr "ox") with _ -> 0);
 			in
 			let element =
 				{
 					data = item;
 					img = rect 0 0 w h; 
-					pos = (x+ox,y+oy); 
+					pos = (x,y); 
 					updating = (new displayUpdating window item)
 				}
 			in
@@ -610,7 +608,9 @@ class sdlWindow width height =
 					| Sdlmouse.BUTTON_LEFT -> 
 						let x = b.Sdlevent.mbe_x
 						and y = b.Sdlevent.mbe_y
-						in self#walkToPos player (x,y)
+						in 
+						if self#selectedObject (x,y) = "" then
+							self#walkToPos player (x,y)
 					| _ -> self#updateEvents
 				end
 			| _ -> self#updateEvents
@@ -717,6 +717,22 @@ class sdlWindow width height =
 		method private getNodes = match nodes with
 			| Some n -> (n:Wally.graph)
 			| None -> failwith "Pathfinding motor is not initialized"
+		
+		method private selectedObject (hx,hy) =
+			let inHitBox elementName = 
+				let element = displayData#get elementName in 
+				let (x,y) = element.pos
+				and (w,h) = (element.img.r_w,element.img.r_h)
+				and (ox,oy) = element.updating#getOffset
+				in 
+				let (ucx, ucy) = (x-ox,y-oy)
+				and (dcx, dcy) = (x-ox+w,y-oy+h)
+				in hx >= ucx && hx <= dcx && hy >= ucy && hy <= dcy
+			in let rec browser = function 
+				| [] -> "" 
+				| e::q when inHitBox e -> print_debug e; e
+				| _::q -> browser q
+			in browser (displayData#keys ())
 		
 		(** Debug Method **)
 		method printDisplayedElement =

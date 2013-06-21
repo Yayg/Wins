@@ -1,6 +1,6 @@
 function main ()
 	give_item "duck"
-	place_item ("duck",600,300)
+	place_item ("duck",428,456)
 	sayHello()
 	return 
 end
