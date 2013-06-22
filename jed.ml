@@ -170,7 +170,7 @@ class displayUpdating window element =
 			oy <- (try int_of_string(idle#getAttr "oy") with _ -> 0)
 		
 		(* Draw Moving *)
-		method getLine ?speed:(r=2) (g,h) (i,j) = 
+		method getLine ?speed:(r=1) (g,h) (i,j) = 
 			let rec line (a,b) (x,y) i = 
 					match (a,b,x,y) with
 						(* diagonales *)
@@ -438,7 +438,8 @@ class sdlWindow width height =
 			currentDialog <- Some (new dialog xmlDialog id)
 		method setAnimation objectName animationName =
 			(displayData#get objectName).updating#setAnimation animationName
-			
+		
+		(* Absolute Moving *)
 		method placeTo objectName newPosition =
 			(displayData#get objectName).pos <- newPosition
 		method moveTo objectName ?actual newPosition =
@@ -448,6 +449,7 @@ class sdlWindow width height =
 			in
 			(displayData#get objectName).updating#getLine actualPosition newPosition
 		
+		(* Node Moving *)
 		method walkToNode characterName ?previousNode node =
 			let beginNode = match previousNode with
 				| None -> 
@@ -466,8 +468,16 @@ class sdlWindow width height =
 		method walkToPos characterName pos =
 			let node = self#getNodes#getNearestNode pos
 			in if node <> "" then self#walkToNode characterName node
+		
+		method placeOffsetNode objectName node (ox,oy) =
+			let (x,y) = self#getNodes#getCoor node in
+			self#placeTo objectName (x+ox,y+oy)
+		
+		method moveOffstNode objectName node (ox,oy) =
+			let (x,y) = self#getNodes#getCoor node in
+			self#moveTo objectName ~actual:(x,y) (x+ox,y+oy)
 			
-			
+		(* Change Room *)
 		method changeRoom name beginNode () =
 			let _ =
 				self#setLoadingMode;
