@@ -3,5 +3,5 @@
 	<node id="centre" x="500" y="509" l="lit,horloge,bureau"/>
 	<node id="bureau" x="755" y="532" l="centre,out"/>
 	<node id="horloge" x="440" y="453" l="centre"/>
-	<node id="out" x="957" y="558" l="bureau"/>
+	<node id="out" x="957" y="558" l="bureau" swr="outdoor" swn="maison"/>
 </graph>

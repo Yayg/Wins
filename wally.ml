@@ -75,6 +75,10 @@ class xmlElement dataXml =
 			| Text(_) -> raise IsNotXmlElement
 			| Element(_, dict) -> try dict#get name with Not_found -> raise AttrNotFound
 		in attr data
+	method checkAttr name =
+		match data with
+			| Text(_) -> raise IsNotXmlElement
+			| Element(_, dict) -> dict#check name
 end
 ;;
 
@@ -282,7 +286,6 @@ class graph (graphXml:treeXml) =
 		val mutable aux = VoidM
 		
 		val changingRoom = new dictionary
-		
 		val mutable currentNode = ""
 		
 		initializer
@@ -297,7 +300,11 @@ class graph (graphXml:treeXml) =
 						and l = self#strParse (data#getAttr "l")
 						in 
 						links#set id ((x,y),l);
-						browser q
+						begin if (data#checkAttr "swr") then
+							let swr = data#getAttr "swr"
+							and swn = data#getAttr "swn"
+							in changingRoom#set id (swr,swn)
+						end; browser q
 				in browser (nodes#getElementsByName "node")
 			in
 			self#calculateDistances;
@@ -580,6 +587,11 @@ class graph (graphXml:treeXml) =
 		method setCurrentNode name =
 			currentNode <- name
 		
+		method needChangeRoom =
+			if changingRoom#check currentNode then
+				Some (changingRoom#get currentNode)
+			else
+				None
 	end
 
 (* Global Variables ***********************************************************)
