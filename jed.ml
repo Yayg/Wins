@@ -644,6 +644,8 @@ class sdlWindow width height =
 						| KEY_i -> self#setInventoryMode
 						| _ -> self#updateEvents
 					end
+				| Sdlevent.MOUSEBUTTONDOWN b 
+					when b.Sdlevent.mbe_button = Sdlmouse.BUTTON_MIDDLE -> self#setInventoryMode
 				| Sdlevent.MOUSEBUTTONDOWN b when self#playerStill -> 
 					self#mouseClickUpdating b
 				| _ -> self#updateEvents
@@ -674,6 +676,8 @@ class sdlWindow width height =
 					| KEY_i | KEY_ESCAPE -> self#setGameMode
 					| _ -> self#updateEvents
 				end
+			| Sdlevent.MOUSEBUTTONDOWN b 
+					when b.Sdlevent.mbe_button = Sdlmouse.BUTTON_MIDDLE -> self#setGameMode
 			| Sdlevent.MOUSEMOTION info -> 
 				self#updateInvText info.Sdlevent.mme_x info.Sdlevent.mme_y
 			| _ -> self#updateEvents
