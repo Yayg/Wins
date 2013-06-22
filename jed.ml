@@ -445,7 +445,7 @@ class sdlWindow width height =
 			in if node <> "" then self#walkToNode characterName node
 			
 			
-		method changeRoom name beginNode =
+		method changeRoom name beginNode () =
 			let _ =
 				self#setLoadingMode;
 				self#fushDisplayData
@@ -605,7 +605,6 @@ class sdlWindow width height =
 		(** Read Input User and run the function corresponding with event **)
 		(* Game Mode *)
 		method private gameInputUser event = 
-			self#doPriorityFunc;
 			match event with
 				| Sdlevent.KEYDOWN key ->
 					begin match key.Sdlevent.keysym with
@@ -620,9 +619,14 @@ class sdlWindow width height =
 			let x = b.Sdlevent.mbe_x
 			and y = b.Sdlevent.mbe_y
 			in match b.Sdlevent.mbe_button with
-					| Sdlmouse.BUTTON_LEFT -> 
-						if self#selectedObject (x,y) = "" then
-							self#walkToPos player (x,y)
+					| Sdlmouse.BUTTON_RIGHT -> 
+						let beforeNode = self#getNodes#getCurrentNode in
+						self#walkToPos player (x,y);
+						begin if beforeNode <> self#getNodes#getCurrentNode then 
+						match self#getNodes#needChangeRoom with
+							| None -> ()
+							| Some (swr,swn) -> push (self#changeRoom swr swn) priorityFunc
+						end
 					| _ -> self#updateEvents
 		
 		method private doPriorityFunc =
@@ -670,6 +674,7 @@ class sdlWindow width height =
 		
 		method private updateEvents =
 			Sdlevent.pump ();
+			self#doPriorityFunc;
 			begin match Sdlevent.poll () with
 				| Some Sdlevent.QUIT -> Sdl.quit (); run <- false
 				| None -> ()

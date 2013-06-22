@@ -49,7 +49,7 @@ let main () =
 			Jed.initW ();
 			Jed.getWindow ()
 		in
-		w#changeRoom (envString#get "firstRoom") (envString#get "firstNode")
+		w#changeRoom (envString#get "firstRoom") (envString#get "firstNode") ()
 	in
 	Woop.bigLoop();
 	exit 0
@@ -117,7 +117,7 @@ let registerDynamicFuncLua () =
 		match (Lua.tostring state 1),(Lua.tostring state 2) with
 			| Some name,Some node -> 
 				let w = Jed.getWindow () in 
-				w#changeRoom name node
+				w#changeRoom name node ()
 			| _ -> failwith "Invalid call in lua at change_room"
 	and giveitem state =
 		match (Lua.tostring state 1) with

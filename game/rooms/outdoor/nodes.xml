@@ -1,5 +1,5 @@
 <graph>
-	<node id="maison" x="39" y="504" l="centre,fond"/>
+	<node id="maison" x="39" y="504" l="centre,fond" swr="begin" swn="out"/>
 	<node id="centre" x="490" y="480" l="maison,fond,soutenance"/>
 	<node id="fond" x="500" y="371" l="maison,centre"/>
 	<node id="soutenance" x="852" y="431" l="centre"/>
