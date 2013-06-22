@@ -7,5 +7,6 @@
 	<scriptDir href="scripts/"/>
 	<fontDir href="fonts/"/>
 	
-	<firstRoom name="begin" node="start"/>
+	<firstRoom name="begin" node="bureau"/>
+	<player name="loly"/>
 </game>

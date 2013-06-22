@@ -159,9 +159,17 @@ class displayUpdating window element =
 		val mutable loopAnimation = false
 		val mutable w = 0
 		val mutable h = 0
+		val mutable ox = 0
+		val mutable oy = 0
+		
+		initializer
+			let idle = element#getDataAnim#getElementById "idle" in
+			w <- int_of_string(idle#getAttr "w");
+			h <- int_of_string(idle#getAttr "h");
+			ox <- (try int_of_string(idle#getAttr "ox") with _ -> 0);
+			oy <- (try int_of_string(idle#getAttr "oy") with _ -> 0)
 		
 		(* Draw Moving *)
-		
 		method getLine (g,h) (i,j) = 
 			let rec line (a,b) (x,y) = 
 					match (a,b,x,y) with
@@ -257,6 +265,8 @@ class displayUpdating window element =
 			loopAnimation <- bool_of_string(animation#getAttr "loop");
 			w <- int_of_string(animation#getAttr "w");
 			h <- int_of_string(animation#getAttr "h");
+			ox <- (try int_of_string(animation#getAttr "ox") with _ -> 0);
+			oy <- (try int_of_string(animation#getAttr "oy") with _ -> 0);
 			browser 0 1 frames;
 			nameAnimation <- name
 		
@@ -279,8 +289,15 @@ class displayUpdating window element =
 					Position (pop positionUpdate)
 			in 
 			(actionAnimation, actionPosition)
+		
+		method still =
+			is_empty positionUpdate
+		(* Get Data *)
 		method getSurface =
 			actualSurface
+		method getOffset =
+			(ox, oy)
+
 	end
 ;;
 
@@ -306,10 +323,14 @@ class sdlWindow width height =
 		val mutable currentItem = None
 		
 		(* Game Mode *)
+		val player = envString#get "player"
 		val displayData = new dictionary
+		val priorityFunc = Queue.create ()
+		
 		val mutable background = get_video_surface ()
 		val mutable currentRoom = None
 		val mutable currentDialog = None
+		
 		val mutable currentRuntime = None
 		val mutable nodes = None
 		
@@ -325,7 +346,11 @@ class sdlWindow width height =
 			modes#set "inventory" (self#createSurface width height);
 			modes#set "loading" (load_image ((getEnvString "dir")//"loading.png"));
 			Sdlevent.disable_events Sdlevent.all_events_mask;
-			Sdlevent.enable_events (Sdlevent.make_mask [Sdlevent.KEYDOWN_EVENT;Sdlevent.MOUSEBUTTONDOWN_EVENT;Sdlevent.QUIT_EVENT])
+			Sdlevent.enable_events (Sdlevent.make_mask [ 
+				Sdlevent.KEYDOWN_EVENT;
+				Sdlevent.MOUSEBUTTONDOWN_EVENT;
+				Sdlevent.QUIT_EVENT]
+			)
 		
 		(** Window Manager **)
 		method getSurface =
@@ -358,8 +383,9 @@ class sdlWindow width height =
 				}
 			in
 			displayData#set name element
-		method addCharacterToDisplay name (x,y) =
-			let character = (getCharacter name :> displayable) in
+		method addCharacterToDisplay name node =
+			let (x,y) = self#getNodes#getCoor node
+			and character = (getCharacter name :> displayable) in
 			let animation = character#getDataAnim#getElementById "idle" in
 			let w = int_of_string(animation#getAttr "w")
 			and h = int_of_string(animation#getAttr "h")
@@ -389,25 +415,52 @@ class sdlWindow width height =
 			currentDialog <- Some (new dialog xmlDialog id)
 		method setAnimation objectName animationName =
 			(displayData#get objectName).updating#setAnimation animationName
+			
 		method placeTo objectName newPosition =
 			(displayData#get objectName).pos <- newPosition
-		method moveTo objectName newPosition =
-			let actualPosition = (displayData#get objectName).pos in
+		method moveTo objectName ?actual newPosition =
+			let actualPosition = match actual with
+				| Some pos -> pos
+				| None -> (displayData#get objectName).pos 
+			in
 			(displayData#get objectName).updating#getLine actualPosition newPosition
-		method changeRoom name beginNode =
+		
+		method walkToNode characterName ?previousNode node =
+			let beginNode = match previousNode with
+				| None -> 
+						let currentNode = self#getNodes#getCurrentNode
+						in self#getNodes#getCoor currentNode
+				| Some n -> self#getNodes#getCoor n
+			in 
+			let path = 
+				self#getNodes#shorthestPath node
+			in let rec browser prevPos = function
+				| [] -> () 
+				| n::q -> 
+					let pos = self#getNodes#getCoor n
+					in self#moveTo characterName ~actual:prevPos pos; browser pos q
+			in browser beginNode path
+		method walkToPos characterName pos =
+			let node = self#getNodes#getNearestNode pos
+			in if node <> "" then self#walkToNode characterName node
+			
+			
+		method changeRoom name beginNode () =
 			let _ =
 				self#setLoadingMode;
 				self#fushDisplayData
 			in 
 			currentRoom <- Some (getRoom name);
-			currentRuntime <- Some (Wally.newLua self#getRoom#getScript);
-			ignore (self#runFunction "main");
 			background <- load_image self#getRoom#getBackground;
 			nodes <- Some self#getRoom#getNodes;
 			(match nodes with
 				| Some n -> n#setCurrentNode beginNode
 				| None -> failwith "Initialization node during room changing is drunk !"
-			); self#setGameMode
+			); 
+			self#addCharacterToDisplay player beginNode;
+			currentRuntime <- Some (Wally.newLua self#getRoom#getScript);
+			ignore (self#runFunction "main");
+			self#setGameMode
 		
 		(** Manager Mode **)
 		method private getVideo =
@@ -462,8 +515,10 @@ class sdlWindow width height =
 					let src = element.updating#getSurface
 					and src_rect = element.img
 					and dst_rect =
-						let x,y = element.pos in
-						rect x y 0 0
+						let x,y = element.pos 
+						and (ox,oy) = element.updating#getOffset
+						in
+						rect (x-ox) (y-oy) 0 0
 					in
 					blit_surface ~src ~src_rect ~dst:(modes#get "game") ~dst_rect ();
 					browser q
@@ -476,10 +531,9 @@ class sdlWindow width height =
 			| Some d -> 
 				let (data, image) = d#update () in
 				let character = data.emitter
-				and offset = (data:tirade).offs
+				and (ox, oy) = (data:tirade).offs
 				in
-				let (ox, oy) = offset
-				and (cx, cy) = (displayData#get character).pos
+				let (cx, cy) = (displayData#get character).pos
 				in let position = rect (cx+ox) (cy+oy) 0 0
 				in blit_surface ~src:image ~dst:(modes#get "game") ~dst_rect:position ()
 		
@@ -548,17 +602,37 @@ class sdlWindow width height =
 					in blit_surface ~src:imgTxt ~dst:(modes#get "inventory") 
 						~dst_rect:(rect (x+15) (y-5) 0 0) ();
 					
-			
-			
 		(** Read Input User and run the function corresponding with event **)
 		(* Game Mode *)
-		method private gameInputUser = function 
-			| Sdlevent.KEYDOWN key ->
-				begin match key.Sdlevent.keysym with
-					| KEY_i -> self#setInventoryMode
+		method private gameInputUser event = 
+			match event with
+				| Sdlevent.KEYDOWN key ->
+					begin match key.Sdlevent.keysym with
+						| KEY_i -> self#setInventoryMode
+						| _ -> self#updateEvents
+					end
+				| Sdlevent.MOUSEBUTTONDOWN b when self#playerStill -> 
+					self#mouseClickUpdating b
+				| _ -> self#updateEvents
+		
+		method private mouseClickUpdating b = 
+			let x = b.Sdlevent.mbe_x
+			and y = b.Sdlevent.mbe_y
+			in match b.Sdlevent.mbe_button with
+					| Sdlmouse.BUTTON_RIGHT -> 
+						let beforeNode = self#getNodes#getCurrentNode in
+						self#walkToPos player (x,y);
+						begin if beforeNode <> self#getNodes#getCurrentNode then 
+						match self#getNodes#needChangeRoom with
+							| None -> ()
+							| Some (swr,swn) -> push (self#changeRoom swr swn) priorityFunc
+						end
 					| _ -> self#updateEvents
-				end
-			| _ -> self#updateEvents
+		
+		method private doPriorityFunc =
+			if self#playerStill then while not(is_empty priorityFunc) do
+				pop priorityFunc ()
+			done
 		
 		(* Inventory Mode *)
 		method private inventoryInputUser = function
@@ -581,7 +655,6 @@ class sdlWindow width height =
 				| _::q -> browser q
 			in browser inventoryDisplayed
 			
-		
 		(** Update Data, Display and Event **)
 		method isRuning =
 			run
@@ -599,8 +672,9 @@ class sdlWindow width height =
 			(* Update Event *)
 			self#updateEvents
 		
-		method updateEvents =
+		method private updateEvents =
 			Sdlevent.pump ();
+			self#doPriorityFunc;
 			begin match Sdlevent.poll () with
 				| Some Sdlevent.QUIT -> Sdl.quit (); run <- false
 				| None -> ()
@@ -625,7 +699,7 @@ class sdlWindow width height =
 		method private createSurface w h =
 			create_RGB_surface_format !window [`HWSURFACE] w h
 			
-		method blit_alpha src dst x y =
+		method private blit_alpha src dst x y =
 			let _ =
 				lock src;
 				lock dst
@@ -646,7 +720,7 @@ class sdlWindow width height =
 			done;
 			left ()
 			
-		method runFunction ?args:(arg=[]) name =
+		method private runFunction ?args:(arg=[]) name =
 			let runtime = match currentRuntime with
 				| Some runtime -> runtime
 				| None -> failwith "Lua runtime is not initialized"
@@ -658,6 +732,29 @@ class sdlWindow width height =
 					| a::q -> a^","^(browser q)
 				in browser arg 
 			in runtime#doLine (name^"("^arguments^")")
+		
+		method private getNodes = match nodes with
+			| Some n -> (n:Wally.graph)
+			| None -> failwith "Pathfinding motor is not initialized"
+		
+		method private selectedObject (hx,hy) =
+			let inHitBox elementName = 
+				let element = displayData#get elementName in 
+				let (x,y) = element.pos
+				and (w,h) = (element.img.r_w,element.img.r_h)
+				and (ox,oy) = element.updating#getOffset
+				in 
+				let (ucx, ucy) = (x-ox,y-oy)
+				and (dcx, dcy) = (x-ox+w,y-oy+h)
+				in hx >= ucx && hx <= dcx && hy >= ucy && hy <= dcy
+			in let rec browser = function 
+				| [] -> "" 
+				| e::q when inHitBox e -> e
+				| _::q -> browser q
+			in browser (displayData#keys ())
+		
+		method playerStill =
+			(displayData#get player).updating#still
 		
 		(** Debug Method **)
 		method printDisplayedElement =

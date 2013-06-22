@@ -1,4 +1,4 @@
-(* Wally - The Lua Motor
+(* Wally - The Lua/Data Motor
 ################################################################################
 #    Wins is a "Point and Click" Game Motor written with OCaml                 #
 #    Copyright (C) 2013    Philémon Gardet [philemon.gardet@epita.fr]          #
@@ -75,6 +75,10 @@ class xmlElement dataXml =
 			| Text(_) -> raise IsNotXmlElement
 			| Element(_, dict) -> try dict#get name with Not_found -> raise AttrNotFound
 		in attr data
+	method checkAttr name =
+		match data with
+			| Text(_) -> raise IsNotXmlElement
+			| Element(_, dict) -> dict#check name
 end
 ;;
 
@@ -239,81 +243,90 @@ class treeXml xmlFile =
 			let result = ref [] in
 			let rec browser = function
 				| VoidTree -> ()
-				| Node(Element(str, dict), brother, children) when String.lowercase str = String.lowercase name ->
-					let e = self#newXmlTree (Node(Element(str, dict), brother, children)) in
-					result := e::!result;
-					browser children;
-					browser brother
+				| Node(Element(str, dict), brother, children) 
+					when String.lowercase str = String.lowercase name ->
+						let e = self#newXmlTree (Node(Element(str, dict), brother, children)) 
+						in
+						result := e::!result;
+						browser children;
+						browser brother
 				| Node(_, brother, children) -> 
 					browser children;
 					browser brother
 			in browser data; !result
 		method getFirstByName name =
 			let rec browser = function
-                                | VoidTree -> VoidTree
-                                | Node(Element(str, dict), brother, children) 
+				| VoidTree -> VoidTree
+				| Node(Element(str, dict), brother, children)
 					when String.lowercase str = String.lowercase name ->
-					Node(Element(str, dict), brother, children)
-                                | Node(_, brother, children) ->
-                                        let resultChildren = browser children in
-                                        if resultChildren = VoidTree then
-                                                browser brother
-                                        else
-                                                resultChildren
-                        in
-                        let result = browser data in
-                        if result = VoidTree then
-                                raise Not_found
-                        else
-                                self#newXmlTree result
+						Node(Element(str, dict), brother, children)
+				| Node(_, brother, children) ->
+					let resultChildren = browser children in
+					if resultChildren = VoidTree then
+						browser brother
+					else
+						resultChildren
+			in
+			let result = browser data in
+			if result = VoidTree then
+				raise Not_found
+			else
+				self#newXmlTree result
 	end
 ;;
 
 class graph (graphXml:treeXml) = 
 	object (self)
 		
-		val mutable tree = graphXml
-		val mutable nodes = []
-		val mutable distance = new dictionary (* (name,(p,((link,distance) list)))) dictionary *)
-		val mutable links = new dictionary (* (((x,y),links list)) dictionary *)
-		val mutable keys = []
-		val mutable n = ref (-1)
-		val mutable aux = VoidM
-
+		val distance = new dictionary (* (name,(p,(link,distance) list)) dictionary *)
+		val links = new dictionary (* ((x,y),links list) dictionary *)
 		
+		val n = ref (-1)
+		val mutable keys = []
+		val mutable aux = VoidM
+		
+		val changingRoom = new dictionary
 		val mutable currentNode = ""
 		
 		initializer
-			self#getNodes;
-			tree <- tree#getChildren ();
-			self#init;
-			self#dicoFusion;
+			let _ =
+				let nodes = (graphXml#getFirstByName "graph")#getChildren () in
+				let rec browser = function
+					| [] -> ()
+					| e::q -> let data = e#getXmlElement () in
+						let id = data#getAttr "id"
+						and x = int_of_string (data#getAttr "x")
+						and y = int_of_string (data#getAttr "y")
+						and l = self#strParse (data#getAttr "l")
+						in 
+						links#set id ((x,y),l);
+						begin if (data#checkAttr "swr") then
+							let swr = data#getAttr "swr"
+							and swn = data#getAttr "swn"
+							in changingRoom#set id (swr,swn)
+						end; browser q
+				in browser (nodes#getElementsByName "node")
+			in
+			self#calculateDistances;
 			aux <- Matrix(self#graphToMatrix)
 			
 		(** Initialisation des graphs **)
-		method private init =
-			let rec browser = function
-				| t when t#getElementsByName "node" = [] -> ()
-				| t ->
-				begin
-					let attrs = (t#getXmlElement ())#getAttrs () in
-					 match (attrs) with
-						| key :: l :: x :: y :: [] ->
-							let element =
-							(
-							(int_of_string(t#getAttr(x)),int_of_string(t#getAttr(y))),
-							self#strParse (t#getAttr(l))
-							)
-							in
-							links#set (t#getAttr(key)) element;
-							browser (t#getNextBrother ())
-						| _ ->  raise Not_found
-				end
-			in
-			browser tree
-			
-		method private dicoFusion =
-			let keys = links#keys in
+		method private strParse str =
+			begin
+				let i = ref (String.length str - 1) and acc = ref "" and final = ref [] in
+				while (0 <= !i) do
+					(if (str.[!i] = ',') then
+						(final := !acc :: !final;
+						acc := "")
+					else
+						acc := Char.escaped(str.[!i]) ^ !acc);
+					i := !i - 1
+				done;
+				final := !acc :: !final;
+				!final
+			end
+		
+		method private calculateDistances =
 			let rec browser = function
 				| [] -> ()
 				| h :: t ->
@@ -323,7 +336,7 @@ class graph (graphXml:treeXml) =
 						browser t
 					end
 			in 
-			browser (keys ())
+			browser (links#keys ())
 			
 		method private addE name l (x,y) = (* (name,((x,y),links list)) dictionary *)
 			let rec browser point = function
@@ -336,7 +349,19 @@ class graph (graphXml:treeXml) =
 			in 
 			n := !n + 1;
 			distance#set name (!n,(browser (x,y) l))
-			
+		
+		method private graphToMatrix =
+			self#initKeys;
+			let mat = self#initMatrix in
+			let rec browser m l =
+				match l with
+				| [] -> m
+				| (i,h) :: t ->
+					let (_,link) = (distance#get h) in
+					m.(i) <- (Array.copy (self#insert (m.(i)) link));
+					browser m t
+			in self#endMatrix(browser mat keys)
+		
 		method private getDistance (x,y) (a,b) =
 			let d1 = (y-b) and d2 = (x-a) in
 			let d = float_of_int((d1 * d1) + (d2 * d2)) in 
@@ -356,33 +381,6 @@ class graph (graphXml:treeXml) =
 			in 
 			browser (links#keys (),coor (links#elements ()))
 			
-		method private strParse str =
-			begin
-				let i = ref (String.length str - 1) and acc = ref "" and final = ref [] in
-				while (0 <= !i) do
-					(if (str.[!i] = ',') then
-						(final := !acc :: !final;
-						acc := "")
-					else
-						acc := Char.escaped(str.[!i]) ^ !acc);
-					i := !i - 1
-				done;
-				final := !acc :: !final;
-				!final
-			end
-		method private getNodes =
-			print_string(((tree#getFirstByName "graph")#getXmlElement ())#getName ()^"\n"); (* test de conformité du fichier graph *)
-			nodes <- tree#getElementsByName "node"
-		method getFirst =
-			let n = nodes in
-			match n with
-				| [] -> tree
-				| h::t -> h
-		method private getName =
-			tree#getAttr ((tree#getXmlElement ())#getName ())
-		method private displayNodes = 
-			nodes
-		
 		method private getD =
 			(distance : (int * (string * float) list) dictionary)
 		method private getLinks =
@@ -420,7 +418,10 @@ class graph (graphXml:treeXml) =
 					end;
 					browser a (i+1)
 			in
-			browser a 0
+			browser a 0;
+			print_string("\n")
+
+		method diplayM = match aux with Matrix(m) -> Array.iter self#displayArray m; print_string("\n\n") | VoidM -> ()
 			
 		method private insert mat l = 
 			let rec ins m = function
@@ -431,18 +432,6 @@ class graph (graphXml:treeXml) =
 			in
 			ins (Array.copy mat) l
 			
-		method private graphToMatrix =
-			self#initKeys;
-			let mat = self#initMatrix in
-			let rec browser m l =
-				match l with
-				| [] -> m
-				| (i,h) :: t ->
-					let (_,link) = (distance#get h) in
-					m.(i) <- (Array.copy (self#insert (m.(i)) link));
-					browser m t
-			in self#endMatrix(browser mat keys)
-			
 		method private endMatrix ma = 
 			let rec endM m = function
 				| n when n = Array.length m -> m
@@ -451,7 +440,7 @@ class graph (graphXml:treeXml) =
 			in endM ma 0
 			
 		(** Dijkstra **)
-		method private dijkstra x y = 
+		method dijkstra x y = 
 			let rec browser y pcc avoir result =
 				if (avoir <> []) then
 					begin
@@ -534,18 +523,21 @@ class graph (graphXml:treeXml) =
 				| [] -> failwith "Impossible case."
 				| a :: [] -> d
 				| a :: b :: t -> 
+					print_string(b ^ " -> "^ a ^ "\n");
 					browser (
 					d +. (match (m.(self#getId a).(self#getId b)) with 
 						| Finite(x) -> x 
-						| Infinite -> failwith "Vers l'infini et au delà !"
+						| Infinite -> match (m.(self#getId b).(self#getId a)) with 
+							| Finite(x) -> x
+							| Infinite -> failwith "Vers l'infini et au delakjnaegnbzerbpbnepeo, !"
 					)) (b :: t)
 			in 
 			browser 0. l
-			| VoidM -> failwith "Error in matrix initializer !"
+			| VoidM -> failwith "Error during matrix initialization !"
 			
 		(** Get Way **)
-		method shorthestPath dst =
-			let ways = self#dijkstra currentNode dst in
+		method shorthestPath ?src:(s=currentNode) dst =
+			let ways = self#dijkstra s dst in
 			let rec browser w dmin = function
 				| [] -> w
 				| h :: t when dmin = (-1.) -> browser h (self#wDistance h) t 
@@ -555,19 +547,32 @@ class graph (graphXml:treeXml) =
 			let track = browser [] (-1.) ways
 			in if track <> [] then
 				(currentNode <- dst;
+				print_string("Current: "^currentNode^"\n");
 				List.rev track)
 			else
 				[]
 		
+		method debug l = 
+			print_string("[");
+			let rec browser = function
+				| [] -> print_string("]")
+				| h :: [] -> print_string(h^"]\n")
+				| h :: t -> print_string(h^",");
+							browser t
+			in browser l
+
 		method getNearestNode (x,y) = (* (((x,y),links list)) dictionary *)
-			match (links#keys ()) with
+			let nearestNode = match (links#keys ()) with
 				| [] -> failwith "Graph Error: Not  initialised."
 				| a :: t -> let d = self#getDistance (self#getCoor a) (x,y) in 
 					let rec browser node min = function
 						| [] -> node 
-						| h :: z when min < (self#getDistance (self#getCoor h) (x,y)) -> browser node min z
+						| h :: z when min < (self#getDistance (self#getCoor h) (x,y)) -> 
+							browser node min z
 						| h :: z -> browser h (self#getDistance (self#getCoor h) (x,y)) z 
 					in browser a d t
+			in if (self#getDistance (self#getCoor nearestNode) (x,y)) > 100. then ""
+			else nearestNode
 		
 		(** Get Nodes Info **)
 		method nodes =
@@ -582,6 +587,11 @@ class graph (graphXml:treeXml) =
 		method setCurrentNode name =
 			currentNode <- name
 		
+		method needChangeRoom =
+			if changingRoom#check currentNode then
+				Some (changingRoom#get currentNode)
+			else
+				None
 	end
 
 (* Global Variables ***********************************************************)
@@ -592,12 +602,14 @@ let dynamicFunctions = ref []
 let globalScripts = ref []
 
 (* Functions ******************************************************************)
-let registerStaticFunction name func =
-	staticFunctions := (name,func)::!staticFunctions
+let registerStaticFunction name ?output:(n=0) func =
+	let f state = ignore(func state); n
+	in staticFunctions := (name,f)::!staticFunctions
 ;;
 
-let registerDynamicFunction name func =
-	dynamicFunctions := (name,func)::!dynamicFunctions
+let registerDynamicFunction name ?output:(n=0) func =
+	let f state = ignore(func state); n
+	in dynamicFunctions := (name,f)::!dynamicFunctions
 ;;
 
 let addGlobalScript path =
