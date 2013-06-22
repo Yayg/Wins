@@ -1,4 +1,4 @@
-(* Wally - The Lua Motor
+(* Wally - The Lua/Data Motor
 ################################################################################
 #    Wins is a "Point and Click" Game Motor written with OCaml                 #
 #    Copyright (C) 2013    Philémon Gardet [philemon.gardet@epita.fr]          #
@@ -274,12 +274,11 @@ class treeXml xmlFile =
 class graph (graphXml:treeXml) = 
 	object (self)
 		
-		val mutable tree = graphXml
-		val mutable nodes = []
-		val mutable distance = new dictionary (* (name,(p,((link,distance) list)))) dictionary *)
-		val mutable links = new dictionary (* (((x,y),links list)) dictionary *)
+		val distance = new dictionary (* (name,(p,(link,distance) list)) dictionary *)
+		val links = new dictionary (* ((x,y),links list) dictionary *)
+		
+		val n = ref (-1)
 		val mutable keys = []
-		val mutable n = ref (-1)
 		val mutable aux = VoidM
 		
 		val changingRoom = new dictionary
@@ -287,36 +286,40 @@ class graph (graphXml:treeXml) =
 		val mutable currentNode = ""
 		
 		initializer
-			self#getNodes;
-			tree <- tree#getChildren ();
-			self#init;
-			self#dicoFusion;
+			let _ =
+				let nodes = (graphXml#getFirstByName "graph")#getChildren () in
+				let rec browser = function
+					| [] -> ()
+					| e::q -> let data = e#getXmlElement () in
+						let id = data#getAttr "id"
+						and x = int_of_string (data#getAttr "x")
+						and y = int_of_string (data#getAttr "y")
+						and l = self#strParse (data#getAttr "l")
+						in 
+						links#set id ((x,y),l);
+						browser q
+				in browser (nodes#getElementsByName "node")
+			in
+			self#calculateDistances;
 			aux <- Matrix(self#graphToMatrix)
 			
 		(** Initialisation des graphs **)
-		method private init =
-			let rec browser = function
-				| t when t#getElementsByName "node" = [] -> ()
-				| t ->
-				begin
-					let attrs = (t#getXmlElement ())#getAttrs () in
-					 match (attrs) with
-						| key :: l :: x :: y :: [] ->
-							let element =
-							(
-							(int_of_string(t#getAttr(x)),int_of_string(t#getAttr(y))),
-							self#strParse (t#getAttr(l))
-							)
-							in
-							links#set (t#getAttr(key)) element;
-							browser (t#getNextBrother ())
-						| _ ->  raise Not_found
-				end
-			in
-			browser tree
-			
-		method private dicoFusion =
-			let keys = links#keys in
+		method private strParse str =
+			begin
+				let i = ref (String.length str - 1) and acc = ref "" and final = ref [] in
+				while (0 <= !i) do
+					(if (str.[!i] = ',') then
+						(final := !acc :: !final;
+						acc := "")
+					else
+						acc := Char.escaped(str.[!i]) ^ !acc);
+					i := !i - 1
+				done;
+				final := !acc :: !final;
+				!final
+			end
+		
+		method private calculateDistances =
 			let rec browser = function
 				| [] -> ()
 				| h :: t ->
@@ -326,7 +329,7 @@ class graph (graphXml:treeXml) =
 						browser t
 					end
 			in 
-			browser (keys ())
+			browser (links#keys ())
 			
 		method private addE name l (x,y) = (* (name,((x,y),links list)) dictionary *)
 			let rec browser point = function
@@ -339,7 +342,19 @@ class graph (graphXml:treeXml) =
 			in 
 			n := !n + 1;
 			distance#set name (!n,(browser (x,y) l))
-			
+		
+		method private graphToMatrix =
+			self#initKeys;
+			let mat = self#initMatrix in
+			let rec browser m l =
+				match l with
+				| [] -> m
+				| (i,h) :: t ->
+					let (_,link) = (distance#get h) in
+					m.(i) <- (Array.copy (self#insert (m.(i)) link));
+					browser m t
+			in self#endMatrix(browser mat keys)
+		
 		method private getDistance (x,y) (a,b) =
 			let d1 = (y-b) and d2 = (x-a) in
 			let d = float_of_int((d1 * d1) + (d2 * d2)) in 
@@ -359,33 +374,6 @@ class graph (graphXml:treeXml) =
 			in 
 			browser (links#keys (),coor (links#elements ()))
 			
-		method private strParse str =
-			begin
-				let i = ref (String.length str - 1) and acc = ref "" and final = ref [] in
-				while (0 <= !i) do
-					(if (str.[!i] = ',') then
-						(final := !acc :: !final;
-						acc := "")
-					else
-						acc := Char.escaped(str.[!i]) ^ !acc);
-					i := !i - 1
-				done;
-				final := !acc :: !final;
-				!final
-			end
-		method private getNodes =
-			(* Debug ** print_string(((tree#getFirstByName "graph")#getXmlElement ())#getName ()^"\n");  test de conformité du fichier graph *)
-			nodes <- tree#getElementsByName "node"
-		method getFirst =
-			let n = nodes in
-			match n with
-				| [] -> tree
-				| h::t -> h
-		method private getName =
-			tree#getAttr ((tree#getXmlElement ())#getName ())
-		method private displayNodes = 
-			nodes
-		
 		method private getD =
 			(distance : (int * (string * float) list) dictionary)
 		method private getLinks =
@@ -436,18 +424,6 @@ class graph (graphXml:treeXml) =
 					ins (Array.copy m) t
 			in
 			ins (Array.copy mat) l
-			
-		method private graphToMatrix =
-			self#initKeys;
-			let mat = self#initMatrix in
-			let rec browser m l =
-				match l with
-				| [] -> m
-				| (i,h) :: t ->
-					let (_,link) = (distance#get h) in
-					m.(i) <- (Array.copy (self#insert (m.(i)) link));
-					browser m t
-			in self#endMatrix(browser mat keys)
 			
 		method private endMatrix ma = 
 			let rec endM m = function
