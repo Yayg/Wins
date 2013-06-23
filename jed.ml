@@ -261,7 +261,7 @@ class displayUpdating window element =
 					line (a,b) (c,d) 0;
 					final (c,d) (x,y)
 			in
-			final (g,h) (i,j) r
+			final (g,h) (i,j)
 			
 		(* Update Methods *)
 		method setAnimation name =
