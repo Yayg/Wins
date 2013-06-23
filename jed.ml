@@ -361,7 +361,6 @@ class sdlWindow width height =
 		
 		val mutable currentRuntime = None
 		val mutable nodes = None
-		val mutable envElem = []
 		
 		(* Inventory Mode *)
 		val mutable invBackground = 
@@ -379,8 +378,7 @@ class sdlWindow width height =
 				Sdlevent.KEYDOWN_EVENT;
 				Sdlevent.MOUSEBUTTONDOWN_EVENT;
 				Sdlevent.QUIT_EVENT]
-			);
-			envElem <- displayData#elements ();
+			)
 		
 		(** Window Manager **)
 		method getSurface =
@@ -533,27 +531,6 @@ class sdlWindow width height =
 			self#gameDisplayDialog;
 		 
 		method private gameUpdataDisplayData =
-			let rec organize = function
-				| [] -> true
-				| a :: [] -> true
-				| a :: b :: t when (let (_,y) = a.pos and (_,z) = b.pos in ((z > y)||(z = y))) -> organize (b :: t)
-				| _ -> false
-			in
-			let rec reorganize e = function
-				| [] -> []
-				| a :: [] -> [a]
-				| a :: b :: t when ((b = e)&&(let (_,y) = a.pos and (_,z) = b.pos in z < y)) -> b :: a :: t
-				| a :: b :: t when ((a = e)&&(let (_,y) = a.pos and (_,z) = b.pos in z < y))-> b :: a :: t
-				| a :: t -> a :: reorganize e t
-			in
-			let rec test = function
-				| [] -> ()
-				| element :: t when element.updating#still -> while (organize envElem = false) do 
-																envElem <- reorganize element envElem 
-															  done
-				| _ :: t -> test t
-			in test envElem;
-
 			let rec browser = function
 				| [] -> ()
 				| element::q ->
@@ -570,8 +547,8 @@ class sdlWindow width height =
 							| _ -> ()
 					end;
 					browser q
-			in browser (envElem)
-		method gameDisplay =
+			in browser (displayData#elements ())
+		method private gameDisplay = 
 			let rec browser = function
 				| [] -> ()
 				| element::q -> 
