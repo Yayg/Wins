@@ -168,10 +168,10 @@ class displayUpdating window element =
 			h <- int_of_string(idle#getAttr "h");
 			ox <- (try int_of_string(idle#getAttr "ox") with _ -> 0);
 			oy <- (try int_of_string(idle#getAttr "oy") with _ -> 0)
-		
+
 		(* Draw Moving *)
 		method getLine ?speed:(r=1) (g,h) (i,j) = 
-			let rec line (a,b) (x,y) i = 
+			let rec line i (a,b) (x,y) = 
 					match (a,b,x,y) with
 						(* diagonales *)
 						| (a,b,x,y) when (x > a)&&(y > b) ->
@@ -180,28 +180,28 @@ class displayUpdating window element =
 							push (a,b) (positionUpdate);
 							push 1 direction;
 							end;
-							line (a + r,b + r) (x,y) (i+1)
+							line (i+1) (a + r,b + r) (x,y) 
 						| (a,b,x,y) when (x > a)&&(y < b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 3 direction;
 							end;
-							line (a + r,b - r) (x,y) (i+1)
+							line (i+1) (a + r,b - r) (x,y)
 						| (a,b,x,y) when (x < a)&&(y < b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 5 direction;
 							end;
-							line (a - r,b - r) (x,y) (i+1)
+							line (i+1) (a - r,b - r) (x,y)
 						| (a,b,x,y) when (x < a)&&(y > b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 7 direction;
 							end;
-							line (a - r,b + r) (x,y) (i+1)
+							line (i+1) (a - r,b + r) (x,y)
 						(* hauteurs *)
 						| (a,b,x,y) when (x = a)&&(y > b) -> 
 							begin
@@ -209,28 +209,28 @@ class displayUpdating window element =
 							push (a,b) (positionUpdate);
 							push 0 direction;
 							end;
-							line (a,b + 1) (x,y) (i+1)
+							line (i+1) (a,b + 1) (x,y)
 						| (a,b,x,y) when (x = a)&&(y < b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 4 direction;
 							end;
-							line (a,b - 1) (x,y) (i+1)
+							line (i+1) (a,b - 1) (x,y)
 						| (a,b,x,y) when (x > a)&&(y = b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 2 direction;
 							end;
-							line (a + 1,b) (x,y) (i+1)
+							line (i+1) (a + 1,b) (x,y)
 						| (a,b,x,y) when (x < a)&&(y = b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 6 direction;
 							end;
-							line (a - 1,b) (x,y) (i+1)
+							line (i+1) (a - 1,b) (x,y)
 						| _ -> ()
 			
 			and func (a,b) (x,y) =
@@ -249,16 +249,16 @@ class displayUpdating window element =
 			let rec final (a,b) (x,y) =
 				match (a,b) with 
 				|(a,b) when ((a = x)||(b = y)) -> 
-					line (a,b) (x,y)
+					line 0 (a,b) (x,y)
 				|(a,b) when x > a ->
 					let c = a + 1 in
 					let d = f a in
-					line (a,b) (c,d) 0;
+					line 0 (a,b) (c,d);
 					final (c,d) (x,y)
 				|(a,b) ->
 					let c = a - 1 in
 					let d = f a in
-					line (a,b) (c,d) 0;
+					line 0 (a,b) (c,d);
 					final (c,d) (x,y)
 			in
 			final (g,h) (i,j)
