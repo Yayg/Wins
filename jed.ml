@@ -180,28 +180,28 @@ class displayUpdating window element =
 							push (a,b) (positionUpdate);
 							push 1 direction;
 							end;
-							line (i+1) (a + r,b + r) (x,y) 
+							line (i+1) (a + 1,b + 1) (x,y) 
 						| (a,b,x,y) when (x > a)&&(y < b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 3 direction;
 							end;
-							line (i+1) (a + r,b - r) (x,y)
+							line (i+1) (a + 1,b - 1) (x,y)
 						| (a,b,x,y) when (x < a)&&(y < b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 5 direction;
 							end;
-							line (i+1) (a - r,b - r) (x,y)
+							line (i+1) (a - 1,b - 1) (x,y)
 						| (a,b,x,y) when (x < a)&&(y > b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
 							push 7 direction;
 							end;
-							line (i+1) (a - r,b + r) (x,y)
+							line (i+1) (a - 1,b + 1) (x,y)
 						(* hauteurs *)
 						| (a,b,x,y) when (x = a)&&(y > b) -> 
 							begin
@@ -249,16 +249,16 @@ class displayUpdating window element =
 			let rec final (a,b) (x,y) =
 				match (a,b) with 
 				|(a,b) when ((a = x)||(b = y)) -> 
-					line 0 (a,b) (x,y)
+					line 1 (a,b) (x,y)
 				|(a,b) when x > a ->
 					let c = a + 1 in
 					let d = f a in
-					line 0 (a,b) (c,d);
+					line 1 (a,b) (c,d);
 					final (c,d) (x,y)
 				|(a,b) ->
 					let c = a - 1 in
 					let d = f a in
-					line 0 (a,b) (c,d);
+					line 1 (a,b) (c,d);
 					final (c,d) (x,y)
 			in
 			final (g,h) (i,j)
