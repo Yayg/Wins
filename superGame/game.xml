@@ -1,0 +1,12 @@
+<game name="The Holly Fake Game" icon="icon.png">
+	<dimension x="1000" y="570"/>
+	
+	<itemDir href="items/"/>
+	<characterDir href="characters/"/>
+	<roomDir href="rooms/"/>
+	<scriptDir href="scripts/"/>
+	<fontDir href="fonts/"/>
+	
+	<firstRoom name="begin" node="begin"/>
+	<player name="guy"/>
+</game>

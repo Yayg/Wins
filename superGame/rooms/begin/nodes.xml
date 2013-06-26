@@ -1,0 +1,10 @@
+<graph>
+	<node id="begin" x="266" y="524" l="a1"/>
+	<node id="a1" x="400" y="523" l="begin,a2,b1"/>
+	<node id="a2" x="585" y="514" l="a1,a3,b1,b2"/>
+	<node id="a3" x="764" y="495" l="a2,out,b1,b2,b3"/>
+	<node id="b1" x="580" y="546" l="a1,a2,a3,b2"/>
+	<node id="b2" x="766" y="547" l="a2,a3,out,b1,b3"/>
+	<node id="b3" x="905" y="538" l="b2,a3,out"/>
+	<node id="out" x="899" y="463" l="a3,b2,b3"/>
+</graph>

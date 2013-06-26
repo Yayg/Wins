@@ -1,0 +1,11 @@
+<infoFonts>
+	<fonts>
+		<font name ="Default" size="12" file="FreeSans.ttf"/>
+		<font name ="Inventory" size="20" file="FreeSans.ttf"/>
+	</fonts>
+	<colors>
+		<color name="inventory" r="0" g="200" b="200"/>
+		<color name="back" r="0" g="0" b="0"/>
+		<color name="red" r="150" g="0" b="0"/>
+	</colors>
+</infoFonts>
