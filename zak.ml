@@ -91,9 +91,6 @@ class character dirName =
 		val animation = 
 			try new treeXml (charDir//dirName//"animation.xml")
 			with _ -> failwith ("read animation.xml of character "^dirName^" failed.")
-		val script = 
-			try load_file (charDir//dirName//"script.lua")
-			with _ -> failwith ("read script.lua of character "^dirName^" failed.")
 		
 		val mutable name = ""
 		val mutable font = ""
