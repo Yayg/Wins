@@ -6,5 +6,5 @@
 	<node id="b1" x="580" y="546" l="a1,a2,a3,b2"/>
 	<node id="b2" x="766" y="547" l="a2,a3,out,b1,b3"/>
 	<node id="b3" x="905" y="538" l="b2,a3,out"/>
-	<node id="out" x="899" y="463" l="a3,b2,b3"/>
+	<node id="out" x="899" y="463" l="a3,b2,b3" swr="lightRoom" swn="begin"/>
 </graph>
