@@ -171,35 +171,34 @@ class displayUpdating window element =
 
 		(* Draw Moving *)
 		method getLine ?speed:(r=1) (g,h) (i,j) = 
+			let countDir = ref 0 
+			in 
 			let rec line i (a,b) (x,y) = 
+					countDir := !countDir+1;
 					match (a,b,x,y) with
 						(* diagonales *)
 						| (a,b,x,y) when (x > a)&&(y > b) ->
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
-							push 1 direction;
 							end;
 							line (i+1) (a + 1,b + 1) (x,y) 
 						| (a,b,x,y) when (x > a)&&(y < b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
-							push 3 direction;
 							end;
 							line (i+1) (a + 1,b - 1) (x,y)
 						| (a,b,x,y) when (x < a)&&(y < b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
-							push 5 direction;
 							end;
 							line (i+1) (a - 1,b - 1) (x,y)
 						| (a,b,x,y) when (x < a)&&(y > b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
-							push 7 direction;
 							end;
 							line (i+1) (a - 1,b + 1) (x,y)
 						(* hauteurs *)
@@ -207,28 +206,24 @@ class displayUpdating window element =
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
-							push 0 direction;
 							end;
 							line (i+1) (a,b + 1) (x,y)
 						| (a,b,x,y) when (x = a)&&(y < b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
-							push 4 direction;
 							end;
 							line (i+1) (a,b - 1) (x,y)
 						| (a,b,x,y) when (x > a)&&(y = b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
-							push 2 direction;
 							end;
 							line (i+1) (a + 1,b) (x,y)
 						| (a,b,x,y) when (x < a)&&(y = b) -> 
 							begin
 							if (i mod r = 0) then 
 							push (a,b) (positionUpdate);
-							push 6 direction;
 							end;
 							line (i+1) (a - 1,b) (x,y)
 						| _ -> ()
@@ -261,14 +256,33 @@ class displayUpdating window element =
 					line 1 (a,b) (c,d);
 					final (c,d) (x,y)
 			in
-			final (g,h) (i,j)
+			final (g,h) (i,j);
+			(*define direction *)
+			begin 
+				let valueDir = match (g,h,i,j) with
+				(* diagonales *)
+				| (a,b,x,y) when (x > a)&&(y > b) -> 1
+				| (a,b,x,y) when (x > a)&&(y < b) -> 3
+				| (a,b,x,y) when (x < a)&&(y < b) -> 5
+				| (a,b,x,y) when (x < a)&&(y > b) -> 7
+				(* hauteurs *)
+				| (a,b,x,y) when (x = a)&&(y > b) -> 0
+				| (a,b,x,y) when (x = a)&&(y < b) -> 4
+				| (a,b,x,y) when (x > a)&&(y = b) -> 2
+				| (a,b,x,y) when (x < a)&&(y = b) -> 6
+				| _ -> 0
+				in
+				for c=1 to !countDir do
+					push valueDir direction 
+				done
+			end
 			
 		(* Update Methods *)
 		method setAnimation name =
 			let noper n =
 				for i = 0 to (n-1) do
 					push Nop animationUpdate;
-					try ignore (pop direction) with _ -> ()
+					ignore (pop direction)
 				done
 			and animation = element#getDataAnim#getElementById name in
 			let frames = (animation#getChildren ())#getElementsByName "frame" in
@@ -276,10 +290,8 @@ class displayUpdating window element =
 				| [] -> ()
 				| f::q -> 
 					let time = int_of_string(f#getAttr "time") 
-					and o = 
-						try pop direction with _ -> 0
 					in
-					push (Animation (rect (i*w) (o*h) w h)) animationUpdate;
+					push (Animation (rect (i*w) 0 w h)) animationUpdate;
 					noper (time-t);
 					browser (i+1) time q
 			in
@@ -302,6 +314,17 @@ class displayUpdating window element =
 							self#setAnimation nameAnimation;
 							pop animationUpdate
 						end
+					else if nameAnimation <> "actived" then 
+						begin
+							let lastDir = 
+								try top direction
+								with _ -> 0 
+							in
+							self#setAnimation "idle";
+							clear direction;
+							push lastDir direction;
+							pop animationUpdate;
+						end
 					else Nop
 				else
 					pop animationUpdate
@@ -313,6 +336,11 @@ class displayUpdating window element =
 			in 
 			(actionAnimation, actionPosition)
 		
+		method getOrientation = 
+			let value = pop direction in
+			begin if is_empty direction then 
+				push value direction
+			end; value
 		method still =
 			is_empty positionUpdate
 		(* Get Data *)
@@ -455,8 +483,7 @@ class sdlWindow width height =
 				| None -> (displayData#get objectName).pos 
 			in
 			(displayData#get objectName).updating#setAnimation "move";
-			(displayData#get objectName).updating#getLine actualPosition newPosition;
-			push (self#resetAnimation objectName) priorityFunc
+			(displayData#get objectName).updating#getLine actualPosition newPosition
 		
 		(* Node Moving *)
 		method walkToNode characterName ?previousNode node () =
@@ -542,7 +569,11 @@ class sdlWindow width height =
 						element.updating#getActions in
 					begin
 						match actionAnimation with
-							| Animation r -> element.img <- r
+							| Animation r -> 
+								let o = 
+									let dir = element.updating#getOrientation in
+									r.r_h * dir
+								in element.img <- {r with r_y=o}
 							| _ -> ()
 					end;
 					begin

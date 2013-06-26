@@ -2,8 +2,7 @@
 	<animation id="idle" loop="true" file="idle.png" w="87" h="161" direction="8" key="1" ox="43" oy="151">
 		<frame time="1"/>
 	</animation>
-	<animation id="move" loop="true" file="move.png" w="87" h="161" direction="8" key="50" ox="43" oy="151">
-		<frame time="1"/>
+	<animation id="move" loop="true" file="move.png" w="87" h="161" direction="8" key="49" ox="43" oy="151">
 		<frame time="1"/>
 		<frame time="1"/>
 		<frame time="1"/>
