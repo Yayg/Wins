@@ -1,5 +1,5 @@
 <graph>
-	<node id="begin" x="95" y="475" l="b1"/>
+	<node id="begin" x="95" y="475" l="b1" swr="begin" swn="out"/>
 	
 	<node id="b1" x="263" y="465" l="begin,lampe,a1,c1"/>
 	
@@ -13,5 +13,5 @@
 	
 	<node id="b2" x="837" y="470" l="out,a2,c2"/>
 	
-	<node id="out" x="916" y="465" l="b2"/>
+	<node id="out" x="916" y="465" l="b2" swr="pistonRoom" swn="begin"/>
 </graph>

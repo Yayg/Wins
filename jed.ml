@@ -482,8 +482,8 @@ class sdlWindow width height =
 				| Some pos -> pos
 				| None -> (displayData#get objectName).pos 
 			in
+			(displayData#get objectName).updating#getLine actualPosition newPosition;
 			(displayData#get objectName).updating#setAnimation "move";
-			(displayData#get objectName).updating#getLine actualPosition newPosition
 		
 		(* Node Moving *)
 		method walkToNode characterName ?previousNode node () =

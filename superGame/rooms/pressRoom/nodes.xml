@@ -1,5 +1,5 @@
 <graph>
-	<node id="begin" x="88" y="464" l="a,b"/>
+	<node id="begin" x="88" y="464" l="a,b" swr="fruitRoom" swn="out"/>
 	
 	<node id="a" x="346" y="432" l="begin,b"/>
 	

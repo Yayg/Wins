@@ -1,9 +1,9 @@
 <graph>
-	<node id="begin" x="84" y="467" l="a,b"/>
+	<node id="begin" x="84" y="467" l="a,b" swr="pistonRoom" swn="out"/>
 	
 	<node id="a" x="432" y="380" l="begin,b,out"/>
 	
 	<node id="b" x="491" y="467" l="begin,a,out"/>
 	
-	<node id="out" x="917" y="467" l="a,b"/>
+	<node id="out" x="917" y="467" l="a,b" swr="pressRoom" swn="begin"/>
 </graph>
