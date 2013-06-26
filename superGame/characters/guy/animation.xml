@@ -53,4 +53,55 @@
 		<frame time="1"/>
 		<frame time="1"/>
 	</animation>
+	<animation id="active" loop="false" file="active.png" w="124" h="161" direction="8" key="49" ox="62" oy="151">
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+		<frame time="1"/>
+	</animation>
 </animations>

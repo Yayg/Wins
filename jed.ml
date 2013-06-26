@@ -712,7 +712,11 @@ class sdlWindow width height =
 								ignore (self#doFunction ("active_"^sObject) 
 									~args:[LString (self#getCurrentItem)] u)
 							in
-							push (self#walkToPos player (x,y)) priorityFunc;
+							self#walkToPos player (x,y) ();
+							push (function u -> 
+								let act () = "active" in
+								(displayData#get player).updating#setAnimation (act u)
+								) priorityFunc;
 							push (action) priorityFunc;
 							push (function () -> currentItem <- None) priorityFunc
 						end
@@ -833,7 +837,7 @@ class sdlWindow width height =
 				let rec browser = 
 					let parseType = function
 						| LInt v -> string_of_int v
-						| LString v -> "\""^v^"\n"
+						| LString v -> "\""^v^"\""
 					in function
 					| [] -> ""
 					| a::[] -> parseType a

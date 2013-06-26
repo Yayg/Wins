@@ -569,7 +569,7 @@ class graph (graphXml:treeXml) =
 							browser node min z
 						| h :: z -> browser h (self#getDistance (self#getCoor h) (x,y)) z 
 					in browser a d t
-			in if (self#getDistance (self#getCoor nearestNode) (x,y)) > 100. then ""
+			in if (self#getDistance (self#getCoor nearestNode) (x,y)) > 180. then ""
 			else nearestNode
 		
 		(** Get Nodes Info **)
