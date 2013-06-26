@@ -75,7 +75,9 @@ let registerStaticFuncLua () =
 			| _ -> failwith "Invalid call in lua at set_global_int"
 	and getglobalint state =
 		let value = match (Lua.tostring state 1) with
-			| Some name -> getGlobalInt name
+			| Some name -> 
+				(try getGlobalInt name
+				with _ -> 0)
 			| _ -> failwith "Invalid call in lua at get_global_int"
 		in Lua.pushinteger state value
 	and removeglobalint state =
@@ -89,7 +91,9 @@ let registerStaticFuncLua () =
 			| _ -> failwith "Invalid call in lua at set_global_string"
 	and getglobalstring state =
 		let value = match (Lua.tostring state 1) with
-			| Some name -> getGlobalString name
+			| Some name -> 
+				(try getGlobalString name
+				with _ -> "")
 			| _ -> failwith "Invalid call in lua at get_global_string"
 		in Lua.pushstring state value
 	and removeglobalstring state =
@@ -149,12 +153,19 @@ let registerDynamicFuncLua () =
 				let w = Jed.getWindow () in 
 				w#addItemToDisplay name (x,y)
 			| _ -> failwith "Invalid call in lua at place_item"
+	and setanimation state =
+		match (Lua.tostring state 1),(Lua.tostring state 2) with
+			| (Some obj,Some anim) -> 
+				let w = Jed.getWindow () in 
+				w#setAnimation obj anim
+			| _ -> failwith "Invalid call in lua at set_animation"
 	in 	
 	registerDynamicFunction "change_room" changeroom;
 	registerDynamicFunction "give_item" giveitem;
 	registerDynamicFunction "drop_item" dropitem;
 	registerDynamicFunction "add_character" addcharacter;
-	registerDynamicFunction "place_item" placeitem
+	registerDynamicFunction "place_item" placeitem;
+	registerDynamicFunction "set_animation" setanimation
 ;;
 
 let initLua () =

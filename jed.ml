@@ -337,10 +337,14 @@ class displayUpdating window element =
 			(actionAnimation, actionPosition)
 		
 		method getOrientation = 
-			let value = pop direction in
-			begin if is_empty direction then 
-				push value direction
-			end; value
+			if is_empty direction then
+				0
+			else begin
+				let value = pop direction in
+				begin if is_empty direction then 
+					push value direction
+				end; value
+			end
 		method still =
 			is_empty positionUpdate
 		(* Get Data *)
