@@ -523,7 +523,6 @@ class graph (graphXml:treeXml) =
 				| [] -> failwith "Impossible case."
 				| a :: [] -> d
 				| a :: b :: t -> 
-					print_string(b ^ " -> "^ a ^ "\n");
 					browser (
 					d +. (match (m.(self#getId a).(self#getId b)) with 
 						| Finite(x) -> x 
@@ -547,7 +546,6 @@ class graph (graphXml:treeXml) =
 			let track = browser [] (-1.) ways
 			in if track <> [] then
 				(currentNode <- dst;
-				print_string("Current: "^currentNode^"\n");
 				List.rev track)
 			else
 				[]

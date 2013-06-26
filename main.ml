@@ -132,11 +132,15 @@ let registerDynamicFuncLua () =
 					invDropItem name
 			| _ -> failwith "Invalid call in lua at drop_item"
 	and addcharacter state =
-		match (Lua.tostring state 1),(Lua.tostring state 2)
+		match (Lua.tostring state 1),(Lua.tostring state 2),
+			(Lua.tointeger state 3),(Lua.tointeger state 4)
 		with
-			| (Some name,Some node) -> 
+			| (Some name,Some node,ox,oy) -> 
 				let w = Jed.getWindow () in 
-				w#addCharacterToDisplay name node
+				w#addCharacterToDisplay name node;
+				begin if (ox <> 0 || oy <> 0) then
+					w#placeOffsetNode name node (ox,oy)
+				end
 			| _ -> failwith "Invalid call in lua at add_character"
 	and placeitem state =
 		match (Lua.tostring state 1),(Lua.tointeger state 2),(Lua.tointeger state 3) 
