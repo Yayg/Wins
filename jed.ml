@@ -291,7 +291,7 @@ class displayUpdating window element =
 			ox <- (try int_of_string(animation#getAttr "ox") with _ -> 0);
 			oy <- (try int_of_string(animation#getAttr "oy") with _ -> 0);
 			browser 0 1 frames;
-			nameAnimation <- name
+			nameAnimation <- name;
 		
 		(* Get Actions *)
 		method getActions =
@@ -443,6 +443,8 @@ class sdlWindow width height =
 			currentDialog <- Some (new dialog xmlDialog id)
 		method setAnimation objectName animationName =
 			(displayData#get objectName).updating#setAnimation animationName
+		method private resetAnimation objectName () =
+			(displayData#get objectName).updating#setAnimation "idle"
 		
 		(* Absolute Moving *)
 		method placeTo objectName newPosition =
@@ -452,7 +454,9 @@ class sdlWindow width height =
 				| Some pos -> pos
 				| None -> (displayData#get objectName).pos 
 			in
-			(displayData#get objectName).updating#getLine actualPosition newPosition
+			(displayData#get objectName).updating#setAnimation "move";
+			(displayData#get objectName).updating#getLine actualPosition newPosition;
+			push (self#resetAnimation objectName) priorityFunc
 		
 		(* Node Moving *)
 		method walkToNode characterName ?previousNode node () =
