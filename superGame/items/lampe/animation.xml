@@ -1,0 +1,8 @@
+<animations>
+	<animation id="idle" loop="false" file="idle.png" w="324" h="438" direction="1" key="1" ox="131" oy="389">
+		<frame time="1"/>
+	</animation>
+	<animation id="actived" loop="false" file="actived.png" w="324" h="438" direction="1" key="1" ox="131" oy="389">
+		<frame time="1"/>
+	</animation>
+</animations>
