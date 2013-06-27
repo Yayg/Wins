@@ -159,13 +159,27 @@ let registerDynamicFuncLua () =
 				let w = Jed.getWindow () in 
 				w#setAnimation obj anim
 			| _ -> failwith "Invalid call in lua at set_animation"
+	and removeobject state =
+		match (Lua.tostring state 1) with
+			| Some name -> 
+				let w = Jed.getWindow () in 
+				w#removeDisplayElement name
+			| _ -> failwith "Invalid call in lua at remove_object"
+	and setdialog state =
+		match (Lua.tostring state 1) with
+			| (Some name) -> 
+				let w = Jed.getWindow () in 
+				w#setDialog name
+			| _ -> failwith "Invalid call in lua at set_dialog"
 	in 	
 	registerDynamicFunction "change_room" changeroom;
 	registerDynamicFunction "give_item" giveitem;
 	registerDynamicFunction "drop_item" dropitem;
 	registerDynamicFunction "add_character" addcharacter;
 	registerDynamicFunction "place_item" placeitem;
-	registerDynamicFunction "set_animation" setanimation
+	registerDynamicFunction "set_animation" setanimation;
+	registerDynamicFunction "remove_object" removeobject;
+	registerDynamicFunction "set_dialog" setdialog
 ;;
 
 let initLua () =

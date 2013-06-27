@@ -471,8 +471,8 @@ class sdlWindow width height =
 			
 		
 		(** Update Game Data **)
-		method setDialog xmlDialog id =
-			currentDialog <- Some (new dialog xmlDialog id)
+		method setDialog id =
+			currentDialog <- Some (new dialog (self#getRoom#getDialog) id)
 		method setAnimation objectName animationName =
 			(displayData#get objectName).updating#setAnimation animationName
 		method private resetAnimation objectName () =
