@@ -1,7 +1,0 @@
-<dialogs>
-	<dialog id="demo">
-		<loly time="300" x="20" y="-20">Ceci est un stupide test !</loly>
-		<kedu time="200" x="-40" y="-20">C'est...</kedu>
-		<kedu time="300" x="20" y="-20">STUPEFIANT !</kedu>
-	</dialog>
-</dialogs>

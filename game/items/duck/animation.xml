@@ -1,5 +1,0 @@
-<animations>
-	<animation id="idle" loop="false" file="idle.png" h="56" w="56" direction="1" key="1" ox="29" oy="52">
-		<frame time="1"/>
-	</animation>
-</animations>
